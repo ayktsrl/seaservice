@@ -61,12 +61,27 @@
 
       <div id="errorMessage" class="text-danger mb-3"></div>
 
-      <button type="submit" class="btn btn-primary w-100">Continue</button>
+      <button type="submit" class="btn btn-primary w-100">Register</button>
     </form>
   </div>
 
-  <script>
-    function handleRegister(event) {
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+      authDomain: "crewapplication-c37a8.firebaseapp.com",
+      projectId: "crewapplication-c37a8",
+      storageBucket: "crewapplication-c37a8.appspot.com",
+      messagingSenderId: "23423243284",
+      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    async function handleRegister(event) {
       event.preventDefault();
 
       const userType = document.querySelector('input[name="userType"]:checked').value;
@@ -86,19 +101,28 @@
         return;
       }
 
-      // Bilgileri geçici olarak localStorage'a atıyoruz
-      localStorage.setItem("registrationEmail", email);
-      localStorage.setItem("registrationPassword", password);
-      localStorage.setItem("registrationPhone", phone);
-      localStorage.setItem("registrationUserType", userType);
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
 
-      // Doğru sayfaya yönlendir
-      if (userType === "seafarer") {
-        window.location.href = "register-seafarer.html";
-      } else {
-        window.location.href = "register-company.html";
+        // LocalStorage'a verileri kaydet
+        localStorage.setItem("registrationEmail", email);
+        localStorage.setItem("registrationPassword", password);
+        localStorage.setItem("registrationPhone", phone);
+        localStorage.setItem("registrationUserType", userType);
+
+        // Yönlendirme
+        if (userType === "seafarer") {
+          window.location.href = "register-seafarer.html";
+        } else {
+          window.location.href = "register-company.html";
+        }
+      } catch (error) {
+        errorMessage.textContent = error.message;
+        console.error("Registration failed:", error);
       }
     }
+
+    window.handleRegister = handleRegister;
   </script>
 </body>
 </html>
