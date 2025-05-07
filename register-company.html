@@ -74,24 +74,25 @@
     </form>
   </div>
 
+  <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
       authDomain: "crewapplication-c37a8.firebaseapp.com",
       projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.firebasestorage.app",
+      storageBucket: "crewapplication-c37a8.appspot.com",
       messagingSenderId: "23423243284",
       appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
     };
 
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Fill email/phone from localStorage
     window.onload = () => {
       document.getElementById("companyEmail").value = localStorage.getItem("registrationEmail") || "";
       document.getElementById("companyPhone").value = localStorage.getItem("registrationPhone") || "";
@@ -123,15 +124,12 @@
       db.collection("companies").doc(user.uid).set(data)
         .then(() => {
           document.getElementById("companyMessage").textContent = "Registration submitted! Awaiting admin approval.";
-          // Optionally redirect:
-          // window.location.href = "company-panel.html";
         })
         .catch((error) => {
           alert("Error saving company data: " + error.message);
         });
     }
 
-    // Optional auto-login with saved credentials (for development only)
     auth.onAuthStateChanged(user => {
       if (!user) {
         const email = localStorage.getItem("registrationEmail");
