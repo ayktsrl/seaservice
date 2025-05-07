@@ -74,71 +74,73 @@
     </form>
   </div>
 
-  <!-- Firebase Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+<!-- Firebase Scripts -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
+<!-- Firebase Config and Logic -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+    authDomain: "crewapplication-c37a8.firebaseapp.com",
+    projectId: "crewapplication-c37a8",
+    storageBucket: "crewapplication-c37a8.appspot.com",
+    messagingSenderId: "23423243284",
+    appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    window.onload = () => {
-      document.getElementById("companyEmail").value = localStorage.getItem("registrationEmail") || "";
-      document.getElementById("companyPhone").value = localStorage.getItem("registrationPhone") || "";
-    };
+  window.onload = () => {
+    document.getElementById("companyEmail").value = localStorage.getItem("registrationEmail") || "";
+    document.getElementById("companyPhone").value = localStorage.getItem("registrationPhone") || "";
+  };
 
-    function submitCompanyForm(event) {
-      event.preventDefault();
+  function submitCompanyForm(event) {
+    event.preventDefault();
 
-      const user = auth.currentUser;
-      if (!user) {
-        alert("You must be logged in to complete registration.");
-        return;
-      }
-
-      const data = {
-        companyName: document.getElementById("companyName").value.trim(),
-        address: document.getElementById("companyAddress").value.trim(),
-        email: document.getElementById("companyEmail").value.trim(),
-        phone: document.getElementById("companyPhone").value.trim(),
-        managerFirstName: document.getElementById("managerFirstName").value.trim(),
-        managerLastName: document.getElementById("managerLastName").value.trim(),
-        managerPosition: document.getElementById("managerPosition").value.trim(),
-        paid: false,
-        verified: false,
-        type: "company",
-        ships: []
-      };
-
-      db.collection("companies").doc(user.uid).set(data)
-        .then(() => {
-          document.getElementById("companyMessage").textContent = "Registration submitted! Awaiting admin approval.";
-        })
-        .catch((error) => {
-          alert("Error saving company data: " + error.message);
-        });
+    const user = auth.currentUser;
+    if (!user) {
+      alert("You must be logged in to complete registration.");
+      return;
     }
 
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        const email = localStorage.getItem("registrationEmail");
-        const password = localStorage.getItem("registrationPassword");
-        if (email && password) {
-          auth.signInWithEmailAndPassword(email, password);
-        }
+    const data = {
+      companyName: document.getElementById("companyName").value.trim(),
+      address: document.getElementById("companyAddress").value.trim(),
+      email: document.getElementById("companyEmail").value.trim(),
+      phone: document.getElementById("companyPhone").value.trim(),
+      managerFirstName: document.getElementById("managerFirstName").value.trim(),
+      managerLastName: document.getElementById("managerLastName").value.trim(),
+      managerPosition: document.getElementById("managerPosition").value.trim(),
+      paid: false,
+      verified: false,
+      type: "company",
+      ships: []
+    };
+
+    db.collection("companies").doc(user.uid).set(data)
+      .then(() => {
+        document.getElementById("companyMessage").textContent = "Registration submitted! Awaiting admin approval.";
+      })
+      .catch((error) => {
+        alert("Error saving company data: " + error.message);
+      });
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      const email = localStorage.getItem("registrationEmail");
+      const password = localStorage.getItem("registrationPassword");
+      if (email && password) {
+        auth.signInWithEmailAndPassword(email, password);
       }
-    });
-  </script>
+    }
+  });
+</script>
+
 </body>
 </html>
