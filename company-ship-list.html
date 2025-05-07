@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Ships</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      background: #eef4fb;
+      padding: 30px 10px;
+    }
+    .ship-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .ship-photo {
+      max-width: 100%;
+      max-height: 180px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="company-panel.html">🏢 Company Panel</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="public-cv-browser.html">CV Browser</a></li>
+          <li class="nav-item"><a class="nav-link" href="create-job.html">Post Job</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-applications.html">Applications</a></li>
+          <li class="nav-item"><a class="nav-link active" href="company-ship-list.html">My Ships</a></li>
+          <li class="nav-item"><a class="nav-link" href="add-ship.html">Add Ship</a></li>
+          <li class="nav-item"><a class="nav-link" href="change-password.html">Change Password</a></li>
+        </ul>
+        <button class="btn btn-sm btn-light" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h4 class="mb-4 text-center">My Ships</h4>
+    <div id="shipList"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+      authDomain: "crewapplication-c37a8.firebaseapp.com",
+      projectId: "crewapplication-c37a8",
+      storageBucket: "crewapplication-c37a8.appspot.com",
+      messagingSenderId: "23423243284",
+      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = "index.html";
+
+      const container = document.getElementById("shipList");
+
+      db.collection("companies").doc(user.uid).get().then(doc => {
+        const ships = doc.data().ships || [];
+
+        if (ships.length === 0) {
+          container.innerHTML = "<p class='text-muted'>No ships added yet.</p>";
+          return;
+        }
+
+        ships.forEach(ship => {
+          const card = document.createElement("div");
+          card.className = "ship-card";
+          const shipId = ship.id;
+
+          card.innerHTML = `
+            <div id="view-${shipId}">
+              ${ship.photoUrl ? `<img src="${ship.photoUrl}" class="ship-photo mb-3" />` : ""}
+              <h5>${ship.name}</h5>
+              <p><strong>Type:</strong> ${ship.type}</p>
+              <p><strong>LOA:</strong> ${ship.loa} m | <strong>GRT:</strong> ${ship.grt} | <strong>DWT:</strong> ${ship.dwt}</p>
+              <p><strong>Built:</strong> ${ship.buildPlace}, ${ship.buildYear}</p>
+              <button class="btn btn-sm btn-warning me-2" onclick="editShip('${shipId}')">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteShip('${shipId}')">Delete</button>
+            </div>
+
+            <form id="form-${shipId}" class="mt-3" style="display:none;" onsubmit="saveShipEdit(event, '${shipId}')">
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <input class="form-control" id="name-${shipId}" value="${ship.name}" required />
+                </div>
+                <div class="col-md-6">
+                  <select class="form-select" id="type-${shipId}" required>
+                    <option ${ship.type === "Tanker" ? "selected" : ""}>Tanker</option>
+                    <option ${ship.type === "Bulk Carrier" ? "selected" : ""}>Bulk Carrier</option>
+                    <option ${ship.type === "Container" ? "selected" : ""}>Container</option>
+                    <option ${ship.type === "General Cargo" ? "selected" : ""}>General Cargo</option>
+                    <option ${ship.type === "Offshore" ? "selected" : ""}>Offshore</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <input type="number" class="form-control" id="loa-${shipId}" value="${ship.loa}" placeholder="LOA" required />
+                </div>
+                <div class="col-md-4">
+                  <input type="number" class="form-control" id="grt-${shipId}" value="${ship.grt}" placeholder="GRT" required />
+                </div>
+                <div class="col-md-4">
+                  <input type="number" class="form-control" id="dwt-${shipId}" value="${ship.dwt}" placeholder="DWT" required />
+                </div>
+                <div class="col-md-6">
+                  <input class="form-control" id="buildPlace-${shipId}" value="${ship.buildPlace}" placeholder="Build Place" required />
+                </div>
+                <div class="col-md-6">
+                  <input type="number" class="form-control" id="buildYear-${shipId}" value="${ship.buildYear}" placeholder="Build Year" required />
+                </div>
+                <div class="col-12 mt-2">
+                  <button type="submit" class="btn btn-sm btn-success me-2">Save</button>
+                  <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEdit('${shipId}')">Cancel</button>
+                </div>
+              </div>
+            </form>
+          `;
+
+          container.appendChild(card);
+        });
+      });
+    });
+
+    function deleteShip(shipId) {
+      if (!confirm("Are you sure you want to delete this ship?")) return;
+
+      auth.onAuthStateChanged(user => {
+        const ref = db.collection("companies").doc(user.uid);
+        ref.get().then(doc => {
+          const ships = doc.data().ships || [];
+          const updatedShips = ships.filter(s => s.id !== shipId);
+          ref.update({ ships: updatedShips }).then(() => location.reload());
+        });
+      });
+    }
+
+    function editShip(id) {
+      document.getElementById(`view-${id}`).style.display = "none";
+      document.getElementById(`form-${id}`).style.display = "block";
+    }
+
+    function cancelEdit(id) {
+      document.getElementById(`view-${id}`).style.display = "block";
+      document.getElementById(`form-${id}`).style.display = "none";
+    }
+
+    function saveShipEdit(event, id) {
+      event.preventDefault();
+
+      auth.onAuthStateChanged(user => {
+        const ref = db.collection("companies").doc(user.uid);
+        ref.get().then(doc => {
+          const ships = doc.data().ships || [];
+          const index = ships.findIndex(s => s.id === id);
+          if (index === -1) return;
+
+          ships[index] = {
+            ...ships[index],
+            name: document.getElementById(`name-${id}`).value.trim(),
+            type: document.getElementById(`type-${id}`).value,
+            loa: Number(document.getElementById(`loa-${id}`).value),
+            grt: Number(document.getElementById(`grt-${id}`).value),
+            dwt: Number(document.getElementById(`dwt-${id}`).value),
+            buildPlace: document.getElementById(`buildPlace-${id}`).value.trim(),
+            buildYear: Number(document.getElementById(`buildYear-${id}`).value)
+          };
+
+          ref.update({ ships }).then(() => location.reload());
+        });
+      });
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    }
+  </script>
+</body>
+</html>

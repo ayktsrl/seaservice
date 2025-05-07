@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Company Panel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body style="background-color:#eef4fb;">
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="company-panel.html">🏢 Company Panel</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="public-cv-browser.html">CV Browser</a></li>
+          <li class="nav-item"><a class="nav-link" href="create-job.html">Post Job</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-applications.html">Applications</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-ship-list.html">My Ships</a></li>
+          <li class="nav-item"><a class="nav-link" href="add-ship.html">Add Ship</a></li>
+          <li class="nav-item"><a class="nav-link" href="change-password.html">Change Password</a></li>
+        </ul>
+        <button class="btn btn-sm btn-light" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container text-center">
+    <h3 class="mb-4">Welcome to the Company Dashboard</h3>
+    <p>Use the navigation bar above to manage your ships, job postings, and applications.</p>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+      authDomain: "crewapplication-c37a8.firebaseapp.com",
+      projectId: "crewapplication-c37a8",
+      storageBucket: "crewapplication-c37a8.appspot.com",
+      messagingSenderId: "23423243284",
+      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "index.html";
+    });
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    }
+  </script>
+</body>
+</html>

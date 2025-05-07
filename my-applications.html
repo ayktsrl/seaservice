@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Applications</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      background-color: #eef4fb;
+      padding: 30px 10px;
+    }
+    .application-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="main.html">🧭 Seafarer Panel</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="main.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link active" href="my-applications.html">My Applications</a></li>
+          <li class="nav-item"><a class="nav-link" href="change-password.html">Change Password</a></li>
+        </ul>
+        <button class="btn btn-sm btn-light" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h4 class="mb-4 text-center">My Job Applications</h4>
+    <div id="applicationList"></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+      authDomain: "crewapplication-c37a8.firebaseapp.com",
+      projectId: "crewapplication-c37a8",
+      storageBucket: "crewapplication-c37a8.appspot.com",
+      messagingSenderId: "23423243284",
+      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(async user => {
+      if (!user) return window.location.href = "index.html";
+
+      const container = document.getElementById("applicationList");
+
+      const snapshot = await db.collection("applications").where("seafarerId", "==", user.uid).get();
+      if (snapshot.empty) {
+        container.innerHTML = "<p class='text-muted'>You haven't applied to any jobs yet.</p>";
+        return;
+      }
+
+      snapshot.forEach(async doc => {
+        const app = doc.data();
+
+        const jobRef = db.collection("jobPosts").doc(app.jobId);
+        const jobDoc = await jobRef.get();
+        const job = jobDoc.exists ? jobDoc.data() : null;
+
+        const card = document.createElement("div");
+        card.className = "application-card";
+        card.innerHTML = `
+          <h5>${job?.position || "Unknown Position"} (${job?.vesselType || "Unknown Type"})</h5>
+          <p><strong>Vessel:</strong> ${job?.vesselName || "-"}</p>
+          <p><strong>Location:</strong> ${job?.location || "-"}</p>
+          <p><strong>Joining:</strong> ${job?.joiningDate || "-"} | Duration: ${job?.duration || "-"}</p>
+          <p><strong>Applied At:</strong> ${new Date(app.appliedAt).toLocaleString()}</p>
+          <p><strong>Status:</strong> <span class="${statusColor(app.status)}">${app.status}</span></p>
+        `;
+        container.appendChild(card);
+      });
+    });
+
+    function statusColor(status) {
+      if (status === "approved") return "text-success fw-bold";
+      if (status === "rejected") return "text-danger fw-bold";
+      return "text-warning fw-bold";
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    }
+  </script>
+</body>
+</html>

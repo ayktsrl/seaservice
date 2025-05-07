@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Job Board</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      background-color: #eef4fb;
+      padding: 30px 10px;
+    }
+    .job-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h4 class="mb-4 text-center">Available Job Postings</h4>
+    <div id="jobList"></div>
+    <div class="text-center mt-4">
+      <button class="btn btn-outline-danger" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+      authDomain: "crewapplication-c37a8.firebaseapp.com",
+      projectId: "crewapplication-c37a8",
+      storageBucket: "crewapplication-c37a8.appspot.com",
+      messagingSenderId: "23423243284",
+      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = "index.html";
+
+      const container = document.getElementById("jobList");
+
+      db.collection("jobPosts").orderBy("createdAt", "desc").get().then(snapshot => {
+        if (snapshot.empty) {
+          container.innerHTML = "<p class='text-muted'>No active job postings.</p>";
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const job = doc.data();
+          const jobId = doc.id;
+          const card = document.createElement("div");
+          card.className = "job-card";
+
+          card.innerHTML = `
+            <h5>${job.position}</h5>
+            <p><strong>Vessel Type:</strong> ${job.vesselType}</p>
+            <p><strong>Vessel Name:</strong> ${job.vesselName || "-"}</p>
+            <p><strong>Joining Date:</strong> ${job.joiningDate}</p>
+            <p><strong>Duration:</strong> ${job.duration}</p>
+            <p><strong>Location:</strong> ${job.location}</p>
+            <p><strong>Notes:</strong> ${job.notes || "No additional notes."}</p>
+            <button class="btn btn-sm btn-success mt-2" onclick="applyJob('${jobId}')">Apply</button>
+          `;
+
+          container.appendChild(card);
+        });
+      });
+    });
+
+    function applyJob(jobId) {
+      auth.onAuthStateChanged(user => {
+        if (!user) return alert("Please login first.");
+
+        const application = {
+          jobId,
+          userId: user.uid,
+          appliedAt: new Date().toISOString(),
+          status: "pending"
+        };
+
+        db.collection("applications")
+          .add(application)
+          .then(() => alert("Application submitted successfully!"))
+          .catch(err => alert("Error submitting application: " + err.message));
+      });
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "index.html";
+      });
+    }
+  </script>
+</body>
+</html>
