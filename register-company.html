@@ -98,36 +98,43 @@
       document.getElementById("companyPhone").value = localStorage.getItem("registrationPhone") || "";
     };
 
-    async function submitCompanyForm(event) {
-      event.preventDefault();
+async function submitCompanyForm(event) {
+  event.preventDefault();
 
-      const user = auth.currentUser;
-      if (!user) {
-        alert("You must be logged in to complete registration.");
-        return;
-      }
+  const user = auth.currentUser;
+  if (!user) {
+    alert("You must be logged in to complete registration.");
+    return;
+  }
 
-      const data = {
-        companyName: document.getElementById("companyName").value.trim(),
-        address: document.getElementById("companyAddress").value.trim(),
-        email: document.getElementById("companyEmail").value.trim(),
-        phone: document.getElementById("companyPhone").value.trim(),
-        managerFirstName: document.getElementById("managerFirstName").value.trim(),
-        managerLastName: document.getElementById("managerLastName").value.trim(),
-        managerPosition: document.getElementById("managerPosition").value.trim(),
-        paid: false,
-        verified: false,
-        type: "company",
-        ships: []
-      };
+  const data = {
+    companyName: document.getElementById("companyName").value.trim(),
+    address: document.getElementById("companyAddress").value.trim(),
+    email: document.getElementById("companyEmail").value.trim(),
+    phone: document.getElementById("companyPhone").value.trim(),
+    managerFirstName: document.getElementById("managerFirstName").value.trim(),
+    managerLastName: document.getElementById("managerLastName").value.trim(),
+    managerPosition: document.getElementById("managerPosition").value.trim(),
+    paid: false,
+    type: "company",
+    ships: []
+  };
 
-      try {
-        await setDoc(doc(db, "companies", user.uid), data);
-        document.getElementById("companyMessage").textContent = "Registration submitted! Awaiting admin approval.";
-      } catch (error) {
-        alert("Error saving company data: " + error.message);
-      }
-    }
+  try {
+    await setDoc(doc(db, "companies", user.uid), data);
+    const msg = document.getElementById("companyMessage");
+    msg.textContent = "Registration successful! Redirecting...";
+    msg.classList.remove("text-danger");
+    msg.classList.add("text-success");
+
+    setTimeout(() => {
+      window.location.href = "company-panel.html";
+    }, 1500);
+  } catch (error) {
+    alert("Error saving company data: " + error.message);
+  }
+}
+
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
