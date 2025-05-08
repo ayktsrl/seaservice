@@ -112,8 +112,7 @@
       projectId: "crewapplication-c37a8",
       storageBucket: "crewapplication-c37a8.firebaseapp.com",
       messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301",
-      measurementId: "G-DSSJMESQ7Z"
+      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -163,6 +162,7 @@
     function setLanguage(lang) {
       applyLanguage(lang);
     }
+    window.setLanguage = setLanguage; // ✅ Bu satır sayesinde HTML içinden çağrılabilir
 
     window.onload = () => {
       const savedLang = localStorage.getItem("lang") || "en";
