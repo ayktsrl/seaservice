@@ -3,147 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title data-i18n="title">Sea Service</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Sea Service</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
-    #languageSwitcher {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: auto;
+    th, td {
+      font-size: 0.875rem;
+      vertical-align: middle;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <select id="languageSwitcher" class="form-select form-select-sm">
-    <option value="en">🇬🇧 English</option>
-    <option value="tr">🇹🇷 Türkçe</option>
-  </select>
-
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="main.html" data-i18n="panel">🧭 Seafarer Panel</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="main.html" data-i18n="dashboard">Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link" href="my-applications.html" data-i18n="myApplications">My Applications</a></li>
-          <li class="nav-item"><a class="nav-link" href="change-password.html" data-i18n="changePassword">Change Password</a></li>
-        </ul>
-        <button class="btn btn-sm btn-light" onclick="logout()" data-i18n="logout">Logout</button>
-      </div>
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5>Sea Service Record</h5>
+      <button class="btn btn-sm btn-success" onclick="addRow()">➕ Add Row</button>
     </div>
-  </nav>
-
-  <div class="container">
-    <h4 data-i18n="seaService">Sea Service</h4>
     <form id="seaServiceForm">
-      <div class="row mb-3">
-        <div class="col-md-4">
-          <label class="form-label" data-i18n="rank">Rank</label>
-          <input type="text" class="form-control" id="seaRank">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label" data-i18n="joinedDate">Joined Date</label>
-          <input type="date" class="form-control" id="joinedDate">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label" data-i18n="signedOffDate">Signed Off Date</label>
-          <input type="date" class="form-control" id="signedOffDate">
-        </div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle text-center">
+          <thead class="table-light">
+            <tr>
+              <th>Rank</th>
+              <th>Joined</th>
+              <th>Signed Off</th>
+              <th>Vessel</th>
+              <th>IMO</th>
+              <th>Type</th>
+              <th>Engine</th>
+              <th>GRT</th>
+              <th>DWT</th>
+              <th>HP</th>
+              <th>KW</th>
+              <th>Manager</th>
+              <th>Area</th>
+              <th>Scope</th>
+              <th>Remarks</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="seaServiceTable">
+          </tbody>
+        </table>
       </div>
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <label class="form-label" data-i18n="vesselName">Vessel Name</label>
-          <input type="text" class="form-control" id="vesselName">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label" data-i18n="vesselType">Vessel Type</label>
-          <input type="text" class="form-control" id="vesselType">
-        </div>
-      </div>
-      <div class="row mb-3">
-        <div class="col-md-4">
-          <label class="form-label" data-i18n="engineType">Engine Type</label>
-          <input type="text" class="form-control" id="engineType">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label" data-i18n="grt">GRT</label>
-          <input type="number" class="form-control" id="grt">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label" data-i18n="dwt">DWT</label>
-          <input type="number" class="form-control" id="dwt">
-        </div>
-      </div>
-      <div class="mb-3">
-        <label class="form-label" data-i18n="manager">Company / Manager</label>
-        <input type="text" class="form-control" id="manager">
-      </div>
-      <button type="submit" class="btn btn-primary" data-i18n="save">Save</button>
-      <div id="seaMessage" class="text-success mt-2"></div>
     </form>
   </div>
 
-  <script>
-    const translations = {
-      en: {
-        title: "Sea Service",
-        panel: "Seafarer Panel",
-        dashboard: "Dashboard",
-        myApplications: "My Applications",
-        changePassword: "Change Password",
-        logout: "Logout",
-        seaService: "Sea Service",
-        rank: "Rank",
-        joinedDate: "Joined Date",
-        signedOffDate: "Signed Off Date",
-        vesselName: "Vessel Name",
-        vesselType: "Vessel Type",
-        engineType: "Engine Type",
-        grt: "GRT",
-        dwt: "DWT",
-        manager: "Company / Manager",
-        save: "Save"
-      },
-      tr: {
-        title: "Deniz Hizmeti",
-        panel: "Gemi Adamı Paneli",
-        dashboard: "Gösterge Paneli",
-        myApplications: "Başvurularım",
-        changePassword: "Şifre Değiştir",
-        logout: "Çıkış Yap",
-        seaService: "Deniz Hizmeti",
-        rank: "Rütbe",
-        joinedDate: "Katılım Tarihi",
-        signedOffDate: "Ayrılış Tarihi",
-        vesselName: "Gemi Adı",
-        vesselType: "Gemi Tipi",
-        engineType: "Motor Tipi",
-        grt: "GRT",
-        dwt: "DWT",
-        manager: "Şirket / Yöneticisi",
-        save: "Kaydet"
-      }
-    };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const selectedLang = localStorage.getItem("language") || "en";
-    document.getElementById("languageSwitcher").value = selectedLang;
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.getAttribute("data-i18n");
-      if (translations[selectedLang][key]) {
-        el.textContent = translations[selectedLang][key];
-      }
+const firebaseConfig = {
+  apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+  authDomain: "crewapplication-c37a8.firebaseapp.com",
+  projectId: "crewapplication-c37a8",
+  storageBucket: "crewapplication-c37a8.appspot.com",
+  messagingSenderId: "23423243284",
+  appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+function createRow(data = {}) {
+  const row = document.createElement("tr");
+  const fields = ["rank", "joined", "signedOff", "vessel", "imo", "type", "engine", "grt", "dwt", "hp", "kw", "manager", "area", "scope", "remarks"];
+  for (let field of fields) {
+    const td = document.createElement("td");
+    const input = document.createElement("input");
+    input.type = field === "joined" || field === "signedOff" ? "date" : "text";
+    input.className = "form-control form-control-sm";
+    input.name = field;
+    input.value = data[field] || "";
+    td.appendChild(input);
+    row.appendChild(td);
+  }
+  const delTd = document.createElement("td");
+  const delBtn = document.createElement("button");
+  delBtn.textContent = "❌";
+  delBtn.className = "btn btn-sm btn-danger";
+  delBtn.onclick = () => row.remove();
+  delTd.appendChild(delBtn);
+  row.appendChild(delTd);
+  document.getElementById("seaServiceTable").appendChild(row);
+}
+
+function addRow() {
+  createRow();
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  const ref = doc(db, "seafarers", user.uid, "cv", "seaService");
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    const { records = [] } = snap.data();
+    records.forEach(data => createRow(data));
+  } else {
+    createRow();
+  }
+});
+
+// Save function (triggered from main Save button)
+document.getElementById("seaServiceForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const rows = Array.from(document.querySelectorAll("#seaServiceTable tr"));
+  const records = rows.map(row => {
+    const entry = {};
+    row.querySelectorAll("input").forEach(input => {
+      entry[input.name] = input.value;
     });
+    return entry;
+  });
 
-    document.getElementById("languageSwitcher").addEventListener("change", e => {
-      localStorage.setItem("language", e.target.value);
-      location.reload();
-    });
-
-    function logout() {
-      localStorage.removeItem("role");
-      window.location.href = "index.html";
-    }
-  </script>
+  await setDoc(doc(db, "seafarers", user.uid, "cv", "seaService"), { records });
+  alert("Sea Service saved.");
+});
+</script>
 </body>
 </html>
