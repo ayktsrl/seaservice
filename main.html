@@ -6,42 +6,75 @@
   <title>My CV Panel - Seafarer Application</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    .tab-content > div {
-      display: none;
+    body {
+      background-color: #eef4fb;
     }
-    .tab-content > div.active {
+    .sidebar {
+      min-height: 100vh;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      padding-top: 30px;
+    }
+    .sidebar a {
       display: block;
+      padding: 10px 20px;
+      color: #000;
+      text-decoration: none;
+    }
+    .sidebar a:hover {
+      background-color: #f0f0f0;
+    }
+    .content {
+      padding: 30px;
+    }
+    iframe {
+      border: none;
+      width: 100%;
+      height: 90vh;
     }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
       <a class="navbar-brand" href="job-board.html">🧭 Seafarer Panel</a>
       <div class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="main.html" id="nav-cv">My CV</a></li>
-          <li class="nav-item"><a class="nav-link" href="my-applications.html" id="nav-applications">My Applications</a></li>
-          <li class="nav-item"><a class="nav-link" href="change-password.html" id="nav-password">Change Password</a></li>
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" href="main.html">My CV</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="my-applications.html">My Applications</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="change-password.html">Change Password</a>
+          </li>
         </ul>
         <button class="btn btn-sm btn-light" onclick="logout()">Logout</button>
       </div>
     </div>
   </nav>
 
-  <div class="container">
-    <h4 class="mb-4">CV Sections</h4>
-    <ul class="list-group mb-4">
-      <li class="list-group-item"><a href="personal-details.html">🧍 Personal Details</a></li>
-      <li class="list-group-item"><a href="certificates.html">📄 Certificates</a></li>
-      <li class="list-group-item"><a href="licenses.html">📜 Licenses</a></li>
-      <li class="list-group-item"><a href="vaccinations.html">💉 Vaccinations</a></li>
-      <li class="list-group-item"><a href="visas.html">🛂 Visas</a></li>
-      <li class="list-group-item"><a href="flag-books.html">🚩 Flag Books</a></li>
-      <li class="list-group-item"><a href="sea-service.html">⚓ Sea Service</a></li>
-      <li class="list-group-item"><a href="experience.html">⏳ Experience</a></li>
-      <li class="list-group-item"><a href="special-skills.html">🛠️ Special Skills</a></li>
-    </ul>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-3 sidebar">
+        <a href="#" onclick="loadPage('personal-details.html')">🧍 Personal Details</a>
+        <a href="#" onclick="loadPage('certificates.html')">📄 Certificates</a>
+        <a href="#" onclick="loadPage('licenses.html')">📜 Licenses</a>
+        <a href="#" onclick="loadPage('vaccinations.html')">💉 Vaccinations</a>
+        <a href="#" onclick="loadPage('visas.html')">🛂 Visas</a>
+        <a href="#" onclick="loadPage('flag-books.html')">🚩 Flag Books</a>
+        <a href="#" onclick="loadPage('sea-service.html')">⚓ Sea Service</a>
+        <a href="#" onclick="loadPage('experience.html')">⏳ Experience</a>
+        <a href="#" onclick="loadPage('special-skills.html')">🛠️ Special Skills</a>
+        <a href="#" onclick="loadPage('references.html')">📇 References</a>
+        <a href="#" onclick="loadPage('education.html')">🏫 Education</a>
+        <a href="#" onclick="loadPage('finish.html')">✅ Finish</a>
+      </div>
+      <div class="col-md-9 content">
+        <iframe id="contentFrame" src="personal-details.html"></iframe>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -50,14 +83,8 @@
       window.location.href = "index.html";
     }
 
-    // Highlight active nav link based on URL
-    const path = window.location.pathname;
-    if (path.includes("main.html")) {
-      document.getElementById("nav-cv").classList.add("active");
-    } else if (path.includes("my-applications.html")) {
-      document.getElementById("nav-applications").classList.add("active");
-    } else if (path.includes("change-password.html")) {
-      document.getElementById("nav-password").classList.add("active");
+    function loadPage(page) {
+      document.getElementById("contentFrame").src = page;
     }
   </script>
 </body>
