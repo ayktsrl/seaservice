@@ -126,7 +126,7 @@
         localStorage.setItem("registrationPhone", fullPhone);
         localStorage.setItem("registrationUserType", userType);
 
-        window.location.href = userType === "seafarer" ? "register-seafarer.html" : "register-company.html";
+        window.location.href = userType === "seafarer" ? "job-board.html" : "register-company.html";
       } catch (error) {
         errorMessage.textContent = error.message;
         console.error("Registration failed:", error);
