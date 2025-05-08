@@ -66,7 +66,6 @@
             <option value="+33">🇫🇷 +33 France</option>
             <option value="+86">🇨🇳 +86 China</option>
             <option value="+91">🇮🇳 +91 India</option>
-            <!-- İstersen diğer ülkeleri de ekleriz -->
           </select>
           <input type="tel" class="form-control" id="phoneNumber" required placeholder="Phone number">
         </div>
@@ -82,7 +81,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
-      getFirestore, getDocs, collection, query, where
+      getFirestore, getDocs, collection, query, where, doc, setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -139,17 +138,27 @@
           return;
         }
 
-        // Kullanıcıyı auth ile oluştur
-        await createUserWithEmailAndPassword(auth, email, password);
-
+        // Kullanıcıyı oluştur
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const fullPhone = countryCode + phoneNumber;
 
+        // Firestore'a kayıt
+        await setDoc(doc(db, "seafarers", userCredential.user.uid), {
+          email,
+          phone: fullPhone,
+          type: "seafarer",
+          registeredAt: new Date().toISOString()
+        });
+
+        // localStorage
         localStorage.setItem("registrationEmail", email);
         localStorage.setItem("registrationPassword", password);
         localStorage.setItem("registrationPhone", fullPhone);
         localStorage.setItem("registrationUserType", userType);
 
-        window.location.href = userType === "seafarer" ? "register-seafarer.html" : "register-company.html";
+        // yönlendirme
+        window.location.href = "main.html";
+
       } catch (error) {
         errorMessage.textContent = error.message;
         console.error("Registration failed:", error);
