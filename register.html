@@ -68,11 +68,7 @@
       <div class="mb-3">
         <label class="form-label" data-i18n="phone">Phone Number</label>
         <div class="input-group">
-          <select class="form-select" id="countryCode" required>
-            <option value="+90">🇹🇷 +90</option>
-            <option value="+1">🇺🇸 +1</option>
-            <option value="+44">🇬🇧 +44</option>
-          </select>
+          <select class="form-select" id="countryCode" required></select>
           <input type="tel" class="form-control" id="phoneNumber" required placeholder="Phone number">
         </div>
       </div>
@@ -110,19 +106,6 @@
       const phoneNumber = document.getElementById("phoneNumber").value.trim();
       const errorMessage = document.getElementById("errorMessage");
 
-      if (countryCode === "+90" && !/^[5]\d{9}$/.test(phoneNumber)) {
-        errorMessage.textContent = "Enter a valid Turkish mobile number (5xx xxx xxxx).";
-        return;
-      }
-      if (countryCode === "+1" && !/^\d{10}$/.test(phoneNumber)) {
-        errorMessage.textContent = "Enter a valid US number (10 digits).";
-        return;
-      }
-      if (countryCode === "+44" && !/^\d{10}$/.test(phoneNumber)) {
-        errorMessage.textContent = "Enter a valid UK number (10 digits).";
-        return;
-      }
-
       if (password.length < 8) {
         errorMessage.textContent = "Password must be at least 8 characters.";
         return;
@@ -152,7 +135,39 @@
 
     window.handleRegister = handleRegister;
 
-    // Language translation
+    // Ülke Kodları Dinamik Ekleme
+    const countries = [
+      { code: "+90", name: "Turkey", flag: "🇹🇷" },
+      { code: "+1", name: "United States", flag: "🇺🇸" },
+      { code: "+44", name: "United Kingdom", flag: "🇬🇧" },
+      { code: "+49", name: "Germany", flag: "🇩🇪" },
+      { code: "+33", name: "France", flag: "🇫🇷" },
+      { code: "+971", name: "UAE", flag: "🇦🇪" },
+      { code: "+61", name: "Australia", flag: "🇦🇺" },
+      { code: "+81", name: "Japan", flag: "🇯🇵" },
+      { code: "+86", name: "China", flag: "🇨🇳" },
+      { code: "+91", name: "India", flag: "🇮🇳" },
+      { code: "+55", name: "Brazil", flag: "🇧🇷" },
+      { code: "+34", name: "Spain", flag: "🇪🇸" },
+      { code: "+7", name: "Russia", flag: "🇷🇺" },
+      { code: "+82", name: "South Korea", flag: "🇰🇷" },
+      { code: "+62", name: "Indonesia", flag: "🇮🇩" },
+      { code: "+92", name: "Pakistan", flag: "🇵🇰" },
+      { code: "+351", name: "Portugal", flag: "🇵🇹" },
+      { code: "+39", name: "Italy", flag: "🇮🇹" },
+      { code: "+40", name: "Romania", flag: "🇷🇴" }
+      // Daha fazla ülke eklenebilir...
+    ];
+
+    const select = document.getElementById("countryCode");
+    countries.forEach(c => {
+      const option = document.createElement("option");
+      option.value = c.code;
+      option.textContent = `${c.flag} ${c.name} (${c.code})`;
+      select.appendChild(option);
+    });
+
+    // Dil desteği
     const translations = {
       en: {
         title: "Register - Seafarer App",
