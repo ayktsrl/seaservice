@@ -81,7 +81,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
-      getFirestore, getDocs, collection, query, where, doc, setDoc
+      getFirestore, doc, setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -108,13 +108,8 @@
       const phoneNumber = document.getElementById("phoneNumber").value.trim();
       const errorMessage = document.getElementById("errorMessage");
 
-      if (!countryCode) {
-        errorMessage.textContent = "Please select a country code.";
-        return;
-      }
-
-      if (!/^\d{7,15}$/.test(phoneNumber)) {
-        errorMessage.textContent = "Enter a valid phone number (7 to 15 digits).";
+      if (!countryCode || !/^\d{7,15}$/.test(phoneNumber)) {
+        errorMessage.textContent = "Please select a valid country code and phone number.";
         return;
       }
 
@@ -129,11 +124,11 @@
       }
 
       try {
-        // Firebase Authentication
+        console.log("Trying to register user...");
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const fullPhone = countryCode + phoneNumber;
 
-        // Firestore’a kayıt
+        console.log("User created, saving to Firestore...");
         await setDoc(doc(db, "seafarers", userCredential.user.uid), {
           email,
           phone: fullPhone,
@@ -146,14 +141,17 @@
         localStorage.setItem("registrationPhone", fullPhone);
         localStorage.setItem("registrationUserType", userType);
 
-        window.location.href = "main.html";
+        alert("Registration successful! Redirecting to main panel...");
+        console.log("Redirecting to main.html");
+        window.location.replace("main.html");
+
       } catch (error) {
+        console.error("Registration failed:", error);
         if (error.code === "auth/email-already-in-use") {
           errorMessage.textContent = "This email address is already registered.";
         } else {
           errorMessage.textContent = error.message;
         }
-        console.error("Registration failed:", error);
       }
     }
 
