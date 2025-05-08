@@ -40,7 +40,9 @@
     <h4 class="mb-4 text-center" data-i18n="availableJobs">Available Job Postings</h4>
     <div id="messageBox" class="alert"></div>
     <div id="jobList"></div>
+
     <div class="text-center mt-4">
+      <button class="btn btn-outline-primary me-2" onclick="goToCv()" data-i18n="myCv">My CV</button>
       <button class="btn btn-outline-danger" onclick="logout()" data-i18n="logout">Log Out</button>
     </div>
   </div>
@@ -71,6 +73,17 @@
       messageBox.textContent = message;
       messageBox.style.display = 'block';
       setTimeout(() => messageBox.style.display = 'none', 4000);
+    }
+
+    function goToCv() {
+      window.location.href = "main.html";
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        localStorage.removeItem("role");
+        window.location.href = "index.html";
+      });
     }
 
     auth.onAuthStateChanged(async user => {
@@ -143,14 +156,7 @@
         });
     }
 
-    function logout() {
-      auth.signOut().then(() => {
-        localStorage.removeItem("role");
-        window.location.href = "index.html";
-      });
-    }
-
-    // Language i18n
+    // Dil çevirisi
     const translations = {
       en: {
         title: "Job Board",
@@ -164,7 +170,8 @@
         notes: "Notes:",
         apply: "Apply",
         alreadyApplied: "Already Applied",
-        logout: "Log Out"
+        logout: "Log Out",
+        myCv: "My CV"
       },
       tr: {
         title: "İş Panosu",
@@ -178,7 +185,8 @@
         notes: "Notlar:",
         apply: "Başvur",
         alreadyApplied: "Başvuruldu",
-        logout: "Çıkış Yap"
+        logout: "Çıkış Yap",
+        myCv: "CV'm"
       }
     };
 
