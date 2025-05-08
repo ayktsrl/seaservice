@@ -27,9 +27,7 @@
 <body>
   <div class="container">
     <h3 class="text-center mb-4">Seafarer CV</h3>
-    
     <div id="cvContainer"></div>
-
     <div class="text-center mt-4">
       <a href="public-cv-browser.html" class="btn btn-secondary">← Back to List</a>
     </div>
@@ -49,66 +47,70 @@
     };
 
     const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get("userId");
-    const container = document.getElementById("cvContainer");
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = "index.html";
 
-    if (!userId) {
-      container.innerHTML = "<p class='text-danger'>Invalid user ID</p>";
-    } else {
-      db.collection("seafarers").doc(userId).get().then(doc => {
-        if (!doc.exists) {
-          container.innerHTML = "<p class='text-muted'>CV not found.</p>";
-          return;
-        }
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get("userId");
+      const container = document.getElementById("cvContainer");
 
-        const data = doc.data();
+      if (!userId) {
+        container.innerHTML = "<p class='text-danger'>Invalid user ID</p>";
+      } else {
+        db.collection("seafarers").doc(userId).get().then(doc => {
+          if (!doc.exists) {
+            container.innerHTML = "<p class='text-muted'>CV not found.</p>";
+            return;
+          }
 
-        const personal = data.personalDetails || {};
-        const seaList = data.seaServiceRecords || [];
-        const skills = data.specialSkills || [];
-        const education = data.education || [];
+          const data = doc.data();
+          const personal = data.personalDetails || {};
+          const seaList = data.seaServiceRecords || [];
+          const skills = data.specialSkills || [];
+          const education = data.education || [];
 
-        const el = document.createElement("div");
-        el.innerHTML = `
-          <div class="cv-section">
-            <h5 class="section-title">Personal Details</h5>
-            <p><strong>Full Name:</strong> ${personal.fullName || "-"}</p>
-            <p><strong>Email:</strong> ${personal.email || "-"}</p>
-            <p><strong>Phone:</strong> ${personal.phone || "-"}</p>
-            <p><strong>Nationality:</strong> ${personal.nationality || "-"}</p>
-            <p><strong>Date of Birth:</strong> ${personal.dob || "-"}</p>
-          </div>
+          const el = document.createElement("div");
+          el.innerHTML = `
+            <div class="cv-section">
+              <h5 class="section-title">Personal Details</h5>
+              <p><strong>Full Name:</strong> ${personal.fullName || "-"}</p>
+              <p><strong>Email:</strong> ${personal.email || "-"}</p>
+              <p><strong>Phone:</strong> ${personal.phone || "-"}</p>
+              <p><strong>Nationality:</strong> ${personal.nationality || "-"}</p>
+              <p><strong>Date of Birth:</strong> ${personal.dob || "-"}</p>
+            </div>
 
-          <div class="cv-section">
-            <h5 class="section-title">Sea Service</h5>
-            ${seaList.length > 0 ? seaList.map(s => `
-              <div class="mb-2">
-                <p><strong>Rank:</strong> ${s.rank || ""}</p>
-                <p><strong>Vessel:</strong> ${s.vesselName || ""} (${s.vesselType || ""})</p>
-                <p><strong>Joined:</strong> ${s.joinedDate || ""} - <strong>Signed Off:</strong> ${s.signedOffDate || ""}</p>
-                <p><strong>GRT/DWT:</strong> ${s.grt || "-"} / ${s.dwt || "-"}</p>
-              </div>
-              <hr/>
-            `).join("") : "<p>No sea service records.</p>"}
-          </div>
+            <div class="cv-section">
+              <h5 class="section-title">Sea Service</h5>
+              ${seaList.length > 0 ? seaList.map(s => `
+                <div class="mb-2">
+                  <p><strong>Rank:</strong> ${s.rank || ""}</p>
+                  <p><strong>Vessel:</strong> ${s.vesselName || ""} (${s.vesselType || ""})</p>
+                  <p><strong>Joined:</strong> ${s.joinedDate || ""} - <strong>Signed Off:</strong> ${s.signedOffDate || ""}</p>
+                  <p><strong>GRT/DWT:</strong> ${s.grt || "-"} / ${s.dwt || "-"}</p>
+                </div>
+                <hr/>
+              `).join("") : "<p>No sea service records.</p>"}
+            </div>
 
-          <div class="cv-section">
-            <h5 class="section-title">Special Skills</h5>
-            ${skills.length > 0 ? `<ul>${skills.map(k => `<li>${k.skill} - ${k.remark}</li>`).join("")}</ul>` : "<p>No skills listed.</p>"}
-          </div>
+            <div class="cv-section">
+              <h5 class="section-title">Special Skills</h5>
+              ${skills.length > 0 ? `<ul>${skills.map(k => `<li>${k.skill} - ${k.remark}</li>`).join("")}</ul>` : "<p>No skills listed.</p>"}
+            </div>
 
-          <div class="cv-section">
-            <h5 class="section-title">Education</h5>
-            ${education.length > 0 ? `<ul>${education.map(e => `<li>${e}</li>`).join("")}</ul>` : "<p>No education details provided.</p>"}
-          </div>
-        `;
+            <div class="cv-section">
+              <h5 class="section-title">Education</h5>
+              ${education.length > 0 ? `<ul>${education.map(e => `<li>${e}</li>`).join("")}</ul>` : "<p>No education details provided.</p>"}
+            </div>
+          `;
 
-        container.appendChild(el);
-      });
-    }
+          container.appendChild(el);
+        });
+      }
+    });
   </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title data-i18n="title">Register - Seafarer App</title>
+  <title>Register - Seafarer App</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     body {
@@ -21,57 +21,63 @@
       width: 100%;
       max-width: 500px;
     }
-    .language-switcher {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: auto;
-    }
   </style>
 </head>
 <body>
-  <select id="languageSwitcher" class="form-select form-select-sm language-switcher">
-    <option value="en">🇬🇧 English</option>
-    <option value="tr">🇹🇷 Türkçe</option>
-  </select>
-
   <div class="register-box">
-    <h4 class="mb-4 text-center" data-i18n="createAccount">Create an Account</h4>
+    <h4 class="mb-4 text-center">Create an Account</h4>
     <form onsubmit="handleRegister(event)">
       <div class="mb-3">
-        <label class="form-label" data-i18n="userType">User Type</label><br>
+        <label class="form-label">User Type</label><br>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="userType" id="seafarer" value="seafarer" required>
-          <label class="form-check-label" for="seafarer" data-i18n="seafarer">Seafarer</label>
+          <label class="form-check-label" for="seafarer">Seafarer</label>
         </div>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="userType" id="company" value="company" required>
-          <label class="form-check-label" for="company" data-i18n="company">Company</label>
+          <label class="form-check-label" for="company">Company</label>
         </div>
       </div>
 
       <div class="mb-3">
-        <label for="email" class="form-label" data-i18n="email">Email address</label>
+        <label for="email" class="form-label">Email address</label>
         <input type="email" class="form-control" id="email" required>
       </div>
 
       <div class="mb-3">
-        <label for="password" class="form-label" data-i18n="password">Password (min 8 chars)</label>
+        <label for="password" class="form-label">Password (min 8 chars)</label>
         <input type="password" class="form-control" id="password" required minlength="8">
       </div>
 
       <div class="mb-3">
-        <label for="confirmPassword" class="form-label" data-i18n="confirmPassword">Confirm Password</label>
+        <label for="confirmPassword" class="form-label">Confirm Password</label>
         <input type="password" class="form-control" id="confirmPassword" required>
       </div>
 
       <div class="mb-3">
-        <label class="form-label" data-i18n="phone">Phone Number</label>
+        <label class="form-label">Phone Number</label>
         <div class="input-group">
           <select class="form-select" id="countryCode" required>
-            <option value="+90">🇹🇷 +90</option>
-            <option value="+1">🇺🇸 +1</option>
-            <option value="+44">🇬🇧 +44</option>
+            <option value="">Select Country Code</option>
+            <option value="+1">🇺🇸 +1 United States</option>
+            <option value="+44">🇬🇧 +44 United Kingdom</option>
+            <option value="+49">🇩🇪 +49 Germany</option>
+            <option value="+33">🇫🇷 +33 France</option>
+            <option value="+39">🇮🇹 +39 Italy</option>
+            <option value="+90">🇹🇷 +90 Turkey</option>
+            <option value="+7">🇷🇺 +7 Russia</option>
+            <option value="+86">🇨🇳 +86 China</option>
+            <option value="+81">🇯🇵 +81 Japan</option>
+            <option value="+61">🇦🇺 +61 Australia</option>
+            <option value="+91">🇮🇳 +91 India</option>
+            <option value="+34">🇪🇸 +34 Spain</option>
+            <option value="+55">🇧🇷 +55 Brazil</option>
+            <option value="+27">🇿🇦 +27 South Africa</option>
+            <option value="+82">🇰🇷 +82 South Korea</option>
+            <option value="+62">🇮🇩 +62 Indonesia</option>
+            <option value="+966">🇸🇦 +966 Saudi Arabia</option>
+            <option value="+971">🇦🇪 +971 UAE</option>
+            <option value="+880">🇧🇩 +880 Bangladesh</option>
           </select>
           <input type="tel" class="form-control" id="phoneNumber" required placeholder="Phone number">
         </div>
@@ -79,7 +85,7 @@
 
       <div id="errorMessage" class="text-danger mb-3"></div>
 
-      <button type="submit" class="btn btn-primary w-100" data-i18n="register">Register</button>
+      <button type="submit" class="btn btn-primary w-100">Register</button>
     </form>
   </div>
 
@@ -110,16 +116,13 @@
       const phoneNumber = document.getElementById("phoneNumber").value.trim();
       const errorMessage = document.getElementById("errorMessage");
 
-      if (countryCode === "+90" && !/^[5]\d{9}$/.test(phoneNumber)) {
-        errorMessage.textContent = "Enter a valid Turkish mobile number (5xx xxx xxxx).";
+      if (!countryCode) {
+        errorMessage.textContent = "Please select a country code.";
         return;
       }
-      if (countryCode === "+1" && !/^\d{10}$/.test(phoneNumber)) {
-        errorMessage.textContent = "Enter a valid US number (10 digits).";
-        return;
-      }
-      if (countryCode === "+44" && !/^\d{10}$/.test(phoneNumber)) {
-        errorMessage.textContent = "Enter a valid UK number (10 digits).";
+
+      if (!/^\d{7,15}$/.test(phoneNumber)) {
+        errorMessage.textContent = "Enter a valid phone number (7 to 15 digits).";
         return;
       }
 
@@ -151,48 +154,6 @@
     }
 
     window.handleRegister = handleRegister;
-
-    // Language translation
-    const translations = {
-      en: {
-        title: "Register - Seafarer App",
-        createAccount: "Create an Account",
-        userType: "User Type",
-        seafarer: "Seafarer",
-        company: "Company",
-        email: "Email address",
-        password: "Password (min 8 chars)",
-        confirmPassword: "Confirm Password",
-        phone: "Phone Number",
-        register: "Register"
-      },
-      tr: {
-        title: "Kayıt - Gemi Adamı Uygulaması",
-        createAccount: "Hesap Oluştur",
-        userType: "Kullanıcı Türü",
-        seafarer: "Gemi Adamı",
-        company: "Şirket",
-        email: "E-posta adresi",
-        password: "Şifre (en az 8 karakter)",
-        confirmPassword: "Şifreyi Onayla",
-        phone: "Telefon Numarası",
-        register: "Kayıt Ol"
-      }
-    };
-
-    const selectedLang = localStorage.getItem("language") || "en";
-    document.getElementById("languageSwitcher").value = selectedLang;
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.getAttribute("data-i18n");
-      if (translations[selectedLang][key]) {
-        el.textContent = translations[selectedLang][key];
-      }
-    });
-
-    document.getElementById("languageSwitcher").addEventListener("change", e => {
-      localStorage.setItem("language", e.target.value);
-      location.reload();
-    });
   </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Job Board</title>
+  <title data-i18n="title">Job Board</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     body {
@@ -17,14 +17,31 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.05);
       margin-bottom: 20px;
     }
+    #messageBox {
+      max-width: 600px;
+      margin: 0 auto 20px;
+      display: none;
+    }
+    #languageSwitcher {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: auto;
+    }
   </style>
 </head>
 <body>
+  <select id="languageSwitcher" class="form-select form-select-sm">
+    <option value="en">🇬🇧 English</option>
+    <option value="tr">🇹🇷 Türkçe</option>
+  </select>
+
   <div class="container">
-    <h4 class="mb-4 text-center">Available Job Postings</h4>
+    <h4 class="mb-4 text-center" data-i18n="availableJobs">Available Job Postings</h4>
+    <div id="messageBox" class="alert"></div>
     <div id="jobList"></div>
     <div class="text-center mt-4">
-      <button class="btn btn-outline-danger" onclick="logout()">Log Out</button>
+      <button class="btn btn-outline-danger" onclick="logout()" data-i18n="logout">Log Out</button>
     </div>
   </div>
 
@@ -45,32 +62,49 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    auth.onAuthStateChanged(user => {
+    const role = localStorage.getItem("role");
+    if (role !== "seafarer") window.location.href = "index.html";
+
+    const messageBox = document.getElementById("messageBox");
+    function showMessage(message, type = 'success') {
+      messageBox.className = `alert alert-${type}`;
+      messageBox.textContent = message;
+      messageBox.style.display = 'block';
+      setTimeout(() => messageBox.style.display = 'none', 4000);
+    }
+
+    auth.onAuthStateChanged(async user => {
       if (!user) return window.location.href = "index.html";
 
       const container = document.getElementById("jobList");
+      const appliedSnapshot = await db.collection("applications")
+        .where("userId", "==", user.uid).get();
+      const appliedJobIds = new Set(appliedSnapshot.docs.map(doc => doc.data().jobId));
 
       db.collection("jobPosts").orderBy("createdAt", "desc").get().then(snapshot => {
         if (snapshot.empty) {
-          container.innerHTML = "<p class='text-muted'>No active job postings.</p>";
+          container.innerHTML = `<p class='text-muted' data-i18n="noJobs">No active job postings.</p>`;
           return;
         }
 
         snapshot.forEach(doc => {
           const job = doc.data();
           const jobId = doc.id;
+          const alreadyApplied = appliedJobIds.has(jobId);
+
           const card = document.createElement("div");
           card.className = "job-card";
 
           card.innerHTML = `
             <h5>${job.position}</h5>
-            <p><strong>Vessel Type:</strong> ${job.vesselType}</p>
-            <p><strong>Vessel Name:</strong> ${job.vesselName || "-"}</p>
-            <p><strong>Joining Date:</strong> ${job.joiningDate}</p>
-            <p><strong>Duration:</strong> ${job.duration}</p>
-            <p><strong>Location:</strong> ${job.location}</p>
-            <p><strong>Notes:</strong> ${job.notes || "No additional notes."}</p>
-            <button class="btn btn-sm btn-success mt-2" onclick="applyJob('${jobId}')">Apply</button>
+            <p><strong data-i18n="vesselType">Vessel Type:</strong> ${job.vesselType}</p>
+            <p><strong data-i18n="vesselName">Vessel Name:</strong> ${job.vesselName || "-"}</p>
+            <p><strong data-i18n="joiningDate">Joining Date:</strong> ${job.joiningDate}</p>
+            <p><strong data-i18n="duration">Duration:</strong> ${job.duration}</p>
+            <p><strong data-i18n="location">Location:</strong> ${job.location}</p>
+            <p><strong data-i18n="notes">Notes:</strong> ${job.notes || "No additional notes."}</p>
+            <button class="btn btn-sm btn-${alreadyApplied ? 'secondary' : 'success'} mt-2" ${alreadyApplied ? 'disabled' : ''}
+              onclick="applyJob('${jobId}')" data-i18n="${alreadyApplied ? 'alreadyApplied' : 'apply'}"></button>
           `;
 
           container.appendChild(card);
@@ -79,28 +113,88 @@
     });
 
     function applyJob(jobId) {
-      auth.onAuthStateChanged(user => {
-        if (!user) return alert("Please login first.");
+      const user = auth.currentUser;
+      if (!user) return showMessage("Please login first.", "danger");
 
-        const application = {
-          jobId,
-          userId: user.uid,
-          appliedAt: new Date().toISOString(),
-          status: "pending"
-        };
+      db.collection("applications")
+        .where("userId", "==", user.uid)
+        .where("jobId", "==", jobId)
+        .get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            showMessage("You have already applied to this job.", "warning");
+            return;
+          }
 
-        db.collection("applications")
-          .add(application)
-          .then(() => alert("Application submitted successfully!"))
-          .catch(err => alert("Error submitting application: " + err.message));
-      });
+          const application = {
+            jobId,
+            userId: user.uid,
+            appliedAt: new Date().toISOString(),
+            status: "pending"
+          };
+
+          db.collection("applications")
+            .add(application)
+            .then(() => {
+              showMessage("Application submitted successfully!", "success");
+              setTimeout(() => window.location.reload(), 1000);
+            })
+            .catch(err => showMessage("Error submitting application: " + err.message, "danger"));
+        });
     }
 
     function logout() {
       auth.signOut().then(() => {
+        localStorage.removeItem("role");
         window.location.href = "index.html";
       });
     }
+
+    // Language i18n
+    const translations = {
+      en: {
+        title: "Job Board",
+        availableJobs: "Available Job Postings",
+        noJobs: "No active job postings.",
+        vesselType: "Vessel Type:",
+        vesselName: "Vessel Name:",
+        joiningDate: "Joining Date:",
+        duration: "Duration:",
+        location: "Location:",
+        notes: "Notes:",
+        apply: "Apply",
+        alreadyApplied: "Already Applied",
+        logout: "Log Out"
+      },
+      tr: {
+        title: "İş Panosu",
+        availableJobs: "Mevcut İş İlanları",
+        noJobs: "Aktif iş ilanı bulunmamaktadır.",
+        vesselType: "Gemi Tipi:",
+        vesselName: "Gemi Adı:",
+        joiningDate: "Katılım Tarihi:",
+        duration: "Süre:",
+        location: "Lokasyon:",
+        notes: "Notlar:",
+        apply: "Başvur",
+        alreadyApplied: "Başvuruldu",
+        logout: "Çıkış Yap"
+      }
+    };
+
+    const selectedLang = localStorage.getItem("language") || "en";
+    document.getElementById("languageSwitcher").value = selectedLang;
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.getAttribute("data-i18n");
+      if (translations[selectedLang][key]) {
+        el.textContent = translations[selectedLang][key];
+      }
+    });
+
+    document.getElementById("languageSwitcher").addEventListener("change", e => {
+      localStorage.setItem("language", e.target.value);
+      location.reload();
+    });
   </script>
 </body>
 </html>
