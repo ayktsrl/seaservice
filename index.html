@@ -180,7 +180,7 @@
       signInWithEmailAndPassword(auth, email, password)
         .then(() => {
           alert(t.loginSuccess);
-          window.location.href = "main.html";
+          window.location.href = "job-board.html";
         })
         .catch(error => {
           alert(t.loginFail + error.message);
