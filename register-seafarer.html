@@ -129,20 +129,11 @@
       }
 
       try {
-        // Firestore'da aynı e-posta var mı kontrolü
-        const seafarersRef = collection(db, "seafarers");
-        const q = query(seafarersRef, where("email", "==", email));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          errorMessage.textContent = "This email is already registered as a seafarer.";
-          return;
-        }
-
-        // Kullanıcıyı oluştur
+        // Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const fullPhone = countryCode + phoneNumber;
 
-        // Firestore'a kayıt
+        // Firestore’a kayıt
         await setDoc(doc(db, "seafarers", userCredential.user.uid), {
           email,
           phone: fullPhone,
@@ -150,17 +141,18 @@
           registeredAt: new Date().toISOString()
         });
 
-        // localStorage
         localStorage.setItem("registrationEmail", email);
         localStorage.setItem("registrationPassword", password);
         localStorage.setItem("registrationPhone", fullPhone);
         localStorage.setItem("registrationUserType", userType);
 
-        // yönlendirme
         window.location.href = "main.html";
-
       } catch (error) {
-        errorMessage.textContent = error.message;
+        if (error.code === "auth/email-already-in-use") {
+          errorMessage.textContent = "This email address is already registered.";
+        } else {
+          errorMessage.textContent = error.message;
+        }
         console.error("Registration failed:", error);
       }
     }
