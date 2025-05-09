@@ -84,7 +84,7 @@
     let userId = null;
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return location.href = 'index.html';
+      if (!user) return window.top.location.href = 'index.html';
       userId = user.uid;
     });
 
