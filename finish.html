@@ -59,7 +59,7 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, deleteUser } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getAuth, onAuthStateChanged, deleteUser, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import {
       getFirestore, collection, query, where, getDocs, deleteDoc, doc
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -99,20 +99,23 @@
     withdrawBtn.addEventListener('click', async () => {
       if (!confirm('Are you sure you want to withdraw and delete your application?')) return;
       const collections = ['personalDetails', 'contact', 'qualifications', 'documents', 'certificates', 'licenses', 'vaccinations', 'visas', 'flagbooks', 'seaService', 'experience', 'specialSkills', 'references', 'education'];
-      for (let col of collections) {
-        const q = query(collection(db, col), where('userId', '==', userId));
-        const snap = await getDocs(q);
-        snap.forEach(async d => await deleteDoc(doc(db, col, d.id)));
-      }
-      const user = auth.currentUser;
-      if (user) {
-        try {
-          await deleteUser(user);
-          alert('Your account and application have been deleted.');
-          location.href = 'index.html';
-        } catch (e) {
-          alert('Error deleting user: ' + e.message);
+      try {
+        for (let col of collections) {
+          const q = query(collection(db, col), where('userId', '==', userId));
+          const snap = await getDocs(q);
+          for (let docSnap of snap.docs) {
+            await deleteDoc(doc(db, col, docSnap.id));
+          }
         }
+        const user = auth.currentUser;
+        if (user) {
+          await deleteUser(user);
+        }
+        await signOut(auth);
+        alert('Your account and application have been deleted.');
+        location.href = 'index.html';
+      } catch (e) {
+        alert('Error during withdrawal: ' + e.message);
       }
     });
   </script>
