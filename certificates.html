@@ -1,235 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Certificates</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My CV Panel - Seafarer Application</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background-color: #eef4fb; padding: 20px; }
-    .certificate-table th, .certificate-table td {
-      vertical-align: middle;
+    body { background-color: #eef4fb; }
+    .sidebar {
+      min-height: 100vh;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      padding-top: 30px;
     }
-    .form-slide {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
-      margin-top: 20px;
-      display: none;
-    }
-    .form-slide.active {
+    .sidebar a {
       display: block;
+      padding: 10px 20px;
+      color: #000;
+      text-decoration: none;
+    }
+    .sidebar a:hover {
+      background-color: #f0f0f0;
+    }
+    .sidebar a.active {
+      background-color: #d9eaff;
+      font-weight: bold;
+      border-left: 4px solid #0d6efd;
+    }
+    .content { padding: 30px; }
+    iframe {
+      border: none;
+      width: 100%;
+      height: 85vh;
+    }
+    #saveBtnContainer {
+      text-align: right;
+      padding: 10px 30px 20px;
     }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#">🌝 Seafarer Panel</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="job-board.html">Job Board</a></li>
-          <li class="nav-item"><a class="nav-link" href="main.html">My CV</a></li>
-          <li class="nav-item"><a class="nav-link" href="my-applications.html">My Applications</a></li>
-        </ul>
-        <div class="dropdown me-2">
-          <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Profile</button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="change-password.html">Change Password</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Log Out</a></li>
-          </ul>
-        </div>
-        <select id="languageSwitcher" class="form-select form-select-sm" style="width:auto;">
-          <option value="en">🇬🇧 English</option>
-          <option value="tr">🇹🇷 Türkçe</option>
-        </select>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-3 sidebar" id="sidebarLinks">
+        <a href="#" data-page="personal-details.html">🧍 Personal Details</a>
+        <a href="#" data-page="contact.html">📞 Contact</a>
+        <a href="#" data-page="qualifications.html">🎓 Qualifications</a>
+        <a href="#" data-page="documents.html">📄 Documents</a>
+        <a href="#" data-page="certificates.html">📋 Certificates</a>
+        <a href="#" data-page="licenses.html">📜 Licenses</a>
+        <a href="#" data-page="vaccinations.html">💉 Vaccinations</a>
+        <a href="#" data-page="visas.html">🛂 Visas</a>
+        <a href="#" data-page="flag-books.html">🚩 Flag Books</a>
+        <a href="#" data-page="sea-service.html">⚓ Sea Service</a>
+        <a href="#" data-page="experience.html">⏳ Experience</a>
+        <a href="#" data-page="special-skills.html">🛠️ Special Skills</a>
+        <a href="#" data-page="references.html">📇 References</a>
+        <a href="#" data-page="education.html">🏫 Education</a>
+        <a href="#" data-page="finish.html">✅ Finish</a>
       </div>
-    </div>
-  </nav>
-
-  <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4>Certificates</h4>
-      <button class="btn btn-success" onclick="openForm()">➕</button>
-    </div>
-
-    <table class="table table-bordered table-striped certificate-table">
-      <thead class="table-primary">
-        <tr>
-          <th></th>
-          <th>Category</th>
-          <th>Certificate</th>
-          <th>Number</th>
-          <th>Issuing Authority</th>
-          <th>Issued</th>
-          <th>Expiry</th>
-          <th>Place of Issue</th>
-          <th>Flag Doc</th>
-          <th>Remarks</th>
-        </tr>
-      </thead>
-      <tbody id="certificateList"></tbody>
-    </table>
-
-    <div id="certificateForm" class="form-slide">
-      <form id="certForm">
-        <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Certificate Type</label><input type="text" class="form-control" id="certType" required /></div>
-          <div class="col-md-6"><label class="form-label">Certificate Name</label><input type="text" class="form-control" id="certName" required /></div>
-          <div class="col-md-6"><label class="form-label">Number</label><input type="text" class="form-control" id="certNumber" /></div>
-          <div class="col-md-6"><label class="form-label">Issuing Authority</label><input type="text" class="form-control" id="issuingAuthority" required /></div>
-          <div class="col-md-6"><label class="form-label">Issue Date</label><input type="date" class="form-control" id="issueDate" required /></div>
-          <div class="col-md-6">
-            <label class="form-label">Expiry Date</label>
-            <input type="date" class="form-control" id="expiryDate" />
-            <div class="form-check mt-1">
-              <input class="form-check-input" type="checkbox" id="noExpiry" />
-              <label class="form-check-label">No expiry date</label>
-            </div>
-          </div>
-          <div class="col-md-6"><label class="form-label">Place of Issue</label><input type="text" class="form-control" id="placeOfIssue" /></div>
-          <div class="col-md-6">
-            <label class="form-label">Flag Document</label>
-            <div class="form-check"><input class="form-check-input" type="checkbox" id="flagDoc" /><label class="form-check-label">Yes</label></div>
-          </div>
-          <div class="col-12"><label class="form-label">Remarks</label><textarea class="form-control" id="remarks" rows="2"></textarea></div>
+      <div class="col-md-9 content">
+        <iframe id="contentFrame" src="personal-details.html"></iframe>
+        <div id="saveBtnContainer">
+          <button class="btn btn-primary" onclick="submitIframeForm()">Save</button>
         </div>
-        <div class="d-flex justify-content-end gap-2 mt-4">
-          <button type="submit" class="btn btn-primary" id="submitBtn">Add</button>
-          <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancel</button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, query, where, doc, deleteDoc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth();
-    const db = getFirestore(app);
-
-    const certList = document.getElementById('certificateList');
-    const certForm = document.getElementById('certForm');
-    const formContainer = document.getElementById('certificateForm');
-    const submitBtn = document.getElementById('submitBtn');
-
-    let editId = null;
-    let userId = null;
-
-    onAuthStateChanged(auth, async user => {
-      if (!user) return (window.location.href = "index.html");
-      userId = user.uid;
-      await renderTable();
-    });
-
-    function openForm(id = null, data = null) {
-      formContainer.classList.add('active');
-      submitBtn.textContent = id ? 'Save' : 'Add';
-      editId = id;
-
-      if (data) {
-        certForm.certType.value = data.type;
-        certForm.certName.value = data.name;
-        certForm.certNumber.value = data.number;
-        certForm.issuingAuthority.value = data.issuing;
-        certForm.issueDate.value = data.issue;
-        certForm.expiryDate.value = data.expiry;
-        certForm.noExpiry.checked = !data.expiry;
-        certForm.placeOfIssue.value = data.place;
-        certForm.flagDoc.checked = data.flag;
-        certForm.remarks.value = data.remarks;
-      } else {
-        certForm.reset();
-      }
-    }
-
-    function closeForm() {
-      formContainer.classList.remove('active');
-      editId = null;
-    }
-
-    certForm.addEventListener('submit', async e => {
-      e.preventDefault();
-
-      const cert = {
-        userId,
-        type: certForm.certType.value,
-        name: certForm.certName.value,
-        number: certForm.certNumber.value,
-        issuing: certForm.issuingAuthority.value,
-        issue: certForm.issueDate.value,
-        expiry: certForm.noExpiry.checked ? '' : certForm.expiryDate.value,
-        place: certForm.placeOfIssue.value,
-        flag: certForm.flagDoc.checked,
-        remarks: certForm.remarks.value
-      };
-
-      if (editId) {
-        await updateDoc(doc(db, "certificates", editId), cert);
-      } else {
-        await addDoc(collection(db, "certificates"), cert);
-      }
-
-      await renderTable();
-      closeForm();
-    });
-
-    async function renderTable() {
-      certList.innerHTML = '';
-      const q = query(collection(db, "certificates"), where("userId", "==", userId));
-      const snapshot = await getDocs(q);
-      snapshot.forEach(docSnap => {
-        const cert = docSnap.data();
-        const id = docSnap.id;
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>
-            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${id}", ${JSON.stringify(cert)})'>✏️</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='deleteCert("${id}")'>❌</button>
-          </td>
-          <td>${cert.type}</td>
-          <td>${cert.name}</td>
-          <td>${cert.number}</td>
-          <td>${cert.issuing}</td>
-          <td>${cert.issue}</td>
-          <td>${cert.expiry || '-'}</td>
-          <td>${cert.place}</td>
-          <td>${cert.flag ? 'Y' : 'N'}</td>
-          <td>${cert.remarks}</td>
-        `;
-        certList.appendChild(row);
-      });
-    }
-
-    async function deleteCert(id) {
-      if (confirm('Are you sure you want to delete this certificate?')) {
-        await deleteDoc(doc(db, "certificates", id));
-        await renderTable();
-      }
-    }
-
+  <script>
     function logout() {
       localStorage.removeItem("role");
-      auth.signOut().then(() => {
-        window.location.href = "index.html";
-      });
+      window.location.href = "index.html";
     }
+
+    function loadPage(page, linkElement) {
+      document.getElementById("contentFrame").src = page;
+      document.querySelectorAll("#sidebarLinks a").forEach(a => a.classList.remove("active"));
+      linkElement.classList.add("active");
+    }
+
+    function submitIframeForm() {
+      const iframe = document.getElementById("contentFrame");
+      const innerForm = iframe.contentWindow.document.querySelector("form");
+      if (innerForm) innerForm.requestSubmit();
+    }
+
+    document.querySelectorAll("#sidebarLinks a").forEach(link => {
+      link.addEventListener("click", function(e) {
+        e.preventDefault();
+        const page = this.getAttribute("data-page");
+        loadPage(page, this);
+      });
+    });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
