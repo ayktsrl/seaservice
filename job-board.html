@@ -8,7 +8,6 @@
   <style>
     body {
       background-color: #eef4fb;
-      padding: 30px 10px;
     }
     .job-card {
       background: white;
@@ -18,35 +17,47 @@
       margin-bottom: 20px;
     }
     #messageBox {
-      max-width: 600px;
+      max-width: 800px;
       margin: 0 auto 20px;
       display: none;
     }
+    .navbar-brand {
+      font-weight: bold;
+    }
+    .navbar-nav .nav-link {
+      color: white !important;
+    }
     #languageSwitcher {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: auto;
+      margin-left: auto;
     }
   </style>
 </head>
 <body>
-  <select id="languageSwitcher" class="form-select form-select-sm">
-    <option value="en">🇬🇧 English</option>
-    <option value="tr">🇹🇷 Türkçe</option>
-  </select>
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="main.html">🧭 Seafarer Panel</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="main.html" data-i18n="myCv">My CV</a></li>
+        </ul>
+        <button class="btn btn-outline-light me-2" onclick="logout()" data-i18n="logout">Log Out</button>
+        <select id="languageSwitcher" class="form-select form-select-sm" style="width:auto;">
+          <option value="en">🇬🇧 English</option>
+          <option value="tr">🇹🇷 Türkçe</option>
+        </select>
+      </div>
+    </div>
+  </nav>
 
   <div class="container">
     <h4 class="mb-4 text-center" data-i18n="availableJobs">Available Job Postings</h4>
     <div id="messageBox" class="alert"></div>
     <div id="jobList"></div>
-
-    <div class="text-center mt-4">
-      <button class="btn btn-outline-primary me-2" onclick="goToCv()" data-i18n="myCv">My CV</button>
-      <button class="btn btn-outline-danger" onclick="logout()" data-i18n="logout">Log Out</button>
-    </div>
   </div>
 
+  <!-- Firebase Scripts and Custom JS -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
@@ -59,7 +70,6 @@
       messagingSenderId: "23423243284",
       appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
@@ -75,10 +85,6 @@
       setTimeout(() => messageBox.style.display = 'none', 4000);
     }
 
-    function goToCv() {
-      window.location.href = "main.html";
-    }
-
     function logout() {
       auth.signOut().then(() => {
         localStorage.removeItem("role");
@@ -90,8 +96,7 @@
       if (!user) return window.location.href = "index.html";
 
       const container = document.getElementById("jobList");
-      const appliedSnapshot = await db.collection("applications")
-        .where("userId", "==", user.uid).get();
+      const appliedSnapshot = await db.collection("applications").where("userId", "==", user.uid).get();
       const appliedJobIds = new Set(appliedSnapshot.docs.map(doc => doc.data().jobId));
 
       db.collection("jobPosts").orderBy("createdAt", "desc").get().then(snapshot => {
@@ -104,10 +109,8 @@
           const job = doc.data();
           const jobId = doc.id;
           const alreadyApplied = appliedJobIds.has(jobId);
-
           const card = document.createElement("div");
           card.className = "job-card";
-
           card.innerHTML = `
             <h5>${job.position}</h5>
             <p><strong data-i18n="vesselType">Vessel Type:</strong> ${job.vesselType}</p>
@@ -116,10 +119,10 @@
             <p><strong data-i18n="duration">Duration:</strong> ${job.duration}</p>
             <p><strong data-i18n="location">Location:</strong> ${job.location}</p>
             <p><strong data-i18n="notes">Notes:</strong> ${job.notes || "No additional notes."}</p>
-            <button class="btn btn-sm btn-${alreadyApplied ? 'secondary' : 'success'} mt-2" ${alreadyApplied ? 'disabled' : ''}
-              onclick="applyJob('${jobId}')" data-i18n="${alreadyApplied ? 'alreadyApplied' : 'apply'}"></button>
+            <button class="btn btn-sm btn-${alreadyApplied ? 'secondary' : 'success'} mt-2"
+              ${alreadyApplied ? 'disabled' : ''} onclick="applyJob('${jobId}')"
+              data-i18n="${alreadyApplied ? 'alreadyApplied' : 'apply'}"></button>
           `;
-
           container.appendChild(card);
         });
       });
@@ -134,59 +137,33 @@
         .where("jobId", "==", jobId)
         .get()
         .then(snapshot => {
-          if (!snapshot.empty) {
-            showMessage("You have already applied to this job.", "warning");
-            return;
-          }
+          if (!snapshot.empty) return showMessage("You have already applied to this job.", "warning");
 
-          const application = {
+          db.collection("applications").add({
             jobId,
             userId: user.uid,
             appliedAt: new Date().toISOString(),
             status: "pending"
-          };
-
-          db.collection("applications")
-            .add(application)
-            .then(() => {
-              showMessage("Application submitted successfully!", "success");
-              setTimeout(() => window.location.reload(), 1000);
-            })
-            .catch(err => showMessage("Error submitting application: " + err.message, "danger"));
+          }).then(() => {
+            showMessage("Application submitted successfully!", "success");
+            setTimeout(() => window.location.reload(), 1000);
+          }).catch(err => showMessage("Error: " + err.message, "danger"));
         });
     }
 
-    // Dil çevirisi
+    // Translation
     const translations = {
       en: {
-        title: "Job Board",
-        availableJobs: "Available Job Postings",
-        noJobs: "No active job postings.",
-        vesselType: "Vessel Type:",
-        vesselName: "Vessel Name:",
-        joiningDate: "Joining Date:",
-        duration: "Duration:",
-        location: "Location:",
-        notes: "Notes:",
-        apply: "Apply",
-        alreadyApplied: "Already Applied",
-        logout: "Log Out",
-        myCv: "My CV"
+        title: "Job Board", availableJobs: "Available Job Postings", noJobs: "No active job postings.",
+        vesselType: "Vessel Type:", vesselName: "Vessel Name:", joiningDate: "Joining Date:",
+        duration: "Duration:", location: "Location:", notes: "Notes:",
+        apply: "Apply", alreadyApplied: "Already Applied", logout: "Log Out", myCv: "My CV"
       },
       tr: {
-        title: "İş Panosu",
-        availableJobs: "Mevcut İş İlanları",
-        noJobs: "Aktif iş ilanı bulunmamaktadır.",
-        vesselType: "Gemi Tipi:",
-        vesselName: "Gemi Adı:",
-        joiningDate: "Katılım Tarihi:",
-        duration: "Süre:",
-        location: "Lokasyon:",
-        notes: "Notlar:",
-        apply: "Başvur",
-        alreadyApplied: "Başvuruldu",
-        logout: "Çıkış Yap",
-        myCv: "CV'm"
+        title: "İş Panosu", availableJobs: "Mevcut İş İlanları", noJobs: "Aktif iş ilanı bulunmamaktadır.",
+        vesselType: "Gemi Tipi:", vesselName: "Gemi Adı:", joiningDate: "Katılım Tarihi:",
+        duration: "Süre:", location: "Lokasyon:", notes: "Notlar:",
+        apply: "Başvur", alreadyApplied: "Başvuruldu", logout: "Çıkış Yap", myCv: "CV'm"
       }
     };
 
@@ -194,11 +171,8 @@
     document.getElementById("languageSwitcher").value = selectedLang;
     document.querySelectorAll("[data-i18n]").forEach(el => {
       const key = el.getAttribute("data-i18n");
-      if (translations[selectedLang][key]) {
-        el.textContent = translations[selectedLang][key];
-      }
+      if (translations[selectedLang][key]) el.textContent = translations[selectedLang][key];
     });
-
     document.getElementById("languageSwitcher").addEventListener("change", e => {
       localStorage.setItem("language", e.target.value);
       location.reload();
