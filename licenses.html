@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visas</title>
+  <title>Licenses</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
     body { background-color: #eef4fb; padding: 20px; }
@@ -32,7 +32,7 @@
 <body>
   <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold">Visas</h4>
+      <h4 class="fw-bold">Licenses</h4>
       <button class="btn btn-success rounded-circle add-btn" onclick="openForm()">+</button>
     </div>
 
@@ -40,30 +40,35 @@
       <thead class="table-primary text-center">
         <tr>
           <th style="width: 80px;"></th>
-          <th>Visa for</th>
-          <th>Type of visa</th>
-          <th>Number</th>
+          <th>Licence</th>
+          <th>Capacity</th>
+          <th>Rank</th>
+          <th>Limitation</th>
+          <th>Issuing Authority</th>
           <th>Issued</th>
           <th>Expiry</th>
-          <th>Place of issue</th>
-          <th>Remarks</th>
+          <th>Number</th>
+          <th>Place of Issue</th>
+          <th>Flag Doc</th>
         </tr>
       </thead>
-      <tbody id="visaList"></tbody>
+      <tbody id="licenseList"></tbody>
       <tfoot>
         <tr>
-          <td colspan="8" class="text-center text-muted small">
-            List all valid held Crew/Seaman Visa’s.
+          <td colspan="11" class="text-center text-muted small">
+            List all valid licenses both National Certificates of Competency and Foreign Certificates of Endorsements including Certificates of Recognition of Application (CRA).
           </td>
         </tr>
       </tfoot>
     </table>
 
-    <div id="visaForm" class="form-slide">
+    <div id="licenseForm" class="form-slide">
       <form id="form">
         <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Visa For</label><input type="text" class="form-control" id="for" required></div>
-          <div class="col-md-6"><label class="form-label">Type of Visa</label><input type="text" class="form-control" id="type"></div>
+          <div class="col-md-6"><label class="form-label">Type</label><input type="text" class="form-control" id="type" required></div>
+          <div class="col-md-6"><label class="form-label">Capacity</label><input type="text" class="form-control" id="capacity"></div>
+          <div class="col-md-6"><label class="form-label">Rank</label><input type="text" class="form-control" id="rank"></div>
+          <div class="col-md-6"><label class="form-label">Limitation</label><input type="text" class="form-control" id="limitation"></div>
           <div class="col-md-6"><label class="form-label">Number</label><input type="text" class="form-control" id="number"></div>
           <div class="col-md-6"><label class="form-label">Issue Date</label><input type="date" class="form-control" id="issue"></div>
           <div class="col-md-6">
@@ -74,7 +79,14 @@
             </div>
           </div>
           <div class="col-md-6"><label class="form-label">Place of Issue</label><input type="text" class="form-control" id="place"></div>
-          <div class="col-12"><label class="form-label">Remarks</label><textarea class="form-control" id="remarks"></textarea></div>
+          <div class="col-md-6"><label class="form-label">Issuing Authority</label><input type="text" class="form-control" id="authority"></div>
+          <div class="col-md-6">
+            <label class="form-label">Flag Document</label>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="flag">
+              <label class="form-check-label">Yes</label>
+            </div>
+          </div>
         </div>
         <div class="d-flex justify-content-end gap-2 mt-4">
           <button type="submit" class="btn btn-primary" id="submitBtn">Add</button>
@@ -108,8 +120,8 @@
     let editId = null;
 
     const formEl = document.getElementById('form');
-    const list = document.getElementById('visaList');
-    const container = document.getElementById('visaForm');
+    const list = document.getElementById('licenseList');
+    const container = document.getElementById('licenseForm');
     const submitBtn = document.getElementById('submitBtn');
 
     onAuthStateChanged(auth, async user => {
@@ -124,14 +136,17 @@
       editId = id;
       formEl.reset();
       if (data) {
-        formEl.for.value = data.for;
         formEl.type.value = data.type;
+        formEl.capacity.value = data.capacity;
+        formEl.rank.value = data.rank;
+        formEl.limitation.value = data.limitation;
         formEl.number.value = data.number;
         formEl.issue.value = data.issue;
         formEl.expiry.value = data.expiry;
         formEl.noExpiry.checked = !data.expiry;
         formEl.place.value = data.place;
-        formEl.remarks.value = data.remarks;
+        formEl.authority.value = data.authority;
+        formEl.flag.checked = data.flag;
       }
     }
 
@@ -144,17 +159,20 @@
       e.preventDefault();
       const data = {
         userId,
-        for: formEl.for.value,
         type: formEl.type.value,
+        capacity: formEl.capacity.value,
+        rank: formEl.rank.value,
+        limitation: formEl.limitation.value,
         number: formEl.number.value,
         issue: formEl.issue.value,
         expiry: formEl.noExpiry.checked ? '' : formEl.expiry.value,
         place: formEl.place.value,
-        remarks: formEl.remarks.value
+        authority: formEl.authority.value,
+        flag: formEl.flag.checked
       };
 
-      if (editId) await updateDoc(doc(db, 'visas', editId), data);
-      else await addDoc(collection(db, 'visas'), data);
+      if (editId) await updateDoc(doc(db, 'licenses', editId), data);
+      else await addDoc(collection(db, 'licenses'), data);
 
       await render();
       closeForm();
@@ -162,7 +180,7 @@
 
     async function render() {
       list.innerHTML = '';
-      const q = query(collection(db, 'visas'), where('userId', '==', userId));
+      const q = query(collection(db, 'licenses'), where('userId', '==', userId));
       const snap = await getDocs(q);
       snap.forEach(docSnap => {
         const data = docSnap.data();
@@ -170,23 +188,26 @@
         row.innerHTML = `
           <td>
             <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${docSnap.id}", ${JSON.stringify(data)})'>✏️</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='deleteVisa("${docSnap.id}")'>❌</button>
+            <button class="btn btn-sm btn-outline-danger" onclick='deleteLicense("${docSnap.id}")'>❌</button>
           </td>
-          <td>${data.for}</td>
           <td>${data.type}</td>
-          <td>${data.number}</td>
+          <td>${data.capacity}</td>
+          <td>${data.rank}</td>
+          <td>${data.limitation}</td>
+          <td>${data.authority}</td>
           <td>${data.issue}</td>
           <td>${data.expiry || '-'}</td>
+          <td>${data.number}</td>
           <td>${data.place}</td>
-          <td>${data.remarks}</td>
+          <td>${data.flag ? 'Y' : 'N'}</td>
         `;
         list.appendChild(row);
       });
     }
 
-    window.deleteVisa = async function (id) {
-      if (confirm('Are you sure you want to delete this visa?')) {
-        await deleteDoc(doc(db, 'visas', id));
+    window.deleteLicense = async function (id) {
+      if (confirm('Are you sure you want to delete this license?')) {
+        await deleteDoc(doc(db, 'licenses', id));
         await render();
       }
     }

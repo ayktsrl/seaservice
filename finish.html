@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finish Application</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #eef4fb;
+      padding: 40px 20px;
+    }
+    .center-box {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    .form-check-input {
+      margin-right: 10px;
+    }
+    .btn-group {
+      margin-top: 20px;
+    }
+    .btn-group .btn {
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="center-box">
+    <p>
+      I hereby certify that the information given above is true and correct to the best of my knowledge and belief. That I have not withheld any information that would affect my application unfavorably.
+    </p>
+    <p>
+      Any false declaration I supplied herein may constitute ground for disqualification and nonacceptance to the company and can be further subjected to applicable penalties in accordance to existing laws governing the recruitment and employment of overseas seafarers.
+    </p>
+    <div class="form-check d-flex justify-content-center">
+      <input class="form-check-input" type="checkbox" id="agreeCheck">
+      <label class="form-check-label" for="agreeCheck">I agree with the declaration.</label>
+    </div>
+
+    <p class="mt-4">
+      If you have finished completing the resume you can click the Finish button below and notify the recruitment department.
+    </p>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="finishBtn" disabled>Finished, please notify recruitment department</button>
+      <a href="view-application.html" class="btn btn-outline-primary">View Application Form</a>
+    </div>
+
+    <p class="mt-4">
+      If you wish to withdraw the application please press the button below. All your application content will be permanently deleted from our repository.
+    </p>
+    <button class="btn btn-outline-danger" id="withdrawBtn">Withdraw Application</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, deleteUser } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import {
+      getFirestore, collection, query, where, getDocs, deleteDoc, doc
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+      authDomain: "crewapplication-c37a8.firebaseapp.com",
+      projectId: "crewapplication-c37a8",
+      storageBucket: "crewapplication-c37a8.appspot.com",
+      messagingSenderId: "23423243284",
+      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore(app);
+
+    const agreeCheck = document.getElementById('agreeCheck');
+    const finishBtn = document.getElementById('finishBtn');
+    const withdrawBtn = document.getElementById('withdrawBtn');
+
+    let userId = null;
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = 'index.html';
+      userId = user.uid;
+    });
+
+    agreeCheck.addEventListener('change', () => {
+      finishBtn.disabled = !agreeCheck.checked;
+    });
+
+    finishBtn.addEventListener('click', () => {
+      alert("Your application has been marked as complete. The recruitment department will be notified.");
+    });
+
+    withdrawBtn.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to withdraw and delete your application?')) return;
+      const collections = ['personalDetails', 'contact', 'qualifications', 'documents', 'certificates', 'licenses', 'vaccinations', 'visas', 'flagbooks', 'seaService', 'experience', 'specialSkills', 'references', 'education'];
+      for (let col of collections) {
+        const q = query(collection(db, col), where('userId', '==', userId));
+        const snap = await getDocs(q);
+        snap.forEach(async d => await deleteDoc(doc(db, col, d.id)));
+      }
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          await deleteUser(user);
+          alert('Your account and application have been deleted.');
+          location.href = 'index.html';
+        } catch (e) {
+          alert('Error deleting user: ' + e.message);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
