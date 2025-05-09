@@ -110,6 +110,7 @@
         const user = auth.currentUser;
         if (user) {
           await deleteUser(user);
+          await signOut(auth);
         }
         await signOut(auth);
         alert('Your account and application have been deleted.');
