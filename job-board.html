@@ -6,9 +6,7 @@
   <title data-i18n="title">Job Board</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
-    body {
-      background-color: #eef4fb;
-    }
+    body { background-color: #eef4fb; }
     .job-card {
       background: white;
       padding: 20px;
@@ -21,28 +19,27 @@
       margin: 0 auto 20px;
       display: none;
     }
-    .navbar-brand {
-      font-weight: bold;
-    }
-    .navbar-nav .nav-link {
-      color: white !important;
-    }
-    #languageSwitcher {
-      margin-left: auto;
-    }
+    .dropdown-toggle::after { margin-left: 0.5rem; }
   </style>
 </head>
 <body>
-
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
-      <a class="navbar-brand" href="main.html">🧭 Seafarer Panel</a>
+      <a class="navbar-brand" href="#">🌝 Seafarer Panel</a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link active" href="job-board.html" data-i18n="jobBoard">Job Board</a></li>
           <li class="nav-item"><a class="nav-link" href="main.html" data-i18n="myCv">My CV</a></li>
+          <li class="nav-item"><a class="nav-link" href="my-applications.html" data-i18n="myApplications">My Applications</a></li>
         </ul>
-        <button class="btn btn-outline-light me-2" onclick="logout()" data-i18n="logout">Log Out</button>
+        <div class="dropdown me-2">
+          <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Profile</button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="change-password.html">Change Password</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Log Out</a></li>
+          </ul>
+        </div>
         <select id="languageSwitcher" class="form-select form-select-sm" style="width:auto;">
           <option value="en">🇬🇧 English</option>
           <option value="tr">🇹🇷 Türkçe</option>
@@ -51,13 +48,12 @@
     </div>
   </nav>
 
-  <div class="container">
+  <div class="container mt-4">
     <h4 class="mb-4 text-center" data-i18n="availableJobs">Available Job Postings</h4>
     <div id="messageBox" class="alert"></div>
     <div id="jobList"></div>
   </div>
 
-  <!-- Firebase Scripts and Custom JS -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
@@ -151,19 +147,20 @@
         });
     }
 
-    // Translation
     const translations = {
       en: {
         title: "Job Board", availableJobs: "Available Job Postings", noJobs: "No active job postings.",
         vesselType: "Vessel Type:", vesselName: "Vessel Name:", joiningDate: "Joining Date:",
         duration: "Duration:", location: "Location:", notes: "Notes:",
-        apply: "Apply", alreadyApplied: "Already Applied", logout: "Log Out", myCv: "My CV"
+        apply: "Apply", alreadyApplied: "Already Applied", logout: "Log Out",
+        myCv: "My CV", jobBoard: "Job Board", myApplications: "My Applications"
       },
       tr: {
         title: "İş Panosu", availableJobs: "Mevcut İş İlanları", noJobs: "Aktif iş ilanı bulunmamaktadır.",
         vesselType: "Gemi Tipi:", vesselName: "Gemi Adı:", joiningDate: "Katılım Tarihi:",
         duration: "Süre:", location: "Lokasyon:", notes: "Notlar:",
-        apply: "Başvur", alreadyApplied: "Başvuruldu", logout: "Çıkış Yap", myCv: "CV'm"
+        apply: "Başvur", alreadyApplied: "Başvuruldu", logout: "Çıkış Yap",
+        myCv: "CV'm", jobBoard: "İş Panosu", myApplications: "Başvurularım"
       }
     };
 
@@ -178,5 +175,6 @@
       location.reload();
     });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

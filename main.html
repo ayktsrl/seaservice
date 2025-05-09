@@ -6,9 +6,7 @@
   <title>My CV Panel - Seafarer Application</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body {
-      background-color: #eef4fb;
-    }
+    body { background-color: #eef4fb; }
     .sidebar {
       min-height: 100vh;
       background: #fff;
@@ -21,12 +19,8 @@
       color: #000;
       text-decoration: none;
     }
-    .sidebar a:hover {
-      background-color: #f0f0f0;
-    }
-    .content {
-      padding: 30px;
-    }
+    .sidebar a:hover { background-color: #f0f0f0; }
+    .content { padding: 30px; }
     iframe {
       border: none;
       width: 100%;
@@ -41,20 +35,25 @@
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
-      <a class="navbar-brand" href="job-board.html">🧭 Seafarer Panel</a>
+      <a class="navbar-brand" href="#">🌝 Seafarer Panel</a>
       <div class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link active" href="main.html">My CV</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="my-applications.html">My Applications</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="change-password.html">Change Password</a>
-          </li>
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="job-board.html">Job Board</a></li>
+          <li class="nav-item"><a class="nav-link active" href="main.html">My CV</a></li>
+          <li class="nav-item"><a class="nav-link" href="my-applications.html">My Applications</a></li>
         </ul>
-        <button class="btn btn-sm btn-light" onclick="logout()">Logout</button>
+        <div class="dropdown me-2">
+          <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Profile</button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="change-password.html">Change Password</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Log Out</a></li>
+          </ul>
+        </div>
+        <select id="languageSwitcher" class="form-select form-select-sm" style="width:auto;">
+          <option value="en">🇬🇧 English</option>
+          <option value="tr">🇹🇷 Türkçe</option>
+        </select>
       </div>
     </div>
   </nav>
@@ -92,16 +91,15 @@
       localStorage.removeItem("role");
       window.location.href = "index.html";
     }
-
     function loadPage(page) {
       document.getElementById("contentFrame").src = page;
     }
-
     function submitIframeForm() {
       const iframe = document.getElementById("contentFrame");
       const innerForm = iframe.contentWindow.document.querySelector("form");
       if (innerForm) innerForm.requestSubmit();
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
