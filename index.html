@@ -1,204 +1,109 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sea Service - Login</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body {
-      background: linear-gradient(to bottom, #dbefff, #ffffff);
-      margin: 0;
-      padding: 0;
-    }
-    .navbar {
-      background-color: #007bff;
-      color: white;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .navbar h1 {
-      font-size: 20px;
-      margin: 0;
-    }
-    .lang-select select {
-      padding: 4px 6px;
-      border-radius: 5px;
-      border: none;
-    }
-    .login-container {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      padding: 30px;
-      display: flex;
-      max-width: 700px;
-      width: 100%;
-      margin: 40px auto;
-    }
-    .left-section, .right-section {
-      flex: 1;
-      padding: 20px;
-    }
-    .left-section {
-      border-right: 1px solid #ddd;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    .left-section button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-    .right-section label {
-      font-weight: 500;
-    }
-    .forgot-password {
-      font-size: 14px;
-      color: #007bff;
-      cursor: pointer;
-      text-decoration: underline;
-      margin-top: 5px;
-    }
-  </style>
-</head>
-<body>
-  <div class="navbar">
-    <h1>🌊 Sea Service</h1>
-    <div class="lang-select">
-      <select id="languageSelector" onchange="setLanguage(this.value)">
-        <option value="en">🇬🇧 English</option>
-        <option value="tr">🇹🇷 Türkçe</option>
-      </select>
-    </div>
-  </div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  <div class="login-container">
-    <div class="left-section">
-      <h5 id="newApps">New Applications</h5>
-      <button id="registerBtn" onclick="window.location.href='register.html'">Register new application</button>
-    </div>
-    <div class="right-section">
-      <h5 class="mb-4" id="loginTitle">Log in</h5>
-      <form onsubmit="loginUser(event)">
-        <div class="mb-3">
-          <label for="email" class="form-label" id="emailLabel">E-mail</label>
-          <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
-        </div>
-        <div class="mb-3">
-          <label for="password" class="form-label" id="passwordLabel">Password</label>
-          <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
-          <div class="forgot-password" id="forgotPassword" onclick="forgotPassword()">Forgot Password?</div>
-        </div>
-        <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
-      </form>
-    </div>
-  </div>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+    authDomain: "crewapplication-c37a8.firebaseapp.com",
+    projectId: "crewapplication-c37a8",
+    storageBucket: "crewapplication-c37a8.appspot.com",
+    messagingSenderId: "23423243284",
+    appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+  };
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.firebaseapp.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    const translations = {
-      en: {
-        loginTitle: "Log in",
-        email: "E-mail",
-        password: "Password",
-        forgot: "Forgot Password?",
-        loginBtn: "Login",
-        registerBtn: "Register new application",
-        newApps: "New Applications",
-        emailRequired: "Please enter your email to reset password.",
-        resetSent: "Password reset email sent. Please check your inbox.",
-        loginSuccess: "Login successful!",
-        loginFail: "Login failed: "
-      },
-      tr: {
-        loginTitle: "Giriş Yap",
-        email: "E-posta",
-        password: "Şifre",
-        forgot: "Şifremi Unuttum?",
-        loginBtn: "Giriş Yap",
-        registerBtn: "Yeni Başvuru",
-        newApps: "Yeni Başvurular",
-        emailRequired: "Şifre sıfırlamak için lütfen e-posta girin.",
-        resetSent: "Şifre sıfırlama bağlantısı gönderildi. Lütfen e-postanızı kontrol edin.",
-        loginSuccess: "Giriş başarılı!",
-        loginFail: "Giriş başarısız: "
-      }
-    };
-
-    function applyLanguage(lang) {
-      const t = translations[lang];
-      document.getElementById("loginTitle").innerText = t.loginTitle;
-      document.getElementById("emailLabel").innerText = t.email;
-      document.getElementById("passwordLabel").innerText = t.password;
-      document.getElementById("forgotPassword").innerText = t.forgot;
-      document.getElementById("loginBtn").innerText = t.loginBtn;
-      document.getElementById("newApps").innerText = t.newApps;
-      document.getElementById("registerBtn").innerText = t.registerBtn;
-      localStorage.setItem("lang", lang);
+  const translations = {
+    en: {
+      loginTitle: "Log in",
+      email: "E-mail",
+      password: "Password",
+      forgot: "Forgot Password?",
+      loginBtn: "Login",
+      registerBtn: "Register new application",
+      newApps: "New Applications",
+      emailRequired: "Please enter your email to reset password.",
+      resetSent: "Password reset email sent. Please check your inbox.",
+      loginSuccess: "Login successful!",
+      loginFail: "Login failed: "
+    },
+    tr: {
+      loginTitle: "Giriş Yap",
+      email: "E-posta",
+      password: "Şifre",
+      forgot: "Şifremi Unuttum?",
+      loginBtn: "Giriş Yap",
+      registerBtn: "Yeni Başvuru",
+      newApps: "Yeni Başvurular",
+      emailRequired: "Şifre sıfırlamak için lütfen e-posta girin.",
+      resetSent: "Şifre sıfırlama bağlantısı gönderildi. Lütfen e-postanızı kontrol edin.",
+      loginSuccess: "Giriş başarılı!",
+      loginFail: "Giriş başarısız: "
     }
+  };
 
-    function setLanguage(lang) {
-      applyLanguage(lang);
-    }
-    window.setLanguage = setLanguage; // ✅ Bu satır sayesinde HTML içinden çağrılabilir
+  function applyLanguage(lang) {
+    const t = translations[lang];
+    document.getElementById("loginTitle").innerText = t.loginTitle;
+    document.getElementById("emailLabel").innerText = t.email;
+    document.getElementById("passwordLabel").innerText = t.password;
+    document.getElementById("forgotPassword").innerText = t.forgot;
+    document.getElementById("loginBtn").innerText = t.loginBtn;
+    document.getElementById("newApps").innerText = t.newApps;
+    document.getElementById("registerBtn").innerText = t.registerBtn;
+    localStorage.setItem("lang", lang);
+  }
 
-    window.onload = () => {
-      const savedLang = localStorage.getItem("lang") || "en";
-      document.getElementById("languageSelector").value = savedLang;
-      applyLanguage(savedLang);
-    };
+  function setLanguage(lang) {
+    applyLanguage(lang);
+  }
+  window.setLanguage = setLanguage;
 
-    window.loginUser = function(e) {
-      e.preventDefault();
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const lang = localStorage.getItem("lang") || "en";
-      const t = translations[lang];
+  window.onload = () => {
+    const savedLang = localStorage.getItem("lang") || "en";
+    document.getElementById("languageSelector").value = savedLang;
+    applyLanguage(savedLang);
+  };
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          alert(t.loginSuccess);
+  window.loginUser = function(e) {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const lang = localStorage.getItem("lang") || "en";
+    const t = translations[lang];
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then(async (userCredential) => {
+        const uid = userCredential.user.uid;
+        const seafarerDoc = await getDoc(doc(db, "seafarers", uid));
+        const companyDoc = await getDoc(doc(db, "companies", uid));
+
+        if (companyDoc.exists()) {
+          window.location.href = "company-dashboard.html";
+        } else if (seafarerDoc.exists()) {
           window.location.href = "job-board.html";
-        })
-        .catch(error => {
-          alert(t.loginFail + error.message);
-        });
-    };
+        } else {
+          alert("Unknown user role.");
+        }
+      })
+      .catch(error => {
+        alert(t.loginFail + error.message);
+      });
+  };
 
-    window.forgotPassword = function() {
-      const email = document.getElementById("email").value;
-      const lang = localStorage.getItem("lang") || "en";
-      const t = translations[lang];
-      if (!email) {
-        alert(t.emailRequired);
-        return;
-      }
-      sendPasswordResetEmail(auth, email)
-        .then(() => alert(t.resetSent))
-        .catch(error => alert("Error: " + error.message));
-    };
-  </script>
-</body>
-</html>
+  window.forgotPassword = function() {
+    const email = document.getElementById("email").value;
+    const lang = localStorage.getItem("lang") || "en";
+    const t = translations[lang];
+    if (!email) {
+      alert(t.emailRequired);
+      return;
+    }
+    sendPasswordResetEmail(auth, email)
+      .then(() => alert(t.resetSent))
+      .catch(error => alert("Error: " + error.message));
+  };
+</script>
