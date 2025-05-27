@@ -8,59 +8,68 @@
   <style>
     body {
       background-color: #eef4fb;
-      padding: 20px;
       font-family: "Segoe UI", sans-serif;
+      padding: 40px;
     }
-    .login-box {
-      max-width: 420px;
-      margin: 100px auto;
-      background: white;
-      padding: 40px 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+    .login-wrapper {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      max-width: 800px;
+      margin: auto;
     }
-    .login-box h4 {
+    .panel {
+      background-color: #f8f9fa;
+      border: 1px solid #ccc;
+      padding: 25px 20px;
+      border-radius: 8px;
+      flex: 1;
+    }
+    .panel h5 {
+      text-align: center;
+      margin-bottom: 20px;
       font-weight: 600;
-      margin-bottom: 30px;
     }
-    .login-box .form-label {
+    .form-label {
       font-weight: 500;
-      font-size: 0.95rem;
     }
-    .login-box a {
-      font-size: 0.9rem;
+    .form-control {
+      background-color: #ffffe0;
     }
-    .login-box small {
-      display: block;
-      margin-top: 25px;
-      color: #666;
-      font-size: 0.85rem;
+    .btn-custom {
+      background-color: #0d6efd;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    .btn-custom:hover {
+      background-color: #0b5ed7;
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <h4 class="text-center" id="loginTitle">Log in</h4>
-    <form onsubmit="loginUser(event)">
-      <div class="mb-3">
-        <label id="emailLabel" class="form-label">E-mail</label>
-        <input type="email" class="form-control" id="email" required />
-      </div>
-      <div class="mb-3">
-        <label id="passwordLabel" class="form-label">Password</label>
-        <input type="password" class="form-control" id="password" required />
-      </div>
-      <div class="mb-3 text-end">
-        <a href="#" id="forgotPassword" onclick="forgotPassword()">Forgot Password?</a>
-      </div>
-      <div class="d-grid gap-3">
-        <button type="submit" id="loginBtn" class="btn btn-primary">Login</button>
-        <a id="registerBtn" href="register.html" class="btn btn-outline-secondary">Register new application</a>
-      </div>
-      <div class="text-center">
-        <small id="newApps">New Applications</small>
-      </div>
-    </form>
+  <div class="login-wrapper">
+    <div class="panel">
+      <h5 id="newApps">New Applications</h5>
+      <a id="registerBtn" href="register.html" class="btn btn-custom w-100">Register new application</a>
+    </div>
+    <div class="panel">
+      <h5 id="loginTitle">Log in</h5>
+      <form onsubmit="loginUser(event)">
+        <div class="mb-3">
+          <label id="emailLabel" class="form-label">E-mail</label>
+          <input type="email" class="form-control" id="email" required />
+        </div>
+        <div class="mb-3">
+          <label id="passwordLabel" class="form-label">Password</label>
+          <input type="password" class="form-control" id="password" required />
+        </div>
+        <div class="text-center">
+          <button type="submit" id="loginBtn" class="btn btn-custom">Login</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script type="module">
@@ -99,7 +108,6 @@
       document.getElementById("loginTitle").innerText = t.loginTitle;
       document.getElementById("emailLabel").innerText = t.email;
       document.getElementById("passwordLabel").innerText = t.password;
-      document.getElementById("forgotPassword").innerText = t.forgot;
       document.getElementById("loginBtn").innerText = t.loginBtn;
       document.getElementById("newApps").innerText = t.newApps;
       document.getElementById("registerBtn").innerText = t.registerBtn;
@@ -131,17 +139,6 @@
         .catch(error => {
           alert(t.loginFail + error.message);
         });
-    };
-
-    window.forgotPassword = function() {
-      const email = document.getElementById("email").value;
-      if (!email) {
-        alert(t.emailRequired);
-        return;
-      }
-      sendPasswordResetEmail(auth, email)
-        .then(() => alert(t.resetSent))
-        .catch(error => alert("Error: " + error.message));
     };
   </script>
 </body>
