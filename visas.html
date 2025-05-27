@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Visas</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
   <style>
     .visa-table th, .visa-table td {
       vertical-align: middle;
@@ -42,14 +39,28 @@
   <button class="btn btn-success mb-3" onclick="addEmptyRow()">➕ Add Visa</button>
   <button class="btn btn-primary float-end" onclick="saveVisas()">Save</button>
 
-  <script>
-    const db = firebase.firestore();
-    const userId = localStorage.getItem("userId"); // her kullanıcı için ayrı kayıt
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+      authDomain: "crewapplication-c37a8.firebaseapp.com",
+      projectId: "crewapplication-c37a8",
+      storageBucket: "crewapplication-c37a8.appspot.com",
+      messagingSenderId: "23423243284",
+      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    let userId = null;
 
     function addEmptyRow(data = {}) {
       const tbody = document.getElementById("visaBody");
       const row = document.createElement("tr");
-
       row.innerHTML = `
         <td><input class="form-control" value="${data.visaFor || ''}"></td>
         <td><input class="form-control" value="${data.type || ''}"></td>
@@ -59,18 +70,19 @@
         <td><input class="form-control" value="${data.place || ''}"></td>
         <td><input class="form-control" value="${data.remarks || ''}"></td>
         <td class="action-icons">
-          <i class="text-danger" onclick="this.closest('tr').remove()">❌</i>
+          <button class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()">❌</button>
         </td>
       `;
       tbody.appendChild(row);
     }
 
-    function saveVisas() {
+    window.addEmptyRow = addEmptyRow;
+
+    window.saveVisas = async function () {
       const rows = document.querySelectorAll("#visaBody tr");
-      const visas = [];
-      rows.forEach(row => {
+      const visas = Array.from(rows).map(row => {
         const inputs = row.querySelectorAll("input");
-        visas.push({
+        return {
           visaFor: inputs[0].value,
           type: inputs[1].value,
           number: inputs[2].value,
@@ -78,21 +90,23 @@
           expiry: inputs[4].value,
           place: inputs[5].value,
           remarks: inputs[6].value
-        });
+        };
       });
-      db.collection("seafarers").doc(userId).update({ visas })
-        .then(() => alert("Saved successfully!"))
-        .catch(err => alert("Error saving: " + err));
-    }
-
-    window.onload = () => {
-      db.collection("seafarers").doc(userId).get().then(doc => {
-        const data = doc.data();
-        if (data?.visas) {
-          data.visas.forEach(v => addEmptyRow(v));
-        }
-      });
+      if (!userId) return alert("User not authenticated.");
+      await setDoc(doc(db, "seafarers", userId), { visas }, { merge: true });
+      alert("Saved successfully!");
     };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      userId = user.uid;
+      const ref = doc(db, "seafarers", userId);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const visas = snap.data().visas || [];
+        visas.forEach(v => addEmptyRow(v));
+      }
+    });
   </script>
 </body>
 </html>
