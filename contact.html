@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
     .section-box {
       border: 1px solid #ccc;
@@ -35,23 +35,15 @@
       <div class="mb-3">
         <label class="form-label">Phone</label>
         <div class="input-group">
-          <select class="form-select" id="countryCode" style="max-width: 120px">
-            <option value="+90">🇹🇷 +90</option>
-            <option value="+1">🇺🇸 +1</option>
-            <option value="+44">🇬🇧 +44</option>
-            <option value="+49">🇩🇪 +49</option>
-            <option value="+33">🇫🇷 +33</option>
-            <option value="+30">🇬🇷 +30</option>
-            <option value="+7">🇷🇺 +7</option>
-          </select>
-          <input type="tel" class="form-control" id="phone" pattern="[0-9]{10}" maxlength="10" placeholder="5xxxxxxxxx">
+          <select class="form-select" id="countryCode" style="max-width: 160px"></select>
+          <input type="tel" class="form-control" id="phone" pattern="[0-9]{7,15}" maxlength="15" placeholder="5xxxxxxxxx">
         </div>
         <small class="text-muted">Only digits, e.g. 5301234567</small>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Country of Residence</label>
-        <input type="text" class="form-control" id="country">
+        <select class="form-select" id="country"></select>
       </div>
 
       <div class="mb-3">
@@ -90,6 +82,44 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  const countryCodeSelect = document.getElementById("countryCode");
+  const countrySelect = document.getElementById("country");
+
+  const countries = [
+    { name: "Turkey", code: "+90" },
+    { name: "United States", code: "+1" },
+    { name: "United Kingdom", code: "+44" },
+    { name: "Germany", code: "+49" },
+    { name: "France", code: "+33" },
+    { name: "Italy", code: "+39" },
+    { name: "China", code: "+86" },
+    { name: "India", code: "+91" },
+    { name: "Japan", code: "+81" },
+    { name: "Russia", code: "+7" },
+    { name: "Saudi Arabia", code: "+966" },
+    { name: "United Arab Emirates", code: "+971" },
+    { name: "Canada", code: "+1" },
+    { name: "Brazil", code: "+55" },
+    { name: "Australia", code: "+61" },
+    { name: "Mexico", code: "+52" },
+    { name: "Netherlands", code: "+31" },
+    { name: "Spain", code: "+34" },
+    { name: "South Korea", code: "+82" },
+    { name: "Indonesia", code: "+62" }
+  ];
+
+  countries.forEach(c => {
+    const opt1 = document.createElement("option");
+    opt1.value = c.code;
+    opt1.textContent = `${c.name} (${c.code})`;
+    countryCodeSelect.appendChild(opt1);
+
+    const opt2 = document.createElement("option");
+    opt2.value = c.name;
+    opt2.textContent = c.name;
+    countrySelect.appendChild(opt2);
+  });
+
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
     document.getElementById("email").value = user.email;
@@ -97,9 +127,9 @@
     const snap = await getDoc(ref);
     if (snap.exists()) {
       const data = snap.data();
-      document.getElementById("countryCode").value = data.countryCode || "+90";
+      countryCodeSelect.value = data.countryCode || "+90";
       document.getElementById("phone").value = data.phone || "";
-      document.getElementById("country").value = data.country || "";
+      countrySelect.value = data.country || "";
       document.getElementById("city").value = data.city || "";
       document.getElementById("zip").value = data.zip || "";
       document.getElementById("address").value = data.address || "";
@@ -112,9 +142,9 @@
     if (!user) return;
     const ref = doc(db, "seafarers", user.uid, "cv", "contact");
     const data = {
-      countryCode: document.getElementById("countryCode").value,
+      countryCode: countryCodeSelect.value,
       phone: document.getElementById("phone").value,
-      country: document.getElementById("country").value,
+      country: countrySelect.value,
       city: document.getElementById("city").value,
       zip: document.getElementById("zip").value,
       address: document.getElementById("address").value

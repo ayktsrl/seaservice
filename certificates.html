@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visas</title>
+  <title>Certificates</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
     body { background-color: #eef4fb; padding: 20px; }
@@ -32,7 +32,7 @@
 <body>
   <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold">Visas</h4>
+      <h4 class="fw-bold">Certificates</h4>
       <button class="btn btn-success rounded-circle add-btn" onclick="openForm()">+</button>
     </div>
 
@@ -40,32 +40,31 @@
       <thead class="table-primary text-center">
         <tr>
           <th style="width: 80px;"></th>
-          <th>Visa for</th>
-          <th>Type of visa</th>
+          <th>Certificate Type</th>
           <th>Number</th>
-          <th>Issued</th>
-          <th>Expiry</th>
-          <th>Place of issue</th>
+          <th>Issue Date</th>
+          <th>Expiry Date</th>
+          <th>Place of Issue</th>
+          <th>Issuing Authority</th>
           <th>Remarks</th>
         </tr>
       </thead>
-      <tbody id="visaList"></tbody>
+      <tbody id="certList"></tbody>
       <tfoot>
         <tr>
           <td colspan="8" class="text-center text-muted small">
-            List all valid held Crew/Seaman Visa’s.
+            List all held and valid certificates.
           </td>
         </tr>
       </tfoot>
     </table>
 
-    <div id="visaForm" class="form-slide">
+    <div id="certForm" class="form-slide">
       <form id="form">
         <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Visa For</label><input type="text" class="form-control" id="for" required></div>
-          <div class="col-md-6"><label class="form-label">Type of Visa</label><input type="text" class="form-control" id="type"></div>
-          <div class="col-md-6"><label class="form-label">Number</label><input type="text" class="form-control" id="number"></div>
-          <div class="col-md-6"><label class="form-label">Issue Date</label><input type="date" class="form-control" id="issue"></div>
+          <div class="col-md-6"><label class="form-label">Certificate Type</label><input type="text" class="form-control" id="type" required></div>
+          <div class="col-md-6"><label class="form-label">Number</label><input type="text" class="form-control" id="number" required></div>
+          <div class="col-md-6"><label class="form-label">Issue Date</label><input type="date" class="form-control" id="issue" required></div>
           <div class="col-md-6">
             <label class="form-label">Expiry Date</label>
             <input type="date" class="form-control" id="expiry">
@@ -74,6 +73,7 @@
             </div>
           </div>
           <div class="col-md-6"><label class="form-label">Place of Issue</label><input type="text" class="form-control" id="place"></div>
+          <div class="col-md-6"><label class="form-label">Issuing Authority</label><input type="text" class="form-control" id="authority" required></div>
           <div class="col-12"><label class="form-label">Remarks</label><textarea class="form-control" id="remarks"></textarea></div>
         </div>
         <div class="d-flex justify-content-end gap-2 mt-4">
@@ -108,8 +108,8 @@
     let editId = null;
 
     const formEl = document.getElementById('form');
-    const list = document.getElementById('visaList');
-    const container = document.getElementById('visaForm');
+    const list = document.getElementById('certList');
+    const container = document.getElementById('certForm');
     const submitBtn = document.getElementById('submitBtn');
 
     onAuthStateChanged(auth, async user => {
@@ -124,13 +124,13 @@
       editId = id;
       formEl.reset();
       if (data) {
-        formEl.for.value = data.for;
         formEl.type.value = data.type;
         formEl.number.value = data.number;
         formEl.issue.value = data.issue;
         formEl.expiry.value = data.expiry;
         formEl.noExpiry.checked = !data.expiry;
         formEl.place.value = data.place;
+        formEl.authority.value = data.authority;
         formEl.remarks.value = data.remarks;
       }
     }
@@ -144,17 +144,17 @@
       e.preventDefault();
       const data = {
         userId,
-        for: formEl.for.value,
         type: formEl.type.value,
         number: formEl.number.value,
         issue: formEl.issue.value,
         expiry: formEl.noExpiry.checked ? '' : formEl.expiry.value,
         place: formEl.place.value,
+        authority: formEl.authority.value,
         remarks: formEl.remarks.value
       };
 
-      if (editId) await updateDoc(doc(db, 'visas', editId), data);
-      else await addDoc(collection(db, 'visas'), data);
+      if (editId) await updateDoc(doc(db, 'certificates', editId), data);
+      else await addDoc(collection(db, 'certificates'), data);
 
       await render();
       closeForm();
@@ -162,7 +162,7 @@
 
     async function render() {
       list.innerHTML = '';
-      const q = query(collection(db, 'visas'), where('userId', '==', userId));
+      const q = query(collection(db, 'certificates'), where('userId', '==', userId));
       const snap = await getDocs(q);
       snap.forEach(docSnap => {
         const data = docSnap.data();
@@ -170,23 +170,23 @@
         row.innerHTML = `
           <td>
             <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${docSnap.id}", ${JSON.stringify(data)})'>✏️</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='deleteVisa("${docSnap.id}")'>❌</button>
+            <button class="btn btn-sm btn-outline-danger" onclick='deleteCert("${docSnap.id}")'>❌</button>
           </td>
-          <td>${data.for}</td>
           <td>${data.type}</td>
           <td>${data.number}</td>
           <td>${data.issue}</td>
           <td>${data.expiry || '-'}</td>
           <td>${data.place}</td>
+          <td>${data.authority}</td>
           <td>${data.remarks}</td>
         `;
         list.appendChild(row);
       });
     }
 
-    window.deleteVisa = async function (id) {
-      if (confirm('Are you sure you want to delete this visa?')) {
-        await deleteDoc(doc(db, 'visas', id));
+    window.deleteCert = async function (id) {
+      if (confirm('Are you sure you want to delete this certificate?')) {
+        await deleteDoc(doc(db, 'certificates', id));
         await render();
       }
     }

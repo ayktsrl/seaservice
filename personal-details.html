@@ -56,8 +56,8 @@
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Date of Birth</label>
-        <input type="text" class="form-control" id="dob">
+        <label class="form-label">Date of Birth <small class="text-muted">(dd/mmm/yyyy)</small></label>
+        <input type="date" class="form-control" id="dob" required>
       </div>
       <div class="mb-3">
         <label class="form-label">Place of Birth</label>
@@ -66,18 +66,101 @@
 
       <div class="mb-3">
         <label class="form-label">Nationality</label>
-        <select class="form-select" id="nationality">
+        <select class="form-select" id="nationality" required>
           <option value="">Select</option>
+          <option value="Afghan">Afghan</option>
+          <option value="Albanian">Albanian</option>
+          <option value="Algerian">Algerian</option>
+          <option value="American">American</option>
+          <option value="Andorran">Andorran</option>
+          <option value="Angolan">Angolan</option>
+          <option value="Argentine">Argentine</option>
+          <option value="Armenian">Armenian</option>
+          <option value="Australian">Australian</option>
+          <option value="Austrian">Austrian</option>
+          <option value="Azerbaijani">Azerbaijani</option>
+          <option value="Bangladeshi">Bangladeshi</option>
+          <option value="Belgian">Belgian</option>
+          <option value="Brazilian">Brazilian</option>
+          <option value="British">British</option>
+          <option value="Bulgarian">Bulgarian</option>
+          <option value="Canadian">Canadian</option>
+          <option value="Chilean">Chilean</option>
+          <option value="Chinese">Chinese</option>
+          <option value="Colombian">Colombian</option>
+          <option value="Croatian">Croatian</option>
+          <option value="Cuban">Cuban</option>
+          <option value="Czech">Czech</option>
+          <option value="Danish">Danish</option>
+          <option value="Dutch">Dutch</option>
+          <option value="Egyptian">Egyptian</option>
+          <option value="Emirati">Emirati</option>
+          <option value="English">English</option>
+          <option value="Estonian">Estonian</option>
+          <option value="Finnish">Finnish</option>
+          <option value="French">French</option>
+          <option value="German">German</option>
+          <option value="Greek">Greek</option>
+          <option value="Hungarian">Hungarian</option>
+          <option value="Indian">Indian</option>
+          <option value="Indonesian">Indonesian</option>
+          <option value="Iranian">Iranian</option>
+          <option value="Iraqi">Iraqi</option>
+          <option value="Irish">Irish</option>
+          <option value="Israeli">Israeli</option>
+          <option value="Italian">Italian</option>
+          <option value="Japanese">Japanese</option>
+          <option value="Jordanian">Jordanian</option>
+          <option value="Kazakh">Kazakh</option>
+          <option value="Kenyan">Kenyan</option>
+          <option value="Korean">Korean</option>
+          <option value="Kuwaiti">Kuwaiti</option>
+          <option value="Latvian">Latvian</option>
+          <option value="Lebanese">Lebanese</option>
+          <option value="Libyan">Libyan</option>
+          <option value="Lithuanian">Lithuanian</option>
+          <option value="Malaysian">Malaysian</option>
+          <option value="Mexican">Mexican</option>
+          <option value="Moldovan">Moldovan</option>
+          <option value="Moroccan">Moroccan</option>
+          <option value="Nepali">Nepali</option>
+          <option value="New Zealander">New Zealander</option>
+          <option value="Nigerian">Nigerian</option>
+          <option value="Norwegian">Norwegian</option>
+          <option value="Pakistani">Pakistani</option>
+          <option value="Palestinian">Palestinian</option>
+          <option value="Peruvian">Peruvian</option>
+          <option value="Philippine">Philippine</option>
+          <option value="Polish">Polish</option>
+          <option value="Portuguese">Portuguese</option>
+          <option value="Qatari">Qatari</option>
+          <option value="Romanian">Romanian</option>
+          <option value="Russian">Russian</option>
+          <option value="Saudi">Saudi</option>
+          <option value="Serbian">Serbian</option>
+          <option value="Singaporean">Singaporean</option>
+          <option value="Slovak">Slovak</option>
+          <option value="Slovenian">Slovenian</option>
+          <option value="Somali">Somali</option>
+          <option value="South African">South African</option>
+          <option value="Spanish">Spanish</option>
+          <option value="Sri Lankan">Sri Lankan</option>
+          <option value="Sudanese">Sudanese</option>
+          <option value="Swedish">Swedish</option>
+          <option value="Swiss">Swiss</option>
+          <option value="Syrian">Syrian</option>
+          <option value="Thai">Thai</option>
+          <option value="Tunisian">Tunisian</option>
           <option value="Turkish">Turkish</option>
-          <option value="Other">Other</option>
+          <option value="Ukrainian">Ukrainian</option>
+          <option value="Uruguayan">Uruguayan</option>
+          <option value="Uzbek">Uzbek</option>
+          <option value="Venezuelan">Venezuelan</option>
+          <option value="Vietnamese">Vietnamese</option>
+          <option value="Yemeni">Yemeni</option>
         </select>
       </div>
-
-      <div class="text-end">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Sample_User_Icon.png/600px-Sample_User_Icon.png" width="100" alt="User Photo">
-      </div>
     </div>
-    
   </form>
 </div>
 <script type="module">
@@ -93,7 +176,7 @@
     messagingSenderId: "23423243284",
     appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
   };
-  
+
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
