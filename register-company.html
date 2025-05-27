@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register Company</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
       background: #f2f8ff;
@@ -26,79 +26,31 @@
 <body>
   <div class="register-box">
     <h4 class="mb-4 text-center">Company Registration</h4>
-    <form onsubmit="submitCompanyForm(event)">
-      <h5 class="mb-3">Company Information</h5>
+    <form id="registrationForm" onsubmit="submitCompanyForm(event)">
       <div class="mb-3">
-        <label class="form-label">Company Name</label>
+        <label for="companyName" class="form-label">Company Name</label>
         <input type="text" class="form-control" id="companyName" required />
       </div>
       <div class="mb-3">
-        <label class="form-label">Company Address</label>
-        <textarea class="form-control" id="companyAddress" rows="2" required></textarea>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Company Email</label>
+        <label for="companyEmail" class="form-label">Company Email</label>
         <input type="email" class="form-control" id="companyEmail" required readonly />
       </div>
       <div class="mb-3">
-        <label class="form-label">Phone Number</label>
-        <div class="input-group">
-          <select class="form-select" id="countryCode" required>
-            <option value="">Select Country Code</option>
-            <option value="+1">🇺🇸 +1 United States</option>
-            <option value="+44">🇬🇧 +44 United Kingdom</option>
-            <option value="+49">🇩🇪 +49 Germany</option>
-            <option value="+33">🇫🇷 +33 France</option>
-            <option value="+39">🇮🇹 +39 Italy</option>
-            <option value="+90">🇹🇷 +90 Turkey</option>
-            <option value="+7">🇷🇺 +7 Russia</option>
-            <option value="+86">🇨🇳 +86 China</option>
-            <option value="+81">🇯🇵 +81 Japan</option>
-            <option value="+61">🇦🇺 +61 Australia</option>
-            <option value="+91">🇮🇳 +91 India</option>
-            <option value="+34">🇪🇸 +34 Spain</option>
-            <option value="+55">🇧🇷 +55 Brazil</option>
-            <option value="+27">🇿🇦 +27 South Africa</option>
-            <option value="+82">🇰🇷 +82 South Korea</option>
-            <option value="+62">🇮🇩 +62 Indonesia</option>
-            <option value="+966">🇸🇦 +966 Saudi Arabia</option>
-            <option value="+971">🇦🇪 +971 UAE</option>
-            <option value="+880">🇧🇩 +880 Bangladesh</option>
-          </select>
-          <input type="tel" class="form-control" id="companyPhone" required placeholder="Phone number">
-        </div>
-      </div>
-
-      <h5 class="mt-4 mb-3">Personnel Manager</h5>
-      <div class="mb-3">
-        <label class="form-label">First Name</label>
-        <input type="text" class="form-control" id="managerFirstName" required />
+        <label for="companyPhone" class="form-label">Phone</label>
+        <input type="tel" class="form-control" id="companyPhone" required />
       </div>
       <div class="mb-3">
-        <label class="form-label">Last Name</label>
-        <input type="text" class="form-control" id="managerLastName" required />
+        <label for="companyAddress" class="form-label">Company Address</label>
+        <input type="text" class="form-control" id="companyAddress" required />
       </div>
-      <div class="mb-3">
-        <label class="form-label">Position</label>
-        <input type="text" class="form-control" id="managerPosition" value="Personnel Manager" required />
-      </div>
-      <div class="form-check mb-4">
-        <input class="form-check-input" type="checkbox" value="" id="skipShipInfo" checked>
-        <label class="form-check-label" for="skipShipInfo">
-          I will add ship information later.
-        </label>
-      </div>
-      <div id="companyMessage" class="text-danger mb-2"></div>
       <button type="submit" class="btn btn-primary w-100">Submit Registration</button>
     </form>
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore, doc, setDoc, getDocs, collection, query, where
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, setDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
@@ -110,79 +62,40 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
+    const auth = getAuth();
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
+    const email = localStorage.getItem("registrationEmail");
+    if (!email) {
+      window.location.href = "index.html";
+    } else {
+      document.getElementById("companyEmail").value = email;
+    }
 
-      document.getElementById("companyEmail").value = localStorage.getItem("registrationEmail") || "";
-      const fullPhone = localStorage.getItem("registrationPhone") || "";
-      const phoneMatch = fullPhone.match(/^(\+\d+)(\d{7,15})$/);
-      if (phoneMatch) {
-        document.getElementById("countryCode").value = phoneMatch[1];
-        document.getElementById("companyPhone").value = phoneMatch[2];
-      }
-    });
+    async function submitCompanyForm(e) {
+      e.preventDefault();
+      const name = document.getElementById("companyName").value;
+      const email = document.getElementById("companyEmail").value;
+      const phone = document.getElementById("companyPhone").value;
+      const address = document.getElementById("companyAddress").value;
 
-    async function submitCompanyForm(event) {
-      event.preventDefault();
-
-      const errorDiv = document.getElementById("companyMessage");
-      const companyName = document.getElementById("companyName").value.trim();
-
-      // Şirket adı kontrolü
-      const companiesRef = collection(db, "companies");
-      const q = query(companiesRef, where("companyName", "==", companyName));
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        errorDiv.textContent = "This company name is already registered. Please choose another.";
-        return;
-      }
-
-      const countryCode = document.getElementById("countryCode").value;
-      const phone = document.getElementById("companyPhone").value.trim();
-
-      if (!countryCode || !/^\d{7,15}$/.test(phone)) {
-        errorDiv.textContent = "Please enter a valid phone number (7-15 digits) and select a country code.";
-        return;
-      }
-
-      const user = auth.currentUser;
-      if (!user) {
-        alert("You must be logged in to complete registration.");
-        return;
-      }
-
-      const data = {
-        companyName: companyName,
-        address: document.getElementById("companyAddress").value.trim(),
-        email: document.getElementById("companyEmail").value.trim(),
-        phone: countryCode + phone,
-        managerFirstName: document.getElementById("managerFirstName").value.trim(),
-        managerLastName: document.getElementById("managerLastName").value.trim(),
-        managerPosition: document.getElementById("managerPosition").value.trim(),
-        paid: false,
-        type: "company",
-        ships: []
-      };
-
-      try {
-        await setDoc(doc(db, "companies", user.uid), data);
-        const msg = document.getElementById("companyMessage");
-        msg.textContent = "Registration successful! Redirecting...";
-        msg.classList.remove("text-danger");
-        msg.classList.add("text-success");
-
-        setTimeout(() => {
-          window.location.href = "company-panel.html";
-        }, 1500);
-      } catch (error) {
-        errorDiv.textContent = "Error saving company data: " + error.message;
-      }
+      onAuthStateChanged(auth, async user => {
+        if (!user) return;
+        try {
+          await setDoc(doc(db, "companies", user.uid), {
+            name,
+            email,
+            phone,
+            address,
+            createdAt: new Date().toISOString(),
+            userId: user.uid
+          });
+          alert("Company registered successfully.");
+          window.location.href = "index.html";
+        } catch (error) {
+          alert("Registration failed: " + error.message);
+        }
+      });
     }
 
     window.submitCompanyForm = submitCompanyForm;

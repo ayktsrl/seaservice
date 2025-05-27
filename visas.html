@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Visas</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <style>
+    .visa-table th, .visa-table td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    .action-icons i {
+      cursor: pointer;
+      margin: 0 5px;
+    }
+    .form-row input {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body class="p-4">
+  <h3 class="mb-4">Visas</h3>
+  <table class="table table-bordered visa-table" id="visaTable">
+    <thead class="table-primary">
+      <tr>
+        <th>Visa For</th>
+        <th>Type of Visa</th>
+        <th>Number</th>
+        <th>Issued</th>
+        <th>Expiry</th>
+        <th>Place of Issue</th>
+        <th>Remarks</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="visaBody"></tbody>
+  </table>
+  <button class="btn btn-success mb-3" onclick="addEmptyRow()">➕ Add Visa</button>
+  <button class="btn btn-primary float-end" onclick="saveVisas()">Save</button>
+
+  <script>
+    const db = firebase.firestore();
+    const userId = localStorage.getItem("userId"); // her kullanıcı için ayrı kayıt
+
+    function addEmptyRow(data = {}) {
+      const tbody = document.getElementById("visaBody");
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td><input class="form-control" value="${data.visaFor || ''}"></td>
+        <td><input class="form-control" value="${data.type || ''}"></td>
+        <td><input class="form-control" value="${data.number || ''}"></td>
+        <td><input type="date" class="form-control" value="${data.issued || ''}"></td>
+        <td><input type="date" class="form-control" value="${data.expiry || ''}"></td>
+        <td><input class="form-control" value="${data.place || ''}"></td>
+        <td><input class="form-control" value="${data.remarks || ''}"></td>
+        <td class="action-icons">
+          <i class="text-danger" onclick="this.closest('tr').remove()">❌</i>
+        </td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function saveVisas() {
+      const rows = document.querySelectorAll("#visaBody tr");
+      const visas = [];
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        visas.push({
+          visaFor: inputs[0].value,
+          type: inputs[1].value,
+          number: inputs[2].value,
+          issued: inputs[3].value,
+          expiry: inputs[4].value,
+          place: inputs[5].value,
+          remarks: inputs[6].value
+        });
+      });
+      db.collection("seafarers").doc(userId).update({ visas })
+        .then(() => alert("Saved successfully!"))
+        .catch(err => alert("Error saving: " + err));
+    }
+
+    window.onload = () => {
+      db.collection("seafarers").doc(userId).get().then(doc => {
+        const data = doc.data();
+        if (data?.visas) {
+          data.visas.forEach(v => addEmptyRow(v));
+        }
+      });
+    };
+  </script>
+</body>
+</html>
