@@ -2,27 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title data-i18n="title">Company Ship List</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Company Ship List</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
-    body {
-      background-color: #eef4fb;
-      padding: 30px 10px;
-    }
-    .ship-card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
-    #languageSwitcher {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: auto;
-    }
+    body { background-color: #eef4fb; padding: 30px 10px; }
+    .ship-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .form-section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-bottom: 30px; }
+    #languageSwitcher { position: absolute; top: 20px; right: 20px; width: auto; }
   </style>
 </head>
 <body>
@@ -33,23 +20,41 @@
 
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container-fluid">
-      <a class="navbar-brand" href="company-panel.html" data-i18n="panelTitle">🏢 Company Panel</a>
+      <a class="navbar-brand" href="company-panel.html">🏢 Company Panel</a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="public-cv-browser.html" data-i18n="cvBrowser">CV Browser</a></li>
-          <li class="nav-item"><a class="nav-link" href="create-job.html" data-i18n="postJob">Post Job</a></li>
-          <li class="nav-item"><a class="nav-link" href="company-applications.html" data-i18n="applications">Applications</a></li>
-          <li class="nav-item"><a class="nav-link active" href="company-ship-list.html" data-i18n="myShips">My Ships</a></li>
-          <li class="nav-item"><a class="nav-link" href="add-ship.html" data-i18n="addShip">Add Ship</a></li>
-          <li class="nav-item"><a class="nav-link" href="change-password.html" data-i18n="changePassword">Change Password</a></li>
+          <li class="nav-item"><a class="nav-link" href="public-cv-browser.html">CV Browser</a></li>
+          <li class="nav-item"><a class="nav-link" href="create-job.html">Post Job</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-applications.html">Applications</a></li>
+          <li class="nav-item"><a class="nav-link active" href="company-ship-list.html">My Ships</a></li>
+          <li class="nav-item"><a class="nav-link" href="change-password.html">Change Password</a></li>
         </ul>
-        <button class="btn btn-sm btn-light" onclick="logout()" data-i18n="logout">Logout</button>
+        <button class="btn btn-sm btn-light" onclick="logout()">Logout</button>
       </div>
     </div>
   </nav>
 
   <div class="container">
-    <h4 class="mb-4 text-center" data-i18n="myShips">My Ships</h4>
+    <h4 class="mb-4 text-center">My Ships</h4>
+
+    <div class="form-section">
+      <h5>Add or Update Ship</h5>
+      <form id="addShipForm">
+        <input type="hidden" id="editIndex">
+        <div class="row g-3">
+          <div class="col-md-6"><input type="text" class="form-control" placeholder="Ship Name" id="name" required /></div>
+          <div class="col-md-6"><input type="text" class="form-control" placeholder="Type" id="type" required /></div>
+          <div class="col-md-4"><input type="number" class="form-control" placeholder="LOA (m)" id="loa" required /></div>
+          <div class="col-md-4"><input type="number" class="form-control" placeholder="GRT" id="grt" required /></div>
+          <div class="col-md-4"><input type="number" class="form-control" placeholder="DWT" id="dwt" required /></div>
+          <div class="col-md-6"><input type="text" class="form-control" placeholder="Build Place" id="buildPlace" required /></div>
+          <div class="col-md-6"><input type="number" class="form-control" placeholder="Build Year" id="buildYear" required /></div>
+        </div>
+        <button type="submit" class="btn btn-success mt-3">Save Ship</button>
+        <button type="button" class="btn btn-secondary mt-3 ms-2" onclick="cancelEdit()">Cancel</button>
+      </form>
+    </div>
+
     <div id="shipList"></div>
   </div>
 
@@ -57,107 +62,93 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
-
+    const firebaseConfig = { /* your firebase config */ };
     const app = firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
+    let currentUser, shipArray = [];
 
-      const container = document.getElementById("shipList");
-
-      db.collection("companies").doc(user.uid).get().then(doc => {
-        const ships = doc.data().ships || [];
-
-        if (ships.length === 0) {
-          container.innerHTML = `<p class='text-muted' data-i18n="noShips">No ships added yet.</p>`;
-          return;
-        }
-
-        ships.forEach(ship => {
-          const div = document.createElement("div");
-          div.className = "ship-card";
-          div.innerHTML = `
-            <h5>${ship.name}</h5>
-            <p><strong data-i18n="type">Type:</strong> ${ship.type}</p>
-            <p><strong data-i18n="loa">LOA:</strong> ${ship.loa} m</p>
-            <p><strong data-i18n="grt">GRT:</strong> ${ship.grt}</p>
-            <p><strong data-i18n="dwt">DWT:</strong> ${ship.dwt}</p>
-            <p><strong data-i18n="build">Build:</strong> ${ship.buildPlace}, ${ship.buildYear}</p>
-          `;
-          container.appendChild(div);
-        });
-      });
+    auth.onAuthStateChanged(async user => {
+      if (!user) return location.href = "index.html";
+      currentUser = user;
+      await loadShips();
     });
 
-    function logout() {
-      auth.signOut().then(() => {
-        window.location.href = "index.html";
+    async function loadShips() {
+      const doc = await db.collection("companies").doc(currentUser.uid).get();
+      shipArray = doc.data().ships || [];
+      renderShipList();
+    }
+
+    function renderShipList() {
+      const container = document.getElementById("shipList");
+      container.innerHTML = shipArray.length ? "" : `<p class='text-muted'>No ships added yet.</p>`;
+
+      shipArray.forEach((ship, index) => {
+        const div = document.createElement("div");
+        div.className = "ship-card";
+        div.innerHTML = `
+          <h5>${ship.name}</h5>
+          <p><strong>Type:</strong> ${ship.type}</p>
+          <p><strong>LOA:</strong> ${ship.loa} m | <strong>GRT:</strong> ${ship.grt} | <strong>DWT:</strong> ${ship.dwt}</p>
+          <p><strong>Build:</strong> ${ship.buildPlace}, ${ship.buildYear}</p>
+          <button class='btn btn-sm btn-warning me-2' onclick='editShip(${index})'>Edit</button>
+          <button class='btn btn-sm btn-danger' onclick='deleteShip(${index})'>Delete</button>
+        `;
+        container.appendChild(div);
       });
     }
 
-    const translations = {
-      en: {
-        title: "Company Ship List",
-        panelTitle: "🏢 Company Panel",
-        cvBrowser: "CV Browser",
-        postJob: "Post Job",
-        applications: "Applications",
-        myShips: "My Ships",
-        addShip: "Add Ship",
-        changePassword: "Change Password",
-        logout: "Logout",
-        noShips: "No ships added yet.",
-        type: "Type:",
-        loa: "LOA:",
-        grt: "GRT:",
-        dwt: "DWT:",
-        build: "Build:"
-      },
-      tr: {
-        title: "Şirket Gemi Listesi",
-        panelTitle: "🏢 Şirket Paneli",
-        cvBrowser: "CV Tarayıcı",
-        postJob: "İlan Ver",
-        applications: "Başvurular",
-        myShips: "Gemilerim",
-        addShip: "Gemi Ekle",
-        changePassword: "Şifre Değiştir",
-        logout: "Çıkış Yap",
-        noShips: "Henüz gemi eklenmedi.",
-        type: "Tip:",
-        loa: "BOY:",
-        grt: "GRT:",
-        dwt: "DWT:",
-        build: "İnşa:"
+    function editShip(index) {
+      const ship = shipArray[index];
+      document.getElementById("editIndex").value = index;
+      for (let key in ship) {
+        if (document.getElementById(key)) {
+          document.getElementById(key).value = ship[key];
+        }
       }
-    };
+    }
 
-    const selectedLang = localStorage.getItem("language") || "en";
-    document.getElementById("languageSwitcher").value = selectedLang;
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.getAttribute("data-i18n");
-      if (translations[selectedLang][key]) {
-        el.textContent = translations[selectedLang][key];
+    function cancelEdit() {
+      document.getElementById("addShipForm").reset();
+      document.getElementById("editIndex").value = "";
+    }
+
+    function deleteShip(index) {
+      if (!confirm("Are you sure you want to delete this ship?")) return;
+      shipArray.splice(index, 1);
+      db.collection("companies").doc(currentUser.uid).update({ ships: shipArray });
+      renderShipList();
+    }
+
+    document.getElementById("addShipForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const newShip = {
+        name: name.value,
+        type: type.value,
+        loa: loa.value,
+        grt: grt.value,
+        dwt: dwt.value,
+        buildPlace: buildPlace.value,
+        buildYear: buildYear.value
+      };
+
+      const index = document.getElementById("editIndex").value;
+      if (index === "") {
+        shipArray.push(newShip);
+      } else {
+        shipArray[index] = newShip;
       }
+
+      await db.collection("companies").doc(currentUser.uid).update({ ships: shipArray });
+      cancelEdit();
+      renderShipList();
     });
 
-    document.getElementById("languageSwitcher").addEventListener("change", e => {
-      localStorage.setItem("language", e.target.value);
-      location.reload();
-    });
+    function logout() {
+      auth.signOut().then(() => location.href = "index.html");
+    }
   </script>
 </body>
 </html>

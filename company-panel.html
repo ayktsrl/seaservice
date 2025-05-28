@@ -12,21 +12,31 @@
       right: 20px;
       width: auto;
     }
+    .dashboard-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      padding: 40px 20px;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+    .dashboard-card:hover {
+      transform: scale(1.02);
+    }
   </style>
 </head>
 <body style="background-color:#eef4fb;">
-
   <select id="languageSwitcher" class="form-select form-select-sm">
     <option value="en">🇬🇧 English</option>
     <option value="tr">🇹🇷 Türkçe</option>
   </select>
 
-  <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container-fluid">
       <a class="navbar-brand" href="company-panel.html" data-i18n="panelTitle">🏢 Company Panel</a>
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="company-dashboard.html" data-i18n="dashboard">Dashboard</a></li>
           <li class="nav-item"><a class="nav-link" href="public-cv-browser.html" data-i18n="cvBrowser">CV Browser</a></li>
           <li class="nav-item"><a class="nav-link" href="create-job.html" data-i18n="postJob">Post Job</a></li>
           <li class="nav-item"><a class="nav-link" href="company-applications.html" data-i18n="applications">Applications</a></li>
@@ -39,9 +49,30 @@
     </div>
   </nav>
 
-  <div class="container text-center">
-    <h3 class="mb-4" data-i18n="welcome">Welcome to the Company Dashboard</h3>
-    <p data-i18n="instruction">Use the navigation bar above to manage your ships, job postings, and applications.</p>
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="dashboard-card">
+          <h5 data-i18n="jobs">Job Postings</h5>
+          <p data-i18n="jobsDesc">Create and manage open job opportunities.</p>
+          <a href="create-job.html" class="btn btn-primary btn-sm" data-i18n="go">Go</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="dashboard-card">
+          <h5 data-i18n="ships">Ship Management</h5>
+          <p data-i18n="shipsDesc">View, edit and add company vessels.</p>
+          <a href="company-ship-list.html" class="btn btn-primary btn-sm" data-i18n="go">Go</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="dashboard-card">
+          <h5 data-i18n="applications">Applications</h5>
+          <p data-i18n="applicationsDesc">Browse and review job applicants.</p>
+          <a href="company-applications.html" class="btn btn-primary btn-sm" data-i18n="go">Go</a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
@@ -72,6 +103,7 @@
       en: {
         title: "Company Panel",
         panelTitle: "🏢 Company Panel",
+        dashboard: "Dashboard",
         cvBrowser: "CV Browser",
         postJob: "Post Job",
         applications: "Applications",
@@ -79,12 +111,17 @@
         addShip: "Add Ship",
         changePassword: "Change Password",
         logout: "Logout",
-        welcome: "Welcome to the Company Dashboard",
-        instruction: "Use the navigation bar above to manage your ships, job postings, and applications."
+        jobs: "Job Postings",
+        jobsDesc: "Create and manage open job opportunities.",
+        ships: "Ship Management",
+        shipsDesc: "View, edit and add company vessels.",
+        applicationsDesc: "Browse and review job applicants.",
+        go: "Go"
       },
       tr: {
         title: "Şirket Paneli",
         panelTitle: "🏢 Şirket Paneli",
+        dashboard: "Kontrol Paneli",
         cvBrowser: "CV Tarayıcı",
         postJob: "İlan Ver",
         applications: "Başvurular",
@@ -92,8 +129,12 @@
         addShip: "Gemi Ekle",
         changePassword: "Şifre Değiştir",
         logout: "Çıkış Yap",
-        welcome: "Şirket Paneline Hoş Geldiniz",
-        instruction: "Gemileri, iş ilanlarını ve başvuruları yönetmek için yukarıdaki menüyü kullanın."
+        jobs: "İş İlanları",
+        jobsDesc: "Açık iş ilanlarını oluştur ve yönet.",
+        ships: "Gemi Yönetimi",
+        shipsDesc: "Şirket gemilerini görüntüle, düzenle ve ekle.",
+        applicationsDesc: "İş başvurularını gözden geçir.",
+        go: "Git"
       }
     };
 

@@ -34,7 +34,7 @@
 
   <div class="form-box">
     <h4 class="mb-4 text-center" data-i18n="header">Post a New Job</h4>
-    <form onsubmit="submitJobForm(event)">
+    <form id="jobForm">
       <div class="mb-3">
         <label class="form-label" data-i18n="position">Position</label>
         <input type="text" class="form-control" id="position" required />
@@ -73,10 +73,11 @@
     </form>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-  <script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
     const firebaseConfig = {
       apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
       authDomain: "crewapplication-c37a8.firebaseapp.com",
@@ -86,17 +87,17 @@
       appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
     };
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    auth.onAuthStateChanged(user => {
+    onAuthStateChanged(auth, (user) => {
       if (!user) {
         window.location.href = "index.html";
       }
     });
 
-    function submitJobForm(event) {
+    document.getElementById("jobForm").addEventListener("submit", async (event) => {
       event.preventDefault();
 
       const position = document.getElementById("position").value;
@@ -110,24 +111,27 @@
       const user = auth.currentUser;
       if (!user) return alert("You must be logged in to post a job.");
 
-      db.collection("jobPosts").add({
-        companyId: user.uid,
-        position,
-        vesselName,
-        vesselType,
-        joiningDate,
-        duration,
-        location,
-        notes,
-        createdAt: new Date().toISOString()
-      }).then(() => {
+      try {
+        await addDoc(collection(db, "jobPosts"), {
+          companyId: user.uid,
+          position,
+          vesselName,
+          vesselType,
+          joiningDate,
+          duration,
+          location,
+          notes,
+          createdAt: new Date().toISOString()
+        });
         document.getElementById("message").textContent = "Job posted successfully!";
         event.target.reset();
-      }).catch(err => {
+      } catch (err) {
         alert("Error: " + err.message);
-      });
-    }
+      }
+    });
+  </script>
 
+  <script>
     const translations = {
       en: {
         title: "Create Job",
