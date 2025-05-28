@@ -43,7 +43,7 @@
           <li class="nav-item"><a class="nav-link" href="add-ship.html" data-i18n="addShip">Add Ship</a></li>
           <li class="nav-item"><a class="nav-link" href="change-password.html" data-i18n="changePassword">Change Password</a></li>
         </ul>
-        <button class="btn btn-sm btn-light" onclick="logout()" data-i18n="logout">Logout</button>
+        <button class="btn btn-sm btn-light" id="logoutBtn" data-i18n="logout">Logout</button>
       </div>
     </div>
   </nav>
@@ -53,10 +53,11 @@
     <div id="cvList"></div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-  <script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
     const firebaseConfig = {
       apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
       authDomain: "crewapplication-c37a8.firebaseapp.com",
@@ -66,41 +67,48 @@
       appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
     };
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    auth.onAuthStateChanged(user => {
-      if (!user) return window.location.href = "index.html";
+    const container = document.getElementById("cvList");
 
-      const container = document.getElementById("cvList");
-      db.collection("seafarers").get().then(snapshot => {
-        if (snapshot.empty) {
-          container.innerHTML = `<p class='text-muted' data-i18n="noSeafarers">No seafarers found.</p>`;
-          return;
-        }
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
 
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const div = document.createElement("div");
-          div.className = "cv-card";
-          div.innerHTML = `
-            <h5>${data.personalDetails?.fullName || "Unnamed"}</h5>
-            <p><strong data-i18n="dob">DOB:</strong> ${data.personalDetails?.dob || "-"}</p>
-            <p><strong data-i18n="nationality">Nationality:</strong> ${data.personalDetails?.nationality || "-"}</p>
-            <p><strong data-i18n="phone">Phone:</strong> ${data.personalDetails?.phone || "-"}</p>
-            <p><strong data-i18n="email">Email:</strong> ${data.personalDetails?.email || "-"}</p>
-          `;
-          container.appendChild(div);
-        });
-      });
+      const seafarersRef = collection(db, "seafarers");
+      const snapshot = await getDocs(seafarersRef);
+
+      if (snapshot.empty) {
+        container.innerHTML = `<p class='text-muted' data-i18n="noSeafarers">No seafarers found.</p>`;
+        return;
+      }
+
+      for (const docSnap of snapshot.docs) {
+        const personalRef = doc(db, "seafarers", docSnap.id, "cv", "personalDetails");
+        const personalDetails = (await getDoc(personalRef)).data() || {};
+
+        const div = document.createElement("div");
+        div.className = "cv-card";
+        div.innerHTML = `
+          <h5>${personalDetails.fullName || "Unnamed"}</h5>
+          <p><strong data-i18n="dob">DOB:</strong> ${personalDetails.dob || "-"}</p>
+          <p><strong data-i18n="nationality">Nationality:</strong> ${personalDetails.nationality || "-"}</p>
+          <p><strong data-i18n="phone">Phone:</strong> ${personalDetails.phone || "-"}</p>
+          <p><strong data-i18n="email">Email:</strong> ${personalDetails.email || "-"}</p>
+        `;
+        container.appendChild(div);
+      }
     });
 
-    function logout() {
-      auth.signOut().then(() => {
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      signOut(auth).then(() => {
         window.location.href = "index.html";
       });
-    }
+    });
 
     const translations = {
       en: {
