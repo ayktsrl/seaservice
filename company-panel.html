@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Company Dashboard</title>
+  <title>Company Panel</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     body { background-color: #eef4fb; padding: 30px 10px; }
@@ -17,14 +17,38 @@
     }
     .stat-card h3 { font-size: 2.5rem; margin-bottom: 10px; }
     .stat-card p { margin-bottom: 10px; font-weight: bold; }
-    .recent-jobs { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-top: 40px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h3 class="mb-1">Dashboard</h3>
-    <p class="mb-4 text-muted">Welcome back! Here's an overview of your company activity.</p>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">🏢 Company Panel</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link active" href="company-dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="public-cv-browser.html">CV Browser</a></li>
+          <li class="nav-item"><a class="nav-link" href="create-job.html">Post Job</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-applications.html">Applications</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-ship-list.html">My Ships</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-verify-seaservice.html">Verify Services</a></li>
+          <li class="nav-item"><a class="nav-link" href="evaluate-seafarers.html">Evaluate Seafarers</a></li>
+          <li class="nav-item"><a class="nav-link" href="ship-crew-list.html">Crew List</a></li>
+          <li class="nav-item"><a class="nav-link" href="change-password.html">Change Password</a></li>
+        </ul>
+        <select id="languageSwitcher" class="form-select form-select-sm me-2" style="width: auto;">
+          <option value="en">🇬🇧 English</option>
+          <option value="tr">🇹🇷 Türkçe</option>
+        </select>
+        <button class="btn btn-sm btn-light" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
 
+  <div class="container">
+    <h3 class="mb-4">Dashboard</h3>
     <div class="row" id="statCards">
       <div class="col-md-3">
         <div class="stat-card">
@@ -55,27 +79,11 @@
         </div>
       </div>
     </div>
-
-    <div class="recent-jobs">
-      <h5 class="mb-3">Recent Job Posts</h5>
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th>Position</th>
-            <th>Vessel</th>
-            <th>Joining</th>
-            <th>Location</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="recentJobsTable"></tbody>
-      </table>
-    </div>
   </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { getFirestore, collection, getDocs, query, where, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -94,37 +102,23 @@
     onAuthStateChanged(auth, async user => {
       if (!user) return location.href = "index.html";
 
-      const jobRef = query(collection(db, "jobPosts"), where("companyId", "==", user.uid));
-      const jobSnap = await getDocs(jobRef);
-      const jobs = jobSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const [jobSnap, appSnap, seaSnap] = await Promise.all([
+        getDocs(query(collection(db, "jobPosts"), where("companyId", "==", user.uid))),
+        getDocs(collection(db, "applications")),
+        getDocs(collection(db, "seafarers"))
+      ]);
 
-      document.getElementById("jobCount").textContent = jobs.length;
-      const appSnap = await getDocs(collection(db, "applications"));
+      document.getElementById("jobCount").textContent = jobSnap.size;
       document.getElementById("applicationCount").textContent = appSnap.size;
-      const seaSnap = await getDocs(collection(db, "seafarers"));
       document.getElementById("seafarerCount").textContent = seaSnap.size;
 
       const companyDoc = await getDoc(doc(db, "companies", user.uid));
       const shipList = companyDoc.exists() ? (companyDoc.data().ships || []) : [];
       document.getElementById("shipCount").textContent = shipList.length;
-
-      const sortedJobs = jobs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0,5);
-      const tableBody = document.getElementById("recentJobsTable");
-      sortedJobs.forEach(job => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${job.position}</td>
-          <td>${job.vesselName}</td>
-          <td>${job.joiningDate}</td>
-          <td>${job.location}</td>
-          <td>
-            <a class="btn btn-sm btn-outline-secondary me-1" href="create-job.html?edit=${job.id}">Edit</a>
-            <a class="btn btn-sm btn-outline-info" href="view-job.html?id=${job.id}">View</a>
-          </td>
-        `;
-        tableBody.appendChild(tr);
-      });
     });
+
+    window.logout = () => signOut(auth).then(() => location.href = "index.html");
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

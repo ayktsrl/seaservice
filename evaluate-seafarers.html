@@ -1,14 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Evaluate Seafarers</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .search-bar {
+      max-width: 400px;
+      margin: 0 auto 20px;
+    }
+  </style>
 </head>
 <body class="bg-light">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">🏢 Company Panel</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="company-dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="public-cv-browser.html">CV Browser</a></li>
+          <li class="nav-item"><a class="nav-link" href="create-job.html">Post Job</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-applications.html">Applications</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-ship-list.html">My Ships</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-verify-seaservice.html">Verify Services</a></li>
+          <li class="nav-item"><a class="nav-link active" href="evaluate-seafarers.html">Evaluate Seafarers</a></li>
+          <li class="nav-item"><a class="nav-link" href="ship-crew-list.html">Crew List</a></li>
+          <li class="nav-item"><a class="nav-link" href="change-password.html">Change Password</a></li>
+        </ul>
+        <select id="languageSwitcher" class="form-select form-select-sm me-2" style="width: auto;">
+          <option value="en">🇬🇧 English</option>
+          <option value="tr">🇹🇷 Türkçe</option>
+        </select>
+        <button class="btn btn-sm btn-light" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
   <div class="container py-5">
     <h3 class="mb-4">Evaluate Verified Sea Services</h3>
+    <input type="text" id="searchInput" class="form-control search-bar" placeholder="Search by vessel or seafarer ID...">
     <ul id="evaluationList" class="list-group"></ul>
   </div>
 
@@ -29,8 +63,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
     let currentUser;
+    let serviceList = [];
 
     onAuthStateChanged(auth, async user => {
       if (!user) return location.href = "index.html";
@@ -41,6 +75,7 @@
     async function loadEvaluations() {
       const list = document.getElementById("evaluationList");
       list.innerHTML = "";
+      serviceList = [];
 
       const snapshot = await getDocs(collectionGroup(db, "seaService"));
       snapshot.forEach(serviceDoc => {
@@ -50,38 +85,54 @@
         const seafarerId = segments[1];
 
         if (data.companyId === currentUser.uid && data.isVerified === true && !data.evaluation?.rating) {
-          const li = document.createElement("li");
-          li.className = "list-group-item";
-
-          li.innerHTML = `
-            <div class="mb-2">
-              <strong>${data.vessel}</strong> — ${data.rank}<br>
-              <small>${data.startDate} to ${data.endDate}</small><br>
-              <small>Seafarer ID: ${seafarerId}</small>
-            </div>
-            <div class="row g-2">
-              <div class="col-md-2">
-                <select class="form-select form-select-sm" id="rating-${path}">
-                  <option value="">⭐ Rate</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                </select>
-              </div>
-              <div class="col-md-8">
-                <input type="text" class="form-control form-control-sm" placeholder="Comment" id="comment-${path}">
-              </div>
-              <div class="col-md-2">
-                <button class="btn btn-primary btn-sm w-100" onclick="saveEvaluation('${seafarerId}', '${segments[3]}', '${path}')">Save</button>
-              </div>
-            </div>`;
-
-          list.appendChild(li);
+          serviceList.push({ data, path, seafarerId, serviceId: segments[3] });
         }
       });
+      renderEvaluations(serviceList);
     }
+
+    function renderEvaluations(services) {
+      const list = document.getElementById("evaluationList");
+      list.innerHTML = "";
+      services.forEach(({ data, path, seafarerId, serviceId }) => {
+        const li = document.createElement("li");
+        li.className = "list-group-item";
+        li.innerHTML = `
+          <div class="mb-2">
+            <strong>${data.vessel}</strong> — ${data.rank}<br>
+            <small>${data.startDate} to ${data.endDate}</small><br>
+            <small>Seafarer ID: ${seafarerId}</small>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-2">
+              <select class="form-select form-select-sm" id="rating-${path}">
+                <option value="">⭐ Rate</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+            <div class="col-md-8">
+              <input type="text" class="form-control form-control-sm" placeholder="Comment" id="comment-${path}">
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-primary btn-sm w-100" onclick="saveEvaluation('${seafarerId}', '${serviceId}', '${path}')">Save</button>
+            </div>
+          </div>`;
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const value = e.target.value.toLowerCase();
+      const filtered = serviceList.filter(({ data, seafarerId }) =>
+        data.vessel.toLowerCase().includes(value) ||
+        seafarerId.toLowerCase().includes(value)
+      );
+      renderEvaluations(filtered);
+    });
 
     window.saveEvaluation = async (userId, serviceId, path) => {
       const rating = document.getElementById(`rating-${path}`).value;
@@ -99,5 +150,15 @@
       await loadEvaluations();
     };
   </script>
+
+  <script>
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        localStorage.removeItem("role");
+        location.href = "index.html";
+      });
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

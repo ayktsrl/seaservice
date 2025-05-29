@@ -14,6 +14,26 @@
   </style>
 </head>
 <body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="company-panel.html" data-i18n="panelTitle">🏢 Company Panel</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="company-dashboard.html" data-i18n="dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="public-cv-browser.html" data-i18n="cvBrowser">CV Browser</a></li>
+          <li class="nav-item"><a class="nav-link" href="create-job.html" data-i18n="postJob">Post Job</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-applications.html" data-i18n="applications">Applications</a></li>
+          <li class="nav-item"><a class="nav-link active" href="company-ship-list.html" data-i18n="myShips">My Ships</a></li>
+          <li class="nav-item"><a class="nav-link" href="ship-crew-list.html" data-i18n="crewList">Crew List</a></li>
+          <li class="nav-item"><a class="nav-link" href="company-verify-seaservice.html" data-i18n="verifySeaService">Verify Sea Service</a></li>
+          <li class="nav-item"><a class="nav-link" href="evaluate-seafarers.html" data-i18n="evaluateSeafarers">Evaluate Seafarers</a></li>
+          <li class="nav-item"><a class="nav-link" href="change-password.html" data-i18n="changePassword">Change Password</a></li>
+        </ul>
+        <button class="btn btn-sm btn-light" onclick="logout()" data-i18n="logout">Logout</button>
+      </div>
+    </div>
+  </nav>
+
   <div class="container">
     <div class="d-flex justify-content-between mb-3">
       <input id="searchInput" class="form-control w-50" placeholder="Search by ship name or type">
@@ -160,6 +180,13 @@
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Ships");
       XLSX.writeFile(wb, "ships.xlsx");
+    };
+
+    window.logout = function () {
+      auth.signOut().then(() => {
+        localStorage.removeItem("role");
+        location.href = "index.html";
+      });
     };
   </script>
 </body>
