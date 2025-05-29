@@ -12,6 +12,7 @@
       justify-content: center;
       align-items: center;
       padding: 40px 10px;
+      min-height: 100vh;
     }
     .register-box {
       background: white;
@@ -26,7 +27,7 @@
 <body>
   <div class="register-box">
     <h4 class="mb-4 text-center">Company Registration</h4>
-    <form id="registrationForm" onsubmit="submitCompanyForm(event)">
+    <form id="registrationForm">
       <div class="mb-3">
         <label for="companyName" class="form-label">Company Name</label>
         <input type="text" class="form-control" id="companyName" required />
@@ -63,7 +64,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth();
+    const auth = getAuth(app);
 
     const email = localStorage.getItem("registrationEmail");
     if (!email) {
@@ -72,7 +73,7 @@
       document.getElementById("companyEmail").value = email;
     }
 
-    async function submitCompanyForm(e) {
+    document.getElementById("registrationForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = document.getElementById("companyName").value;
       const email = document.getElementById("companyEmail").value;
@@ -90,15 +91,14 @@
             createdAt: new Date().toISOString(),
             userId: user.uid
           });
+          localStorage.setItem("role", "company");
           alert("Company registered successfully.");
-          window.location.href = "index.html";
+          window.location.href = "company-dashboard.html";
         } catch (error) {
           alert("Registration failed: " + error.message);
         }
       });
-    }
-
-    window.submitCompanyForm = submitCompanyForm;
+    });
   </script>
 </body>
 </html>
