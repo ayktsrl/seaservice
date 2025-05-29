@@ -15,19 +15,8 @@
 </head>
 <body>
   <div class="container">
-    <div class="d-flex justify-content-between mb-3 align-items-center">
-      <input id="searchInput" class="form-control w-25 me-2" placeholder="Search by name or type">
-      <select id="typeFilter" class="form-select w-25 me-2">
-        <option value="">All Types</option>
-        <option value="Tanker">Tanker</option>
-        <option value="Bulk Carrier">Bulk Carrier</option>
-        <option value="Container">Container</option>
-        <option value="General Cargo">General Cargo</option>
-      </select>
-      <select id="yearFilter" class="form-select w-25 me-2">
-        <option value="">All Years</option>
-        ${[...Array(30)].map((_, i) => `<option value="${2025 - i}">${2025 - i}</option>`).join('')}
-      </select>
+    <div class="d-flex justify-content-between mb-3">
+      <input id="searchInput" class="form-control w-50" placeholder="Search by ship name or type">
       <button class="btn btn-outline-success" onclick="exportShipsToExcel()">Export to Excel</button>
     </div>
 
@@ -38,11 +27,11 @@
         <div class="row g-3">
           <div class="col-md-6"><input type="text" class="form-control" placeholder="Ship Name" id="name" required></div>
           <div class="col-md-6"><input type="text" class="form-control" placeholder="Type" id="type" required></div>
-          <div class="col-md-4"><input type="number" class="form-control" placeholder="LOA (m)" id="loa" required></div>
-          <div class="col-md-4"><input type="number" class="form-control" placeholder="GRT" id="grt" required></div>
-          <div class="col-md-4"><input type="number" class="form-control" placeholder="DWT" id="dwt" required></div>
+          <div class="col-md-4"><input type="number" class="form-control" placeholder="LOA (m)" id="loa" required min="1"></div>
+          <div class="col-md-4"><input type="number" class="form-control" placeholder="GRT" id="grt" required min="1"></div>
+          <div class="col-md-4"><input type="number" class="form-control" placeholder="DWT" id="dwt" required min="1"></div>
           <div class="col-md-6"><input type="text" class="form-control" placeholder="Build Place" id="buildPlace" required></div>
-          <div class="col-md-6"><input type="number" class="form-control" placeholder="Build Year" id="buildYear" required></div>
+          <div class="col-md-6"><input type="number" class="form-control" placeholder="Build Year" id="buildYear" required min="1900"></div>
         </div>
         <button type="submit" class="btn btn-success mt-3">Save Ship</button>
         <button type="button" class="btn btn-secondary mt-3 ms-2" onclick="cancelEdit()">Cancel</button>
@@ -54,7 +43,7 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { getFirestore, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -87,18 +76,17 @@
     function renderShipList(list) {
       const container = document.getElementById("shipList");
       container.innerHTML = list.length ? "" : `<p class='text-muted'>No ships added yet.</p>`;
-
       list.forEach((ship, index) => {
         const div = document.createElement("div");
         div.className = "ship-card";
         div.innerHTML = `
-          <h5>\${ship.name}</h5>
-          <p><strong>Type:</strong> \${ship.type}</p>
-          <p><strong>LOA:</strong> \${ship.loa} m | <strong>GRT:</strong> \${ship.grt} | <strong>DWT:</strong> \${ship.dwt}</p>
-          <p><strong>Build:</strong> \${ship.buildPlace}, \${ship.buildYear}</p>
-          <a href="ship-crew-list.html?shipId=\${ship.name}" class="btn btn-sm btn-outline-info me-2">Crew</a>
-          <button class='btn btn-sm btn-warning me-2' onclick='editShip(\${index})'>Edit</button>
-          <button class='btn btn-sm btn-danger' onclick='deleteShip(\${index})'>Delete</button>`
+          <h5>${ship.name}</h5>
+          <p><strong>Type:</strong> ${ship.type}</p>
+          <p><strong>LOA:</strong> ${ship.loa} m | <strong>GRT:</strong> ${ship.grt} | <strong>DWT:</strong> ${ship.dwt}</p>
+          <p><strong>Build:</strong> ${ship.buildPlace}, ${ship.buildYear}</p>
+          <button class='btn btn-sm btn-warning me-2' onclick='editShip(${index})'>Edit</button>
+          <button class='btn btn-sm btn-danger' onclick='deleteShip(${index})'>Delete</button>
+        `;
         container.appendChild(div);
       });
     }
@@ -128,13 +116,13 @@
     document.getElementById("addShipForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const newShip = {
-        name: name.value,
-        type: type.value,
-        loa: loa.value,
-        grt: grt.value,
-        dwt: dwt.value,
-        buildPlace: buildPlace.value,
-        buildYear: buildYear.value
+        name: name.value.trim(),
+        type: type.value.trim(),
+        loa: Number(loa.value) || 0,
+        grt: Number(grt.value) || 0,
+        dwt: Number(dwt.value) || 0,
+        buildPlace: buildPlace.value.trim(),
+        buildYear: Number(buildYear.value) || 0
       };
 
       const index = document.getElementById("editIndex").value;
@@ -149,23 +137,14 @@
       renderShipList(shipArray);
     });
 
-    document.getElementById("searchInput").addEventListener("input", applyFilters);
-    document.getElementById("typeFilter").addEventListener("change", applyFilters);
-    document.getElementById("yearFilter").addEventListener("change", applyFilters);
-
-    function applyFilters() {
-      const search = document.getElementById("searchInput").value.toLowerCase();
-      const type = document.getElementById("typeFilter").value;
-      const year = document.getElementById("yearFilter").value;
-
-      const filtered = shipArray.filter(s => {
-        const matchesSearch = s.name.toLowerCase().includes(search) || s.type.toLowerCase().includes(search);
-        const matchesType = !type || s.type === type;
-        const matchesYear = !year || String(s.buildYear) === year;
-        return matchesSearch && matchesType && matchesYear;
-      });
+    document.getElementById("searchInput").addEventListener("input", e => {
+      const val = e.target.value.toLowerCase();
+      const filtered = shipArray.filter(s =>
+        s.name.toLowerCase().includes(val) ||
+        s.type.toLowerCase().includes(val)
+      );
       renderShipList(filtered);
-    }
+    });
 
     window.exportShipsToExcel = () => {
       const data = shipArray.map(s => ({
@@ -175,13 +154,12 @@
         GRT: s.grt,
         DWT: s.dwt,
         BuildPlace: s.buildPlace,
-        BuildYear: s.buildYear,
-        CrewURL: `https://crewapplication-c37a8.web.app/ship-crew-list.html?shipId=${s.name}`
+        BuildYear: s.buildYear
       }));
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Ships");
-      XLSX.writeFile(wb, "ships_with_crew_links.xlsx");
+      XLSX.writeFile(wb, "ships.xlsx");
     };
   </script>
 </body>
