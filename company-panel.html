@@ -3,85 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title data-i18n="title">Company Panel</title>
+  <title>Company Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
-    #languageSwitcher {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: auto;
-    }
-    .dashboard-card {
+    body { background-color: #eef4fb; padding: 30px 10px; }
+    .stat-card {
       background: white;
-      border-radius: 16px;
+      padding: 20px;
+      border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.05);
-      padding: 40px 20px;
+      margin-bottom: 20px;
       text-align: center;
-      transition: transform 0.2s ease;
     }
-    .dashboard-card:hover {
-      transform: scale(1.02);
-    }
-    body {
-      background-color:#eef4fb;
-      padding: 30px 10px;
-    }
+    .stat-card h3 { font-size: 2.5rem; margin-bottom: 10px; }
+    .stat-card p { margin-bottom: 10px; font-weight: bold; }
+    .recent-jobs { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-top: 40px; }
   </style>
 </head>
 <body>
-  <select id="languageSwitcher" class="form-select form-select-sm">
-    <option value="en">🇬🇧 English</option>
-    <option value="tr">🇹🇷 Türkçe</option>
-  </select>
+  <div class="container">
+    <h3 class="mb-1">Dashboard</h3>
+    <p class="mb-4 text-muted">Welcome back! Here's an overview of your company activity.</p>
 
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="company-panel.html" data-i18n="panelTitle">🏢 Company Panel</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="company-dashboard.html" data-i18n="dashboard">Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link" href="public-cv-browser.html" data-i18n="cvBrowser">CV Browser</a></li>
-          <li class="nav-item"><a class="nav-link" href="create-job.html" data-i18n="postJob">Post Job</a></li>
-          <li class="nav-item"><a class="nav-link" href="company-applications.html" data-i18n="applications">Applications</a></li>
-          <li class="nav-item"><a class="nav-link" href="company-ship-list.html" data-i18n="myShips">My Ships</a></li>
-          <li class="nav-item"><a class="nav-link" href="add-ship.html" data-i18n="addShip">Add Ship</a></li>
-          <li class="nav-item"><a class="nav-link" href="change-password.html" data-i18n="changePassword">Change Password</a></li>
-        </ul>
-        <button class="btn btn-sm btn-light" onclick="logout()" data-i18n="logout">Logout</button>
+    <div class="row" id="statCards">
+      <div class="col-md-3">
+        <div class="stat-card">
+          <p>Total Jobs</p>
+          <h3 id="jobCount">-</h3>
+          <a href="create-job.html" class="btn btn-sm btn-outline-primary">Go</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <p>Total Applications</p>
+          <h3 id="applicationCount">-</h3>
+          <a href="company-applications.html" class="btn btn-sm btn-outline-primary">Go</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <p>Total Seafarers</p>
+          <h3 id="seafarerCount">-</h3>
+          <a href="public-cv-browser.html" class="btn btn-sm btn-outline-primary">Go</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <p>Total Ships</p>
+          <h3 id="shipCount">-</h3>
+          <a href="company-ship-list.html" class="btn btn-sm btn-outline-primary">Go</a>
+        </div>
       </div>
     </div>
-  </nav>
 
-  <div class="container">
-    <div class="row g-4">
-      <div class="col-md-4">
-        <div class="dashboard-card">
-          <h5 data-i18n="jobs">Job Postings</h5>
-          <p data-i18n="jobsDesc">Create and manage open job opportunities.</p>
-          <a href="create-job.html" class="btn btn-primary btn-sm" data-i18n="go">Go</a>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="dashboard-card">
-          <h5 data-i18n="ships">Ship Management</h5>
-          <p data-i18n="shipsDesc">View, edit and add company vessels.</p>
-          <a href="company-ship-list.html" class="btn btn-primary btn-sm" data-i18n="go">Go</a>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="dashboard-card">
-          <h5 data-i18n="applications">Applications</h5>
-          <p data-i18n="applicationsDesc">Browse and review job applicants.</p>
-          <a href="company-applications.html" class="btn btn-primary btn-sm" data-i18n="go">Go</a>
-        </div>
-      </div>
+    <div class="recent-jobs">
+      <h5 class="mb-3">Recent Job Posts</h5>
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Position</th>
+            <th>Vessel</th>
+            <th>Joining</th>
+            <th>Location</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="recentJobsTable"></tbody>
+      </table>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getFirestore, collection, getDocs, query, where, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
@@ -94,70 +89,41 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) window.location.href = "index.html";
-    });
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = "index.html";
 
-    window.logout = function () {
-      signOut(auth).then(() => {
-        window.location.href = "index.html";
+      const jobRef = query(collection(db, "jobPosts"), where("companyId", "==", user.uid));
+      const jobSnap = await getDocs(jobRef);
+      const jobs = jobSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      document.getElementById("jobCount").textContent = jobs.length;
+      const appSnap = await getDocs(collection(db, "applications"));
+      document.getElementById("applicationCount").textContent = appSnap.size;
+      const seaSnap = await getDocs(collection(db, "seafarers"));
+      document.getElementById("seafarerCount").textContent = seaSnap.size;
+
+      const companyDoc = await getDoc(doc(db, "companies", user.uid));
+      const shipList = companyDoc.exists() ? (companyDoc.data().ships || []) : [];
+      document.getElementById("shipCount").textContent = shipList.length;
+
+      const sortedJobs = jobs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0,5);
+      const tableBody = document.getElementById("recentJobsTable");
+      sortedJobs.forEach(job => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${job.position}</td>
+          <td>${job.vesselName}</td>
+          <td>${job.joiningDate}</td>
+          <td>${job.location}</td>
+          <td>
+            <a class="btn btn-sm btn-outline-secondary me-1" href="create-job.html?edit=${job.id}">Edit</a>
+            <a class="btn btn-sm btn-outline-info" href="view-job.html?id=${job.id}">View</a>
+          </td>
+        `;
+        tableBody.appendChild(tr);
       });
-    }
-  </script>
-
-  <script>
-    const translations = {
-      en: {
-        title: "Company Panel",
-        panelTitle: "🏢 Company Panel",
-        dashboard: "Dashboard",
-        cvBrowser: "CV Browser",
-        postJob: "Post Job",
-        applications: "Applications",
-        myShips: "My Ships",
-        addShip: "Add Ship",
-        changePassword: "Change Password",
-        logout: "Logout",
-        jobs: "Job Postings",
-        jobsDesc: "Create and manage open job opportunities.",
-        ships: "Ship Management",
-        shipsDesc: "View, edit and add company vessels.",
-        applicationsDesc: "Browse and review job applicants.",
-        go: "Go"
-      },
-      tr: {
-        title: "Şirket Paneli",
-        panelTitle: "🏢 Şirket Paneli",
-        dashboard: "Kontrol Paneli",
-        cvBrowser: "CV Tarayıcı",
-        postJob: "İlan Ver",
-        applications: "Başvurular",
-        myShips: "Gemilerim",
-        addShip: "Gemi Ekle",
-        changePassword: "Şifre Değiştir",
-        logout: "Çıkış Yap",
-        jobs: "İŞ İlanları",
-        jobsDesc: "Açık iş ilanlarını oluştur ve yönet.",
-        ships: "Gemi Yönetimi",
-        shipsDesc: "Şirket gemilerini görüntüle, düzenle ve ekle.",
-        applicationsDesc: "İş başvurularını gözden geçir.",
-        go: "Git"
-      }
-    };
-
-    const selectedLang = localStorage.getItem("language") || "en";
-    document.getElementById("languageSwitcher").value = selectedLang;
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.getAttribute("data-i18n");
-      if (translations[selectedLang][key]) {
-        el.textContent = translations[selectedLang][key];
-      }
-    });
-
-    document.getElementById("languageSwitcher").addEventListener("change", e => {
-      localStorage.setItem("language", e.target.value);
-      location.reload();
     });
   </script>
 </body>

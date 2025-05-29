@@ -6,10 +6,7 @@
   <title data-i18n="title">Create Job</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
-    body {
-      background-color: #eef4fb;
-      padding: 30px 10px;
-    }
+    body { background-color: #eef4fb; padding: 30px 10px; }
     .form-box {
       background: white;
       padding: 30px;
@@ -32,24 +29,6 @@
     <option value="tr">🇹🇷 Türkçe</option>
   </select>
 
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="company-panel.html" data-i18n="panelTitle">🏢 Company Panel</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="company-dashboard.html" data-i18n="dashboard">Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link" href="public-cv-browser.html" data-i18n="cvBrowser">CV Browser</a></li>
-          <li class="nav-item"><a class="nav-link active" href="create-job.html" data-i18n="postJob">Post Job</a></li>
-          <li class="nav-item"><a class="nav-link" href="company-applications.html" data-i18n="applications">Applications</a></li>
-          <li class="nav-item"><a class="nav-link" href="company-ship-list.html" data-i18n="myShips">My Ships</a></li>
-          <li class="nav-item"><a class="nav-link" href="add-ship.html" data-i18n="addShip">Add Ship</a></li>
-          <li class="nav-item"><a class="nav-link" href="change-password.html" data-i18n="changePassword">Change Password</a></li>
-        </ul>
-        <button class="btn btn-sm btn-light" onclick="logout()" data-i18n="logout">Logout</button>
-      </div>
-    </div>
-  </nav>
-
   <div class="form-box">
     <h4 class="mb-4 text-center" data-i18n="header">Post a New Job</h4>
     <form id="jobForm">
@@ -59,7 +38,7 @@
       </div>
       <div class="mb-3">
         <label class="form-label" data-i18n="vesselName">Vessel Name</label>
-        <input type="text" class="form-control" id="vesselName" />
+        <select class="form-select" id="vesselName" required></select>
       </div>
       <div class="mb-3">
         <label class="form-label" data-i18n="vesselType">Vessel Type</label>
@@ -93,8 +72,8 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getFirestore, collection, addDoc, getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
@@ -109,9 +88,19 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "index.html";
+      } else {
+        const companyDoc = await getDoc(doc(db, "companies", user.uid));
+        const ships = companyDoc.exists() ? companyDoc.data().ships || [] : [];
+        const vesselNameSelect = document.getElementById("vesselName");
+        ships.forEach(ship => {
+          const option = document.createElement("option");
+          option.value = ship.name;
+          option.textContent = ship.name;
+          vesselNameSelect.appendChild(option);
+        });
       }
     });
 
@@ -141,33 +130,20 @@
           notes,
           createdAt: new Date().toISOString()
         });
-        document.getElementById("message").textContent = "Job posted successfully!";
+        const msg = document.getElementById("message");
+        msg.textContent = "Job posted successfully!";
         event.target.reset();
+        setTimeout(() => msg.textContent = "", 3000);
       } catch (err) {
         alert("Error: " + err.message);
       }
     });
-
-    window.logout = function () {
-      signOut(auth).then(() => {
-        window.location.href = "index.html";
-      });
-    };
   </script>
 
   <script>
     const translations = {
       en: {
         title: "Create Job",
-        panelTitle: "🏢 Company Panel",
-        dashboard: "Dashboard",
-        cvBrowser: "CV Browser",
-        postJob: "Post Job",
-        applications: "Applications",
-        myShips: "My Ships",
-        addShip: "Add Ship",
-        changePassword: "Change Password",
-        logout: "Logout",
         header: "Post a New Job",
         position: "Position",
         vesselName: "Vessel Name",
@@ -179,16 +155,7 @@
         submit: "Post Job"
       },
       tr: {
-        title: "İŞ İlanı Oluştur",
-        panelTitle: "🏢 Şirket Paneli",
-        dashboard: "Kontrol Paneli",
-        cvBrowser: "CV Tarayıcı",
-        postJob: "İlan Ver",
-        applications: "Başvurular",
-        myShips: "Gemilerim",
-        addShip: "Gemi Ekle",
-        changePassword: "Şifre Değiştir",
-        logout: "Çıkış Yap",
+        title: "İş İlanı Oluştur",
         header: "Yeni İş İlanı Ekle",
         position: "Pozisyon",
         vesselName: "Gemi Adı",

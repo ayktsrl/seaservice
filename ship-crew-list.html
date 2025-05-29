@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ship Crew List</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #eef4fb; padding: 30px 10px; }
+    .crew-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
+  </style>
+</head>
+<body>
+  <div class="crew-box">
+    <h4 class="mb-4 text-center">Crew List for Selected Ship</h4>
+    <form id="addCrewForm" class="row g-3 mb-4">
+      <div class="col-md-4">
+        <input type="text" class="form-control" id="fullName" placeholder="Full Name" required />
+      </div>
+      <div class="col-md-3">
+        <input type="text" class="form-control" id="rank" placeholder="Rank" required />
+      </div>
+      <div class="col-md-3">
+        <input type="date" class="form-control" id="joinDate" required />
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Add</button>
+      </div>
+    </form>
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Rank</th>
+          <th>Joining Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="crewTableBody"></tbody>
+    </table>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+      authDomain: "crewapplication-c37a8.firebaseapp.com",
+      projectId: "crewapplication-c37a8",
+      storageBucket: "crewapplication-c37a8.appspot.com",
+      messagingSenderId: "23423243284",
+      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const shipId = params.get("shipId");
+
+    const crewTable = document.getElementById("crewTableBody");
+    const form = document.getElementById("addCrewForm");
+
+    async function loadCrew() {
+      crewTable.innerHTML = "";
+      const crewRef = collection(db, `ships/${shipId}/crew`);
+      const snapshot = await getDocs(crewRef);
+      snapshot.forEach(docSnap => {
+        const crew = docSnap.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${crew.fullName}</td>
+          <td>${crew.rank}</td>
+          <td>${crew.joinDate}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteCrew('${docSnap.id}')">Delete</button></td>
+        `;
+        crewTable.appendChild(tr);
+      });
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById("fullName").value;
+      const rank = document.getElementById("rank").value;
+      const joinDate = document.getElementById("joinDate").value;
+
+      await addDoc(collection(db, `ships/${shipId}/crew`), {
+        fullName,
+        rank,
+        joinDate
+      });
+
+      form.reset();
+      loadCrew();
+    });
+
+    window.deleteCrew = async (id) => {
+      await deleteDoc(doc(db, `ships/${shipId}/crew/${id}`));
+      loadCrew();
+    };
+
+    loadCrew();
+  </script>
+</body>
+</html>
