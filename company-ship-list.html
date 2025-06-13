@@ -5,13 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Company Ship List</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { background-color: #eef4fb; padding: 30px 10px; }
-    .ship-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .form-section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-bottom: 30px; }
-    #languageSwitcher { position: absolute; top: 20px; right: 20px; width: auto; }
-  </style>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
@@ -40,7 +35,7 @@
       <button class="btn btn-outline-success" onclick="exportShipsToExcel()">Export to Excel</button>
     </div>
 
-    <div class="form-section">
+    <div class="form-box">
       <h5>Add or Update Ship</h5>
       <form id="addShipForm">
         <input type="hidden" id="editIndex">
@@ -62,22 +57,9 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { getFirestore, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     let currentUser, shipArray = [];
 
@@ -183,10 +165,8 @@
     };
 
     window.logout = function () {
-      auth.signOut().then(() => {
-        localStorage.removeItem("role");
-        location.href = "index.html";
-      });
+      localStorage.removeItem("role");
+      location.href = "index.html";
     };
   </script>
 </body>

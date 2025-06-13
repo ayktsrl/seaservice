@@ -1,16 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ship Crew List</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { background-color: #eef4fb; padding: 30px 10px; }
-    .crew-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 1000px; margin: auto; }
-    #searchInput { max-width: 400px; margin: 0 auto 20px; display: block; }
-  </style>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
@@ -30,61 +26,54 @@
           <li class="nav-item"><a class="nav-link active" href="ship-crew-list.html">Crew List</a></li>
           <li class="nav-item"><a class="nav-link" href="change-password.html">Change Password</a></li>
         </ul>
+        <button class="btn btn-sm btn-light" onclick="logout()">Logout</button>
       </div>
     </div>
   </nav>
 
-  <div class="crew-box">
-    <h4 class="mb-4 text-center">Crew List for Selected Ship</h4>
-    <input type="text" id="searchInput" class="form-control" placeholder="Search by name or rank">
+  <div class="container">
+    <div class="crew-box">
+      <h4 class="mb-4 text-center">Crew List for Selected Ship</h4>
+      <input type="text" id="searchInput" class="form-control" placeholder="Search by name or rank">
 
-    <form id="addCrewForm" class="row g-3 mt-3 mb-4">
-      <div class="col-md-4">
-        <input type="text" class="form-control" id="fullName" placeholder="Full Name" required />
-      </div>
-      <div class="col-md-3">
-        <input type="text" class="form-control" id="rank" placeholder="Rank" required />
-      </div>
-      <div class="col-md-3">
-        <input type="date" class="form-control" id="joinDate" required />
-      </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">Add</button>
-      </div>
-    </form>
+      <form id="addCrewForm" class="row g-3 mt-3 mb-4">
+        <div class="col-md-4">
+          <input type="text" class="form-control" id="fullName" placeholder="Full Name" required />
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" id="rank" placeholder="Rank" required />
+        </div>
+        <div class="col-md-3">
+          <input type="date" class="form-control" id="joinDate" required />
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">Add</button>
+        </div>
+      </form>
 
-    <div class="d-flex justify-content-end mb-2">
-      <button class="btn btn-outline-success" onclick="exportToExcel()">Export to Excel</button>
+      <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-outline-success" onclick="exportToExcel()">Export to Excel</button>
+      </div>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Rank</th>
+            <th>Joining Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="crewTableBody"></tbody>
+      </table>
     </div>
-
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Rank</th>
-          <th>Joining Date</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="crewTableBody"></tbody>
-    </table>
   </div>
 
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    import { auth } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { db } from './firebase-config.js';
+    import { collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const params = new URLSearchParams(window.location.search);
     const shipId = params.get("shipId");
@@ -93,6 +82,11 @@
     const form = document.getElementById("addCrewForm");
     const searchInput = document.getElementById("searchInput");
     let allCrew = [];
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = "index.html";
+      loadCrew();
+    });
 
     async function loadCrew() {
       crewTable.innerHTML = "";
@@ -155,7 +149,10 @@
       renderCrewList(filtered);
     });
 
-    loadCrew();
+    window.logout = () => {
+      localStorage.removeItem("role");
+      location.href = "index.html";
+    };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

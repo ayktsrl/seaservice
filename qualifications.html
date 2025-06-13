@@ -1,3 +1,4 @@
+<!-- qualifications.html (modular version) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,181 +6,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Qualifications</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <style>
-    .section-box {
-      border: 1px solid #ccc;
-      padding: 20px;
-      margin-top: 20px;
-      background: #f9f9f9;
-    }
-    .section-title {
-      background-color: #0d6efd;
-      color: #fff;
-      padding: 8px 12px;
-      font-weight: bold;
-      margin: -20px -20px 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <div class="container mt-4">
-    <form id="qualificationsForm">
-      <div class="section-box">
-        <div class="section-title">Qualifications</div>
+<body class="bg-light p-4">
+  <div class="container">
+    <form id="qualificationsForm" class="form-box">
+      <div class="section-title">Qualifications</div>
 
-        <div class="mb-3">
-          <label class="form-label">Rank Applied</label>
-          <select class="form-select" id="rankApplied">
-            <option>MASTER</option>
-            <option>CHIEF OFFICER</option>
-            <option>SECOND OFFICER</option>
-            <option>THIRD OFFICER</option>
-            <option>FOURTH OFFICER</option>
-            <option>JUNIOR OFFICER</option>
-            <option>DECK CADET</option>
-            <option>RADIO OFFICER</option>
-            <option>CHIEF ENGINEER</option>
-            <option>SECOND ENGINEER</option>
-            <option>THIRD ENGINEER</option>
-            <option>FOURTH ENGINEER</option>
-            <option>FIFTH ENGINEER</option>
-            <option>JUNIOR ENGINEER</option>
-            <option>ENGINE CADET</option>
-            <option>ELECTRICAL ENGINEER</option>
-            <option>ELECTRO TECH OFFICER</option>
-            <option>ELECTRICIAN</option>
-            <option>ASSISTANT ELECTRICIAN</option>
-            <option>ELECTRO TECH TRAINEE</option>
-            <option>ELECTRO CADET</option>
-            <option>BOSUN</option>
-            <option>PUMPMAN</option>
-            <option>ABLE SEAMAN</option>
-            <option>ORDINARY SEAMAN</option>
-            <option>FITTER</option>
-            <option>MOTORMAN</option>
-            <option>OILER</option>
-            <option>WIPER</option>
-            <option>CHIEF STEWARD</option>
-            <option>COOK</option>
-            <option>2ND COOK</option>
-            <option>MESSMAN</option>
-            <option>CATERING BOY</option>
-            <option>CARGO ENGINEER/3RD ENGINEER</option>
-            <option>REEFER MAN</option>
-            <option>SAFETY OFFICER</option>
-            <option>SAFETY AND QUALITY COORDINATOR</option>
-            <option>SUPERNUMERARY</option>
-            <option>SUPERINTENDENT</option>
-            <option>PMS ENGINEER</option>
-            <option>CHIEF ELECT OFFICER</option>
-          </select>
-        </div>
+      <div class="mb-3">
+        <label class="form-label">Rank Applied</label>
+        <select class="form-select" id="rankApplied"></select>
+      </div>
 
-        <div class="mb-3">
-          <label class="form-label">Lowest Rank Acceptable</label>
-          <select class="form-select" id="lowestRank">
-            <option>MASTER</option>
-            <option>CHIEF OFFICER</option>
-            <option>SECOND OFFICER</option>
-            <option>THIRD OFFICER</option>
-            <option>FOURTH OFFICER</option>
-            <option>JUNIOR OFFICER</option>
-            <option>DECK CADET</option>
-            <option>RADIO OFFICER</option>
-            <option>CHIEF ENGINEER</option>
-            <option>SECOND ENGINEER</option>
-            <option>THIRD ENGINEER</option>
-            <option>FOURTH ENGINEER</option>
-            <option>FIFTH ENGINEER</option>
-            <option>JUNIOR ENGINEER</option>
-            <option>ENGINE CADET</option>
-            <option>ELECTRICAL ENGINEER</option>
-            <option>ELECTRO TECH OFFICER</option>
-            <option>ELECTRICIAN</option>
-            <option>ASSISTANT ELECTRICIAN</option>
-            <option>ELECTRO TECH TRAINEE</option>
-            <option>ELECTRO CADET</option>
-            <option>BOSUN</option>
-            <option>PUMPMAN</option>
-            <option>ABLE SEAMAN</option>
-            <option>ORDINARY SEAMAN</option>
-            <option>FITTER</option>
-            <option>MOTORMAN</option>
-            <option>OILER</option>
-            <option>WIPER</option>
-            <option>CHIEF STEWARD</option>
-            <option>COOK</option>
-            <option>2ND COOK</option>
-            <option>MESSMAN</option>
-            <option>CATERING BOY</option>
-            <option>CARGO ENGINEER/3RD ENGINEER</option>
-            <option>REEFER MAN</option>
-            <option>SAFETY OFFICER</option>
-            <option>SAFETY AND QUALITY COORDINATOR</option>
-            <option>SUPERNUMERARY</option>
-            <option>SUPERINTENDENT</option>
-            <option>PMS ENGINEER</option>
-            <option>CHIEF ELECT OFFICER</option>
-          </select>
-        </div>
+      <div class="mb-3">
+        <label class="form-label">Lowest Rank Acceptable</label>
+        <select class="form-select" id="lowestRank"></select>
+      </div>
 
-        <div class="mb-3">
-          <label class="form-label">Preferred Vessel Type</label>
-          <select class="form-select" id="vesselType">
-            <option>Oil - Crude/Oil Products Tanker</option>
-            <option>Oil - Products Tanker</option>
-            <option>Oil - Tanker (unspecified)</option>
-            <option>Oil - Asphalt/Bitumen Tanker</option>
-            <option>Oil - Vegetable Oil Tanker</option>
-            <option>Oil - Edible Oil Tanker</option>
-            <option>Oil - Crude Oil Tanker</option>
-            <option>Oil - Shuttle Tanker</option>
-            <option>Oil - Coal/Oil Mixture Tanker</option>
-            <option>Bulk Dry/Oil - Ore/Oil Carrier</option>
-            <option>Bulk Dry/Oil - Bulk/Oil Carrier (OBO)</option>
-            <option>Bulk Dry/Oil - Bulk/Caustic Soda Carrier (CABU)</option>
-            <option>Bulk Dry/Oil - Ore/Bulk/Products Carrier</option>
-            <option>General Cargo - General Cargo/Tanker (Container/oil/bulk - COB ship)</option>
-            <option>Other Offshore - FSO, Oil</option>
-            <option>Other Offshore - FPSO, Oil</option>
-            <option>Inland Waterways Tanker - Oil Tanker, Inland Waterways</option>
-            <option>Inland Waterways Tanker - Edible Oil Tanker, Inland Waterways</option>
-            <option>Inland Waterways Tanker - Vegetable Oil Tanker, Inland Waterways</option>
-            <option>Inland Waterways Other Non Seagoing - Dredging, Inland Waterways</option>
-            <option>Inland Waterways Other Non Seagoing - Fishing, Inland Waterways</option>
-            <option>Inland Waterways Other Non Seagoing - Research, Inland Waterways</option>
-            <option>Inland Waterways Other Non Seagoing - Towing/Pushing, Inland Waterways</option>
-            <option>Inland Waterways Other Non Seagoing - Other Activities, Inland Waterways</option>
-            <option>Non Propelled - Crude Oil Tank Barge, non propelled</option>
-            <option>Non Propelled - Oil Storage Barge, non propelled</option>
-          </select>
-        </div>
+      <div class="mb-3">
+        <label class="form-label">Preferred Vessel Type</label>
+        <select class="form-select" id="vesselType"></select>
+      </div>
 
-        <div class="mb-3">
-          <label class="form-label">Readiness Date</label>
-          <input type="date" class="form-control" id="readiness">
-        </div>
+      <div class="mb-3">
+        <label class="form-label">Readiness Date</label>
+        <input type="date" class="form-control" id="readiness" />
+      </div>
+
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </form>
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
+    async function loadOptions(selectId, file) {
+      const res = await fetch(file);
+      const html = await res.text();
+      document.getElementById(selectId).innerHTML = html;
+    }
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    loadOptions("rankApplied", "options-ranks.html");
+    loadOptions("lowestRank", "options-ranks.html");
+    loadOptions("vesselType", "options-vessels.html");
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return;

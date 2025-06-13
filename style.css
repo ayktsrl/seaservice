@@ -1,0 +1,140 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+nav {
+  background-color: #333;
+  color: white;
+  padding: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* From change-password.html and index.html refinements */
+.form-box {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  max-width: 500px;
+  margin: auto;
+}
+
+.login-wrapper {
+  max-width: 400px;
+  margin: auto;
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.form-title {
+  margin-bottom: 25px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+/* From register.html refinements */
+.register-body {
+  background: #f2f8ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.register-box {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 500px;
+}
+
+.language-switcher {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: auto;
+}
+
+/* From view-cv.html refinements */
+.cv-section {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+}
+
+.section-title {
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+}
+
+/* From my-applications.html */
+.application-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+/* From main.html refinements */
+.sidebar {
+  min-height: 100vh;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  padding-top: 30px;
+}
+
+.sidebar a {
+  display: block;
+  padding: 10px 20px;
+  color: #000;
+  text-decoration: none;
+}
+
+.sidebar a:hover {
+  background-color: #f0f0f0;
+}
+
+.sidebar a.active {
+  background-color: #d9eaff;
+  font-weight: bold;
+  border-left: 4px solid #0d6efd;
+}
+
+.content {
+  padding: 30px;
+}
+
+iframe {
+  border: none;
+  width: 100%;
+  height: 85vh;
+}
+
+/* From job-board.html */
+.job-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+#messageBox {
+  max-width: 800px;
+  margin: 0 auto 20px;
+  display: none;
+}

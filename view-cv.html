@@ -5,27 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Seafarer CV</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <style>
-    body {
-      background: #eef4fb;
-      padding: 30px 10px;
-    }
-    .cv-section {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
-      margin-bottom: 30px;
-    }
-    .section-title {
-      border-bottom: 1px solid #ccc;
-      margin-bottom: 15px;
-      padding-bottom: 5px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
+  <div class="container py-4">
     <h3 class="text-center mb-4">Seafarer CV</h3>
     <div id="cvContainer"></div>
     <div class="text-center mt-4">
@@ -33,40 +16,34 @@
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.firebasestorage.app",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const container = document.getElementById("cvContainer");
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get("userId");
 
-    auth.onAuthStateChanged(user => {
-      if (!user) return window.location.href = "index.html";
+    if (!userId) {
+      container.innerHTML = "<p class='text-danger'>Invalid user ID</p>";
+    } else {
+      onAuthStateChanged(auth, async user => {
+        if (!user) {
+          window.location.href = "index.html";
+          return;
+        }
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const userId = urlParams.get("userId");
-      const container = document.getElementById("cvContainer");
+        try {
+          const docRef = doc(db, "seafarers", userId);
+          const docSnap = await getDoc(docRef);
 
-      if (!userId) {
-        container.innerHTML = "<p class='text-danger'>Invalid user ID</p>";
-      } else {
-        db.collection("seafarers").doc(userId).get().then(doc => {
-          if (!doc.exists) {
+          if (!docSnap.exists()) {
             container.innerHTML = "<p class='text-muted'>CV not found.</p>";
             return;
           }
 
-          const data = doc.data();
+          const data = docSnap.data();
           const personal = data.personalDetails || {};
           const seaList = data.seaServiceRecords || [];
           const skills = data.specialSkills || [];
@@ -108,9 +85,11 @@
           `;
 
           container.appendChild(el);
-        });
-      }
-    });
+        } catch (err) {
+          container.innerHTML = `<p class="text-danger">Error loading CV: ${err.message}</p>`;
+        }
+      });
+    }
   </script>
 </body>
 </html>

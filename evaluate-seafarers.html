@@ -1,16 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Evaluate Seafarers</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    .search-bar {
-      max-width: 400px;
-      margin: 0 auto 20px;
-    }
-  </style>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-light">
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
@@ -42,27 +37,15 @@
 
   <div class="container py-5">
     <h3 class="mb-4">Evaluate Verified Sea Services</h3>
-    <input type="text" id="searchInput" class="form-control search-bar" placeholder="Search by vessel or seafarer ID...">
+    <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search by vessel or seafarer ID...">
     <ul id="evaluationList" class="list-group"></ul>
   </div>
 
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { getFirestore, collectionGroup, updateDoc, doc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { collectionGroup, updateDoc, doc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
     let currentUser;
     let serviceList = [];
 
@@ -148,15 +131,13 @@
       });
 
       await loadEvaluations();
-    };
+    }
   </script>
 
   <script>
     function logout() {
-      firebase.auth().signOut().then(() => {
-        localStorage.removeItem("role");
-        location.href = "index.html";
-      });
+      localStorage.removeItem("role");
+      location.href = "index.html";
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

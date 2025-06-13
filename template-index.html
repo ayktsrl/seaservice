@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Index Page</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <main class="container mt-4">
+    <h1>Welcome to the Index Page</h1>
+    <div id="options-preview" class="mt-4"></div>
+  </main>
+
+  <script>
+    // Navbar load
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById('navbar-container').innerHTML = data;
+      });
+
+    // Load options from options.html and display sample
+    fetch("options.html")
+      .then(res => res.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+
+        const countries = JSON.parse(doc.getElementById("countryCodes").textContent);
+        const ranks = JSON.parse(doc.getElementById("ranks").textContent);
+
+        const optionsDiv = document.getElementById("options-preview");
+
+        optionsDiv.innerHTML = `
+          <h4>Example Country: ${countries[0].flag} ${countries[0].name} (${countries[0].code})</h4>
+          <h4>Example Rank: ${ranks[0].en} / ${ranks[0].tr}</h4>
+        `;
+      });
+  </script>
+</body>
+</html>

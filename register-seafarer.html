@@ -5,26 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Register - Seafarer App</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <style>
-    body {
-      background: #f2f8ff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 40px 10px;
-      min-height: 100vh;
-    }
-    .register-box {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 500px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="register-body">
   <div class="register-box">
     <h4 class="mb-4 text-center">Seafarer Registration</h4>
     <form id="registrationForm">
@@ -45,22 +28,9 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getFirestore, setDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    import { auth, db } from './firebase-config.js';
+    import { setDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
     const email = localStorage.getItem("registrationEmail");
     if (!email) {
@@ -77,6 +47,7 @@
 
       onAuthStateChanged(auth, async user => {
         if (!user) return;
+
         try {
           await setDoc(doc(db, "seafarers", user.uid), {
             phone,
@@ -85,6 +56,7 @@
             createdAt: new Date().toISOString(),
             userId: user.uid
           });
+
           localStorage.setItem("role", "seafarer");
           alert("Seafarer registered successfully.");
           window.location.href = "job-board.html";

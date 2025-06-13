@@ -5,15 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Education</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { background-color: #eef4fb; padding: 20px; }
-    table th, table td { vertical-align: middle; text-align: center; }
-    .form-slide { display: none; margin-top: 20px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
-    .form-slide.active { display: block; }
-    .add-btn { width: 40px; height: 40px; font-size: 20px; padding: 0; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="bg-light p-4">
   <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4 class="fw-bold">Education</h4>
@@ -58,111 +52,98 @@
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import {
-      getFirestore, collection, addDoc, updateDoc, deleteDoc, getDocs, query, where, doc
-    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import {
+    collection, addDoc, updateDoc, deleteDoc, getDocs, query, where, doc
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+  let userId = null;
+  let editId = null;
+
+  const formEl = document.getElementById('form');
+  const list = document.getElementById('educationList');
+  const container = document.getElementById('educationForm');
+  const submitBtn = document.getElementById('submitBtn');
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) return window.location.href = 'index.html';
+    userId = user.uid;
+    await render();
+  });
+
+  window.openForm = function (id = null, data = null) {
+    container.classList.add('active');
+    submitBtn.textContent = id ? 'Save' : 'Add';
+    editId = id;
+    formEl.reset();
+    if (data) {
+      formEl.type.value = data.type;
+      formEl.name.value = data.name;
+      formEl.fromYear.value = data.fromYear;
+      formEl.toYear.value = data.toYear;
+      formEl.qualification.value = data.qualification;
+      formEl.address.value = data.address;
+      formEl.remarks.value = data.remarks;
+    }
+  }
+
+  window.closeForm = function () {
+    container.classList.remove('active');
+    editId = null;
+  }
+
+  formEl.addEventListener('submit', async e => {
+    e.preventDefault();
+    const data = {
+      userId,
+      type: formEl.type.value,
+      name: formEl.name.value,
+      fromYear: formEl.fromYear.value,
+      toYear: formEl.toYear.value,
+      qualification: formEl.qualification.value,
+      address: formEl.address.value,
+      remarks: formEl.remarks.value
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth();
+    if (editId) await updateDoc(doc(db, 'education', editId), data);
+    else await addDoc(collection(db, 'education'), data);
 
-    let userId = null;
-    let editId = null;
+    await render();
+    closeForm();
+  });
 
-    const formEl = document.getElementById('form');
-    const list = document.getElementById('educationList');
-    const container = document.getElementById('educationForm');
-    const submitBtn = document.getElementById('submitBtn');
-
-    onAuthStateChanged(auth, async user => {
-      if (!user) return window.location.href = 'index.html';
-      userId = user.uid;
-      await render();
+  async function render() {
+    list.innerHTML = '';
+    const q = query(collection(db, 'education'), where('userId', '==', userId));
+    const snap = await getDocs(q);
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>
+          <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${docSnap.id}", ${JSON.stringify(data)})'>✏️</button>
+          <button class="btn btn-sm btn-outline-danger" onclick='deleteEducation("${docSnap.id}")'>❌</button>
+        </td>
+        <td>${data.type}</td>
+        <td>${data.name}</td>
+        <td>${data.fromYear}</td>
+        <td>${data.toYear}</td>
+        <td>${data.qualification}</td>
+        <td>${data.address}</td>
+        <td>${data.remarks}</td>
+      `;
+      list.appendChild(row);
     });
+  }
 
-    window.openForm = function (id = null, data = null) {
-      container.classList.add('active');
-      submitBtn.textContent = id ? 'Save' : 'Add';
-      editId = id;
-      formEl.reset();
-      if (data) {
-        formEl.type.value = data.type;
-        formEl.name.value = data.name;
-        formEl.fromYear.value = data.fromYear;
-        formEl.toYear.value = data.toYear;
-        formEl.qualification.value = data.qualification;
-        formEl.address.value = data.address;
-        formEl.remarks.value = data.remarks;
-      }
-    }
-
-    window.closeForm = function () {
-      container.classList.remove('active');
-      editId = null;
-    }
-
-    formEl.addEventListener('submit', async e => {
-      e.preventDefault();
-      const data = {
-        userId,
-        type: formEl.type.value,
-        name: formEl.name.value,
-        fromYear: formEl.fromYear.value,
-        toYear: formEl.toYear.value,
-        qualification: formEl.qualification.value,
-        address: formEl.address.value,
-        remarks: formEl.remarks.value
-      };
-
-      if (editId) await updateDoc(doc(db, 'education', editId), data);
-      else await addDoc(collection(db, 'education'), data);
-
+  window.deleteEducation = async function (id) {
+    if (confirm('Are you sure you want to delete this entry?')) {
+      await deleteDoc(doc(db, 'education', id));
       await render();
-      closeForm();
-    });
-
-    async function render() {
-      list.innerHTML = '';
-      const q = query(collection(db, 'education'), where('userId', '==', userId));
-      const snap = await getDocs(q);
-      snap.forEach(docSnap => {
-        const data = docSnap.data();
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>
-            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${docSnap.id}", ${JSON.stringify(data)})'>✏️</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='deleteEducation("${docSnap.id}")'>❌</button>
-          </td>
-          <td>${data.type}</td>
-          <td>${data.name}</td>
-          <td>${data.fromYear}</td>
-          <td>${data.toYear}</td>
-          <td>${data.qualification}</td>
-          <td>${data.address}</td>
-          <td>${data.remarks}</td>
-        `;
-        list.appendChild(row);
-      });
     }
-
-    window.deleteEducation = async function (id) {
-      if (confirm('Are you sure you want to delete this entry?')) {
-        await deleteDoc(doc(db, 'education'), id);
-        await render();
-      }
-    }
-  </script>
+  }
+</script>
 </body>
 </html>

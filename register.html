@@ -5,31 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title data-i18n="title">Register - Seafarer App</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <style>
-    body {
-      background: #f2f8ff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .register-box {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 500px;
-    }
-    .language-switcher {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: auto;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="register-body">
   <select id="languageSwitcher" class="form-select form-select-sm language-switcher">
     <option value="en">🇬🇧 English</option>
     <option value="tr">🇹🇷 Türkçe</option>
@@ -80,22 +58,11 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { auth } from "./firebase-config.js";
+    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
-      authDomain: "crewapplication-c37a8.firebaseapp.com",
-      projectId: "crewapplication-c37a8",
-      storageBucket: "crewapplication-c37a8.appspot.com",
-      messagingSenderId: "23423243284",
-      appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    async function handleRegister(event) {
+    // Register function
+    window.handleRegister = async function(event) {
       event.preventDefault();
 
       const userType = document.querySelector('input[name="userType"]:checked').value;
@@ -118,7 +85,6 @@
 
       try {
         await createUserWithEmailAndPassword(auth, email, password);
-
         const fullPhone = countryCode + phoneNumber;
 
         localStorage.setItem("registrationEmail", email);
@@ -131,67 +97,38 @@
         errorMessage.textContent = error.message;
         console.error("Registration failed:", error);
       }
-    }
+    };
 
-    window.handleRegister = handleRegister;
+    // Fetch countries from options.html
+    fetch("options.html")
+      .then(res => res.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const countries = JSON.parse(doc.getElementById("countryCodes").textContent);
+        const select = document.getElementById("countryCode");
 
-    // Ülke Kodları Dinamik Ekleme
-    const countries = [
-      { code: "+90", name: "Turkey", flag: "🇹🇷" },
-      { code: "+1", name: "United States", flag: "🇺🇸" },
-      { code: "+44", name: "United Kingdom", flag: "🇬🇧" },
-      { code: "+49", name: "Germany", flag: "🇩🇪" },
-      { code: "+33", name: "France", flag: "🇫🇷" },
-      { code: "+971", name: "UAE", flag: "🇦🇪" },
-      { code: "+61", name: "Australia", flag: "🇦🇺" },
-      { code: "+81", name: "Japan", flag: "🇯🇵" },
-      { code: "+86", name: "China", flag: "🇨🇳" },
-      { code: "+91", name: "India", flag: "🇮🇳" },
-      { code: "+55", name: "Brazil", flag: "🇧🇷" },
-      { code: "+34", name: "Spain", flag: "🇪🇸" },
-      { code: "+7", name: "Russia", flag: "🇷🇺" },
-      { code: "+82", name: "South Korea", flag: "🇰🇷" },
-      { code: "+62", name: "Indonesia", flag: "🇮🇩" },
-      { code: "+92", name: "Pakistan", flag: "🇵🇰" },
-      { code: "+351", name: "Portugal", flag: "🇵🇹" },
-      { code: "+39", name: "Italy", flag: "🇮🇹" },
-      { code: "+40", name: "Romania", flag: "🇷🇴" }
-      // Daha fazla ülke eklenebilir...
-    ];
+        countries.forEach(c => {
+          const option = document.createElement("option");
+          option.value = c.code;
+          option.textContent = `${c.flag} ${c.name} (${c.code})`;
+          select.appendChild(option);
+        });
+      });
 
-    const select = document.getElementById("countryCode");
-    countries.forEach(c => {
-      const option = document.createElement("option");
-      option.value = c.code;
-      option.textContent = `${c.flag} ${c.name} (${c.code})`;
-      select.appendChild(option);
-    });
-
-    // Dil desteği
+    // Translations
     const translations = {
       en: {
-        title: "Register - Seafarer App",
-        createAccount: "Create an Account",
-        userType: "User Type",
-        seafarer: "Seafarer",
-        company: "Company",
-        email: "Email address",
-        password: "Password (min 8 chars)",
-        confirmPassword: "Confirm Password",
-        phone: "Phone Number",
-        register: "Register"
+        title: "Register - Seafarer App", createAccount: "Create an Account",
+        userType: "User Type", seafarer: "Seafarer", company: "Company",
+        email: "Email address", password: "Password (min 8 chars)",
+        confirmPassword: "Confirm Password", phone: "Phone Number", register: "Register"
       },
       tr: {
-        title: "Kayıt - Gemi Adamı Uygulaması",
-        createAccount: "Hesap Oluştur",
-        userType: "Kullanıcı Türü",
-        seafarer: "Gemi Adamı",
-        company: "Şirket",
-        email: "E-posta adresi",
-        password: "Şifre (en az 8 karakter)",
-        confirmPassword: "Şifreyi Onayla",
-        phone: "Telefon Numarası",
-        register: "Kayıt Ol"
+        title: "Kayıt - Gemi Adamı Uygulaması", createAccount: "Hesap Oluştur",
+        userType: "Kullanıcı Türü", seafarer: "Gemi Adamı", company: "Şirket",
+        email: "E-posta adresi", password: "Şifre (en az 8 karakter)",
+        confirmPassword: "Şifreyi Onayla", phone: "Telefon Numarası", register: "Kayıt Ol"
       }
     };
 
