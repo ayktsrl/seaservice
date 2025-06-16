@@ -54,7 +54,8 @@
             dob,
             email,
             createdAt: new Date().toISOString(),
-            userId: user.uid
+            userId: user.uid,
+            role: "seafarer" // ✅ Eksik olan alan eklendi
           });
 
           localStorage.setItem("role", "seafarer");
