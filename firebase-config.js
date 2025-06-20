@@ -4,19 +4,20 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// Senin Firebase ayarların (örnek olarak yazıldı, kendi bilgilerinle değiştir)
+// 🔐 Gerçek Firebase yapılandırman
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
+  authDomain: "crewapplication-c37a8.firebaseapp.com",
+  projectId: "crewapplication-c37a8",
+  storageBucket: "crewapplication-c37a8.firebasestorage.app",
+  messagingSenderId: "23423243284",
+  appId: "1:23423243284:web:67e22f6ed057c74f4b4301",
+  measurementId: "G-DSSJMESQ7Z"
 };
 
-// 🚀 Firebase'i başlat
+// 🚀 Uygulamayı başlat
 const app = initializeApp(firebaseConfig);
 
-// 🔐 Auth ve 🔥 Firestore nesnelerini dışa aktar
+// 🔐 Auth ve Firestore'u dışa aktar
 export const auth = getAuth(app);
 export const db = getFirestore(app);
