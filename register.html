@@ -40,9 +40,8 @@
   </div>
 
   <script type="module">
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-    const auth = getAuth();
+    import { auth } from './firebase-config.js';
+    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const form = document.getElementById("registerForm");
     const errorMsg = document.getElementById("errorMsg");
@@ -63,7 +62,6 @@
 
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // Kayıt başarılı, kullanıcı tipi bazlı yönlendirme
         if (userType === "seafarer") {
           window.location.href = "seafarer-dashboard.html";
         } else {
