@@ -6,36 +6,69 @@
   <title>Certificates</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    @media (max-width: 768px) {
+      h4 {
+        font-size: 1.4rem;
+        text-align: center;
+      }
+
+      .table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        font-size: 0.9rem;
+      }
+
+      .form-label,
+      .form-control,
+      .btn,
+      .form-check-label {
+        font-size: 0.9rem;
+      }
+
+      .add-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+        padding: 0;
+      }
+
+      .form-slide {
+        padding: 15px;
+      }
+    }
+  </style>
 </head>
 <body class="bg-light p-4">
   <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <h4 class="fw-bold">Certificates</h4>
       <button class="btn btn-success rounded-circle add-btn" onclick="openForm()">+</button>
     </div>
 
-    <table class="table table-bordered table-striped">
-      <thead class="table-primary text-center">
-        <tr>
-          <th style="width: 80px;"></th>
-          <th>Certificate Type</th>
-          <th>Number</th>
-          <th>Issue Date</th>
-          <th>Expiry Date</th>
-          <th>Place of Issue</th>
-          <th>Issuing Authority</th>
-          <th>Remarks</th>
-        </tr>
-      </thead>
-      <tbody id="certList"></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="8" class="text-center text-muted small">
-            List all held and valid certificates.
-          </td>
-        </tr>
-      </tfoot>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="table-primary text-center">
+          <tr>
+            <th style="width: 80px;"></th>
+            <th>Certificate Type</th>
+            <th>Number</th>
+            <th>Issue Date</th>
+            <th>Expiry Date</th>
+            <th>Place of Issue</th>
+            <th>Issuing Authority</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="certList"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="8" class="text-center text-muted small">List all held and valid certificates.</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
 
     <div id="certForm" class="form-slide">
       <form id="form">
@@ -47,7 +80,8 @@
             <label class="form-label">Expiry Date</label>
             <input type="date" class="form-control" id="expiry">
             <div class="form-check mt-1">
-              <input type="checkbox" class="form-check-input" id="noExpiry"><label class="form-check-label">No expiry date</label>
+              <input type="checkbox" class="form-check-input" id="noExpiry">
+              <label class="form-check-label">No expiry date</label>
             </div>
           </div>
           <div class="col-md-6"><label class="form-label">Place of Issue</label><input type="text" class="form-control" id="place"></div>

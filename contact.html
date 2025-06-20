@@ -6,11 +6,38 @@
   <title>Contact</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    @media (max-width: 768px) {
+      .section-box {
+        padding: 20px;
+        background: #fff;
+        border-radius: 10px;
+      }
+
+      .section-title {
+        font-size: 1.4rem;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .form-label,
+      .form-control,
+      .form-select,
+      .btn,
+      small {
+        font-size: 0.95rem;
+      }
+
+      .input-group {
+        flex-wrap: nowrap;
+      }
+    }
+  </style>
 </head>
-<body>
-<div class="container mt-4">
+<body class="bg-light p-3">
+<div class="container">
   <form id="contactForm">
-    <div class="section-box">
+    <div class="section-box shadow-sm">
       <div class="section-title">Contact</div>
 
       <div class="mb-3">
@@ -45,6 +72,10 @@
       <div class="mb-3">
         <label class="form-label">Address</label>
         <textarea class="form-control" id="address" rows="2"></textarea>
+      </div>
+
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </div>
   </form>

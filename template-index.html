@@ -2,8 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Mobil uyum için eklendi -->
   <title>Index Page</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Gerekirse local stiller */
+    main.container {
+      padding: 20px;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+        text-align: center;
+      }
+
+      #options-preview h4 {
+        font-size: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <div id="navbar-container"></div>

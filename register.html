@@ -6,6 +6,51 @@
   <title data-i18n="title">Register - Seafarer App</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    @media (max-width: 768px) {
+      .register-box {
+        margin: 20px;
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      h4.text-center {
+        font-size: 1.25rem;
+      }
+
+      .form-label,
+      .form-check-label {
+        font-size: 0.95rem;
+      }
+
+      .form-control,
+      .form-select {
+        font-size: 0.95rem;
+      }
+
+      .btn {
+        font-size: 0.95rem;
+      }
+
+      .language-switcher {
+        top: 10px !important;
+        right: 10px !important;
+      }
+
+      .input-group {
+        flex-direction: column;
+      }
+
+      .input-group > .form-select {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+
+      .input-group > .form-control {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body class="register-body">
   <select id="languageSwitcher" class="form-select form-select-sm language-switcher">
@@ -61,7 +106,6 @@
     import { auth } from "./firebase-config.js";
     import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    // Register function
     window.handleRegister = async function(event) {
       event.preventDefault();
 
@@ -92,7 +136,6 @@
         localStorage.setItem("registrationPhone", fullPhone);
         localStorage.setItem("registrationUserType", userType);
 
-        // ✅ Yönlendirme düzeltildi
         window.location.href = userType === "seafarer"
           ? "register-seafarer.html"
           : "register-company.html";
@@ -103,7 +146,6 @@
       }
     };
 
-    // Fetch countries from options.html
     fetch("options.html")
       .then(res => res.text())
       .then(html => {
@@ -120,7 +162,6 @@
         });
       });
 
-    // Translations
     const translations = {
       en: {
         title: "Register - Seafarer App", createAccount: "Create an Account",

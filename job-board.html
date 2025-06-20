@@ -6,6 +6,32 @@
   <title data-i18n="title">Job Board</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    @media (max-width: 768px) {
+      h4.text-center {
+        font-size: 1.3rem;
+      }
+
+      .job-card {
+        padding: 15px;
+        border-radius: 10px;
+      }
+
+      .job-card h5 {
+        font-size: 1.1rem;
+      }
+
+      .job-card p,
+      .job-card button {
+        font-size: 0.95rem;
+      }
+
+      #messageBox {
+        font-size: 0.95rem;
+        padding: 8px;
+      }
+    }
+  </style>
 </head>
 <body>
   <div id="navbar-container"></div>
@@ -124,6 +150,7 @@
       translateUI();
     });
   </script>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -6,33 +6,69 @@
   <title>Vaccinations</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    @media (max-width: 768px) {
+      h4 {
+        font-size: 1.4rem;
+        text-align: center;
+      }
+
+      .table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        font-size: 0.9rem;
+      }
+
+      .btn, .form-control, .form-check-label {
+        font-size: 0.9rem;
+      }
+
+      .add-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+        padding: 0;
+      }
+
+      .form-slide {
+        padding: 15px;
+      }
+
+      .form-slide label {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
 </head>
 <body class="p-4 bg-light">
   <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <h4 class="fw-bold">Vaccinations</h4>
       <button class="btn btn-success rounded-circle add-btn" onclick="openForm()">+</button>
     </div>
 
-    <table class="table table-bordered table-striped">
-      <thead class="table-primary text-center">
-        <tr>
-          <th style="width: 80px;"></th>
-          <th>Number</th>
-          <th>Type</th>
-          <th>Issued</th>
-          <th>Expires</th>
-          <th>Place of Issue</th>
-          <th>Remarks</th>
-        </tr>
-      </thead>
-      <tbody id="vaccinationList"></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="7" class="text-center text-muted small">List all valid Vaccinations</td>
-        </tr>
-      </tfoot>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="table-primary text-center">
+          <tr>
+            <th style="width: 80px;"></th>
+            <th>Number</th>
+            <th>Type</th>
+            <th>Issued</th>
+            <th>Expires</th>
+            <th>Place of Issue</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="vaccinationList"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="7" class="text-center text-muted small">List all valid Vaccinations</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
 
     <div id="vaccinationForm" class="form-slide">
       <form id="form">
