@@ -16,6 +16,26 @@ body {
 }
 
 /* --------------------------------
+   Login Sayfası (Ortak Giriş Formları)
+---------------------------------*/
+.login-wrapper {
+  max-width: 400px;
+  width: 100%;
+  margin: 60px auto;
+  padding: 30px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-title {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+/* --------------------------------
    Navbar ve Genel Butonlar
 ---------------------------------*/
 .navbar {
@@ -111,29 +131,15 @@ p {
    Responsive ve Mobil Ayarlar
 ---------------------------------*/
 @media (max-width: 768px) {
-  /* Genel container padding */
   .container {
     padding: 10px;
   }
 
-  /* Yazı ve başlıklar küçülür */
-  h1 {
-    font-size: 1.8rem;
-  }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.6rem; }
+  h3 { font-size: 1.4rem; }
+  h4 { font-size: 1.2rem; }
 
-  h2 {
-    font-size: 1.6rem;
-  }
-
-  h3 {
-    font-size: 1.4rem;
-  }
-
-  h4 {
-    font-size: 1.2rem;
-  }
-
-  /* Form elemanları, butonlar küçülür */
   .form-control,
   .form-select,
   textarea,
@@ -141,42 +147,35 @@ p {
     font-size: 0.95rem;
   }
 
-  /* Buton tam genişlik */
   .btn {
     width: 100%;
     padding: 0.5rem 1rem;
   }
 
-  /* Navbar menü mobilde açılır */
   .navbar-collapse {
     background: #007bff;
     padding: 10px;
   }
 
-  /* Kartlar ve kutular alt alta dizilir */
   .d-flex.justify-content-between {
     flex-direction: column !important;
     gap: 10px;
   }
 
-  /* Tablo mobilde kaydırılabilir */
   .table-responsive {
     overflow-x: auto;
   }
 
-  /* Kart ve liste fontları küçülür */
   .ship-card, .application-card, .stat-card {
     font-size: 0.95rem;
     padding: 15px;
   }
 
-  /* Arama ve buton alanları alt alta gelir */
   .search-export-wrapper,
   .btn-group {
     flex-direction: column !important;
   }
 
-  /* Modal footer butonlar alt alta */
   .modal-footer {
     flex-direction: column;
     gap: 10px;
@@ -190,17 +189,14 @@ p {
 /* --------------------------------
    Özel Durumlar ve İnce Ayarlar
 ---------------------------------*/
-/* Checkbox label boyutu */
 .form-check-label {
   font-size: 0.95rem;
 }
 
-/* Küçük butonlar için genişlik */
 button.btn-sm {
   min-width: 80px;
 }
 
-/* Boşluk ayarları */
 .mb-3 {
   margin-bottom: 1rem !important;
 }
