@@ -128,6 +128,30 @@ p {
 }
 
 /* --------------------------------
+   Sidebar ve CV Panel Özel Stilleri
+---------------------------------*/
+.sidebar a {
+  display: block;
+  padding: 10px 12px;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+iframe#contentFrame {
+  width: 100%;
+  height: 75vh;
+  border: none;
+}
+
+#saveBtnContainer {
+  display: flex;
+  justify-content: end;
+  padding: 10px 0;
+}
+
+/* --------------------------------
    Responsive ve Mobil Ayarlar
 ---------------------------------*/
 @media (max-width: 768px) {
@@ -183,6 +207,15 @@ p {
 
   .modal-footer > * {
     width: 100%;
+  }
+
+  iframe#contentFrame {
+    height: 60vh;
+  }
+
+  #saveBtnContainer {
+    justify-content: center;
+    text-align: center;
   }
 }
 
