@@ -1,6 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
   <a class="navbar-brand" href="#" onclick="goToDashboard()">⚓ Seafarer App</a>
-  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
 
@@ -27,10 +28,8 @@
   </div>
 </nav>
 
-<script type="module">
-  import { auth } from './firebase-config.js';
-
-  window.goToDashboard = function () {
+<script>
+  function goToDashboard() {
     const role = localStorage.getItem("role");
     if (role === "seafarer") {
       window.location.href = "seafarer-dashboard.html";
@@ -39,20 +38,11 @@
     } else {
       window.location.href = "index.html";
     }
-  };
+  }
 
-  window.logout = function () {
+  function logout() {
     localStorage.removeItem("role");
     localStorage.removeItem("userId");
-    if (auth && auth.signOut) {
-      auth.signOut().then(() => {
-        window.location.href = "index.html";
-      }).catch((err) => {
-        console.error("Logout error:", err);
-        alert("Logout failed");
-      });
-    } else {
-      window.location.href = "index.html";
-    }
-  };
+    window.location.href = "index.html";
+  }
 </script>
