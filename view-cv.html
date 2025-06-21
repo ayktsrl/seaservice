@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Seafarer CV</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 
@@ -48,37 +48,11 @@
     </div>
   </div>
 
-  <!-- JS Logic -->
+  <!-- Firebase ve CV Script -->
   <script type="module">
     import { auth, db } from './firebase-config.js';
     import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
-    window.goToDashboard = function () {
-      const role = localStorage.getItem("role");
-      if (role === "seafarer") {
-        window.location.href = "seafarer-dashboard.html";
-      } else if (role === "company") {
-        window.location.href = "company-dashboard.html";
-      } else {
-        window.location.href = "index.html";
-      }
-    };
-
-    window.logout = function () {
-      localStorage.removeItem("role");
-      localStorage.removeItem("userId");
-      if (auth && auth.signOut) {
-        auth.signOut().then(() => {
-          window.location.href = "index.html";
-        }).catch((err) => {
-          console.error("Logout error:", err);
-          alert("Logout failed");
-        });
-      } else {
-        window.location.href = "index.html";
-      }
-    };
 
     const container = document.getElementById("cvContainer");
     const urlParams = new URLSearchParams(window.location.search);
@@ -148,6 +122,25 @@
           container.innerHTML = `<p class="text-danger">Error loading CV: ${err.message}</p>`;
         }
       });
+    }
+  </script>
+
+  <script>
+    function goToDashboard() {
+      const role = localStorage.getItem("role");
+      if (role === "seafarer") {
+        window.location.href = "seafarer-dashboard.html";
+      } else if (role === "company") {
+        window.location.href = "company-dashboard.html";
+      } else {
+        window.location.href = "index.html";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("role");
+      localStorage.removeItem("userId");
+      window.location.href = "index.html";
     }
   </script>
 </body>
