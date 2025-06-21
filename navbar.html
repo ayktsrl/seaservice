@@ -1,5 +1,5 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-  <a class="navbar-brand" href="index.html">⚓ Seafarer App</a>
+  <a class="navbar-brand" href="#" onclick="goToDashboard()">⚓ Seafarer App</a>
   <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -29,3 +29,16 @@
     </div>
   </div>
 </nav>
+
+<script>
+  function goToDashboard() {
+    const role = localStorage.getItem("role");
+    if (role === "seafarer") {
+      window.location.href = "seafarer-dashboard.html";
+    } else if (role === "company") {
+      window.location.href = "company-dashboard.html";
+    } else {
+      window.location.href = "index.html";
+    }
+  }
+</script>
