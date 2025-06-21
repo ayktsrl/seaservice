@@ -40,8 +40,9 @@
   </div>
 
   <script type="module">
-    import { auth } from './firebase-config.js';
+    import { auth, db } from './firebase-config.js';
     import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const form = document.getElementById("registerForm");
     const errorMsg = document.getElementById("errorMsg");
@@ -62,6 +63,14 @@
 
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
+
+        const collectionName = userType === "seafarer" ? "seafarers" : "companies";
+        await setDoc(doc(db, collectionName, uid), {
+          email: email,
+          createdAt: new Date().toISOString()
+        });
+
         if (userType === "seafarer") {
           window.location.href = "seafarer-dashboard.html";
         } else {
