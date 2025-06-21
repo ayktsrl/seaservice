@@ -7,9 +7,6 @@
   <div class="collapse navbar-collapse" id="navbarContent">
     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
       <li class="nav-item">
-        <a class="nav-link" href="dashboard.html">Dashboard</a>
-      </li>
-      <li class="nav-item">
         <a class="nav-link" href="job-board.html">Job Board</a>
       </li>
       <li class="nav-item">
@@ -32,6 +29,7 @@
 
 <script type="module">
   import { auth } from './firebase-config.js';
+
   window.goToDashboard = function () {
     const role = localStorage.getItem("role");
     if (role === "seafarer") {
