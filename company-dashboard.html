@@ -40,28 +40,28 @@
   <div class="container">
     <h3 class="mb-4">Dashboard</h3>
     <div class="row" id="statCards">
-      <div class="col-md-3">
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p>Total Jobs</p>
           <h3 id="jobCount">-</h3>
           <a href="create-job.html" class="btn btn-sm btn-outline-primary">Go</a>
         </div>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p>Total Applications</p>
           <h3 id="applicationCount">-</h3>
           <a href="company-applications.html" class="btn btn-sm btn-outline-primary">Go</a>
         </div>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p>Total Seafarers</p>
           <h3 id="seafarerCount">-</h3>
           <a href="public-cv-browser.html" class="btn btn-sm btn-outline-primary">Go</a>
         </div>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p>Total Ships</p>
           <h3 id="shipCount">-</h3>
@@ -73,7 +73,7 @@
 
   <!-- Navbar yükleyici -->
   <script>
-    fetch('navbar.html')
+    fetch('navbar-company.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
