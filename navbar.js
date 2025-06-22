@@ -1,4 +1,4 @@
-// Kullanıcının rolüne göre dashboard'a yönlendir
+// Fonksiyonları global yap
 window.goToDashboard = function () {
   const role = localStorage.getItem("role");
   if (role === "seafarer") {
@@ -10,14 +10,16 @@ window.goToDashboard = function () {
   }
 };
 
-// Çıkış işlemi
 window.logout = function () {
   localStorage.removeItem("role");
   location.href = "index.html";
 };
 
-// Navbar yüklendikten sonra butonlara tıklama olaylarını bağla
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("goToDashboardBtn")?.addEventListener("click", window.goToDashboard);
-  document.getElementById("logoutBtn")?.addEventListener("click", window.logout);
-});
+// Navbar yüklendikten sonra 100ms içinde butonları bağla
+setTimeout(() => {
+  const goBtn = document.getElementById("goToDashboardBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (goBtn) goBtn.addEventListener("click", window.goToDashboard);
+  if (logoutBtn) logoutBtn.addEventListener("click", window.logout);
+}, 100);
