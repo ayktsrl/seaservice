@@ -51,10 +51,6 @@
         <select class="form-select" id="vesselName" required></select>
       </div>
       <div class="mb-3">
-        <label class="form-label" data-i18n="vesselType">Vessel Type</label>
-        <select class="form-select" id="vesselType" required></select>
-      </div>
-      <div class="mb-3">
         <label class="form-label" data-i18n="joiningDate">Joining Date</label>
         <input type="date" class="form-control" id="joiningDate" required />
       </div>
@@ -75,7 +71,6 @@
     </form>
   </div>
 
-  <!-- Navbar yükleyici -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
@@ -90,21 +85,14 @@
   <script type="module">
     import { auth, db } from './firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { doc, collection, setDoc, getDoc, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { doc, collection, setDoc, query, where, getDocs, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const jobForm = document.getElementById('jobForm');
     const vesselSelect = document.getElementById('vesselName');
-    const vesselTypeSelect = document.getElementById('vesselType');
-
-    async function loadOptions(id, file) {
-      const res = await fetch(file);
-      const html = await res.text();
-      document.getElementById(id).innerHTML = html;
-    }
-
-    await loadOptions("vesselType", "options-vessels.html");
 
     let userId = null;
+    let shipMap = {}; // vessel name to type
+
     onAuthStateChanged(auth, async user => {
       if (!user) return location.href = "index.html";
       userId = user.uid;
@@ -115,6 +103,7 @@
       let options = "";
       querySnapshot.forEach(doc => {
         const shipData = doc.data();
+        shipMap[shipData.name] = shipData.type;
         options += `<option value="${shipData.name}">${shipData.name}</option>`;
       });
 
@@ -123,11 +112,12 @@
 
     jobForm.addEventListener('submit', async e => {
       e.preventDefault();
+      const selectedVessel = jobForm.vesselName.value;
       const data = {
         companyId: userId,
         position: jobForm.position.value,
-        vesselName: jobForm.vesselName.value,
-        vesselType: jobForm.vesselType.value,
+        vesselName: selectedVessel,
+        vesselType: shipMap[selectedVessel] || '',
         joiningDate: jobForm.joiningDate.value,
         duration: jobForm.duration.value,
         location: jobForm.location.value,
