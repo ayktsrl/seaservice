@@ -44,7 +44,7 @@
     <form id="jobForm">
       <div class="mb-3">
         <label class="form-label" data-i18n="position">Position</label>
-        <input type="text" class="form-control" id="position" required />
+        <select class="form-select" id="position" required></select>
       </div>
       <div class="mb-3">
         <label class="form-label" data-i18n="vesselName">Vessel Name</label>
@@ -55,12 +55,12 @@
         <input type="date" class="form-control" id="joiningDate" required />
       </div>
       <div class="mb-3">
-        <label class="form-label" data-i18n="duration">Duration</label>
-        <input type="text" class="form-control" id="duration" required />
+        <label class="form-label" data-i18n="contract">Contract</label>
+        <input type="text" class="form-control" id="contract" required />
       </div>
       <div class="mb-3">
         <label class="form-label" data-i18n="location">Location</label>
-        <input type="text" class="form-control" id="location" required />
+        <select class="form-select" id="location" required></select>
       </div>
       <div class="mb-3">
         <label class="form-label" data-i18n="notes">Notes</label>
@@ -79,6 +79,18 @@
         const script = document.createElement("script");
         script.src = "navbar.js";
         document.body.appendChild(script);
+      });
+
+    fetch('options-ranks.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('position').innerHTML = html;
+      });
+
+    fetch('options-countries.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('location').innerHTML = html;
       });
   </script>
 
@@ -119,7 +131,7 @@
         vesselName: selectedVessel,
         vesselType: shipMap[selectedVessel] || '',
         joiningDate: jobForm.joiningDate.value,
-        duration: jobForm.duration.value,
+        contract: jobForm.contract.value,
         location: jobForm.location.value,
         notes: jobForm.notes.value,
         createdAt: new Date().toISOString()
