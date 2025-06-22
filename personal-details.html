@@ -1,133 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Personal Details</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-
-    @media (max-width: 768px) {
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .section-box {
-      background: #fff;
-      padding: 1.5rem;
+    .form-section {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
       border-radius: 10px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
     }
-
-    .section-title {
-      font-size: 1.25rem;
-      font-weight: bold;
-      margin-bottom: 1.5rem;
-      text-align: center;
+    input[type="text"], select {
+      text-transform: uppercase;
     }
   </style>
 </head>
-<body class="bg-light p-3">
-  <div class="container">
+<body>
+  <div class="form-section">
+    <h5 class="mb-4 text-center">Personal Details (as per passport)</h5>
     <form id="personalForm">
-      <div class="section-box">
-        <div class="section-title">Personal Details (as per passport)</div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="firstName" class="form-label">First Name</label>
+          <input type="text" class="form-control restrict" id="firstName" name="firstName" required>
+        </div>
+        <div class="col-md-6">
+          <label for="lastName" class="form-label">Last Name</label>
+          <input type="text" class="form-control restrict" id="lastName" name="lastName" required>
+        </div>
+      </div>
 
-        <div class="form-grid">
+      <div class="mb-3">
+        <label for="middleNames" class="form-label">Middle/Other Names</label>
+        <input type="text" class="form-control restrict" id="middleNames" name="middleNames">
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Gender</label>
           <div>
-            <label class="form-label">First Name</label>
-            <input type="text" class="form-control" id="firstName" />
-          </div>
-          <div>
-            <label class="form-label">Last Name</label>
-            <input type="text" class="form-control" id="lastName" />
-          </div>
-          <div>
-            <label class="form-label">Middle/Other Names</label>
-            <input type="text" class="form-control" id="middleName" />
-          </div>
-          <div>
-            <label class="form-label">Gender</label><br/>
             <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="gender" value="male" id="genderMale"/>
-              <label class="form-check-label" for="genderMale">Male</label>
+              <input class="form-check-input" type="radio" name="gender" id="male" value="Male" checked>
+              <label class="form-check-label" for="male">Male</label>
             </div>
             <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="gender" value="female" id="genderFemale"/>
-              <label class="form-check-label" for="genderFemale">Female</label>
+              <input class="form-check-input" type="radio" name="gender" id="female" value="Female">
+              <label class="form-check-label" for="female">Female</label>
             </div>
           </div>
-          <div>
-            <label class="form-label">Date of Birth <small class="text-muted">(dd/mm/yyyy)</small></label>
-            <input type="date" class="form-control" id="dob" />
-          </div>
-          <div>
-            <label class="form-label">Place of Birth</label>
-            <input type="text" class="form-control" id="birthPlace" />
-          </div>
-          <div>
-            <label class="form-label">Nationality</label>
-            <select class="form-select" id="nationality">
-              <option value="">Select</option>
-              <option value="Afghan">Afghan</option>
-              <option value="Albanian">Albanian</option>
-              <option value="Algerian">Algerian</option>
-              <option value="American">American</option>
-              <option value="Turkish">Turkish</option>
-              <option value="Ukrainian">Ukrainian</option>
-              <option value="Vietnamese">Vietnamese</option>
-            </select>
-          </div>
+        </div>
+        <div class="col-md-6">
+          <label for="dob" class="form-label">Date of Birth <small>(dd/mm/yyyy)</small></label>
+          <input type="date" class="form-control" id="dob" name="dob" required>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="birthPlace" class="form-label">Place of Birth</label>
+          <input type="text" class="form-control restrict" id="birthPlace" name="birthPlace">
+        </div>
+        <div class="col-md-6">
+          <label for="nationality" class="form-label">Nationality</label>
+          <select class="form-select" id="nationality" name="nationality" required></select>
         </div>
       </div>
     </form>
   </div>
 
-  <script type="module">
-    import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
-      const ref = doc(db, "seafarers", user.uid, "cv", "personalDetails");
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
-        document.getElementById("firstName").value = data.firstName || "";
-        document.getElementById("lastName").value = data.lastName || "";
-        document.getElementById("middleName").value = data.middleName || "";
-        document.getElementById("dob").value = data.dob || "";
-        document.getElementById("birthPlace").value = data.birthPlace || "";
-        document.getElementById("nationality").value = data.nationality || "";
-        if (data.gender === "male") document.getElementById("genderMale").checked = true;
-        if (data.gender === "female") document.getElementById("genderFemale").checked = true;
-      }
+  <script>
+    document.querySelectorAll(".restrict").forEach(input => {
+      input.addEventListener("input", function () {
+        this.value = this.value.toUpperCase().replace(/[^A-Z\s]/g, "");
+      });
     });
 
-    document.getElementById("personalForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const user = auth.currentUser;
-      if (!user) return;
-      const ref = doc(db, "seafarers", user.uid, "cv", "personalDetails");
-      const data = {
-        firstName: document.getElementById("firstName").value,
-        lastName: document.getElementById("lastName").value,
-        middleName: document.getElementById("middleName").value,
-        dob: document.getElementById("dob").value,
-        birthPlace: document.getElementById("birthPlace").value,
-        nationality: document.getElementById("nationality").value,
-        gender: document.querySelector("input[name='gender']:checked")?.value || ""
-      };
-      await setDoc(ref, data);
-      alert("Saved successfully!");
-    });
+    fetch('options-nationality.html')
+      .then(res => res.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const options = doc.querySelector('select').innerHTML;
+        document.getElementById('nationality').innerHTML = options;
+      });
   </script>
 </body>
 </html>
