@@ -6,43 +6,66 @@
   <title data-i18n="title">Job Board</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    @media (max-width: 768px) {
-      h4.text-center {
-        font-size: 1.3rem;
-      }
-
-      .job-card {
-        padding: 15px;
-        border-radius: 10px;
-      }
-
-      .job-card h5 {
-        font-size: 1.1rem;
-      }
-
-      .job-card p,
-      .job-card button {
-        font-size: 0.95rem;
-      }
-
-      #messageBox {
-        font-size: 0.95rem;
-        padding: 8px;
-      }
-    }
-  </style>
 </head>
 <body>
   <div id="navbar-container"></div>
 
   <div class="container mt-4">
     <h4 class="mb-4 text-center" data-i18n="availableJobs">Available Job Postings</h4>
-    <div id="messageBox" class="alert"></div>
-    <div id="jobList"></div>
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <select id="filterVesselType" class="form-select">
+          <option value="">All Vessel Types</option>
+          <option value="Tanker">Tanker</option>
+          <option value="Bulk Carrier">Bulk Carrier</option>
+          <option value="Container">Container</option>
+          <option value="General Cargo">General Cargo</option>
+          <option value="RoRo">RoRo</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <select id="filterPosition" class="form-select">
+          <option value="">All Positions</option>
+          <option value="Master">Master</option>
+          <option value="Chief Officer">Chief Officer</option>
+          <option value="2nd Officer">2nd Officer</option>
+          <option value="Chief Engineer">Chief Engineer</option>
+          <option value="2nd Engineer">2nd Engineer</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="showOnlyMine" />
+          <label class="form-check-label" for="showOnlyMine" data-i18n="showOnlyMine">
+            Show only my applications
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div id="messageBox" class="alert" style="display:none;"></div>
+    <div id="countInfo" class="text-muted mb-2 small text-end"></div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle text-center">
+        <thead class="table-light">
+          <tr>
+            <th data-i18n="position">Position</th>
+            <th data-i18n="vesselType">Vessel Type</th>
+            <th data-i18n="vesselName">Vessel Name</th>
+            <th data-i18n="joiningDate">Joining Date</th>
+            <th data-i18n="contract">Contract</th>
+            <th data-i18n="location">Location</th>
+            <th data-i18n="notes">Notes</th>
+            <th data-i18n="action">Action</th>
+          </tr>
+        </thead>
+        <tbody id="jobList"></tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- Navbar yükleyici -->
   <script>
     fetch('navbar.html')
       .then(res => res.text())
@@ -57,7 +80,7 @@
   <script type="module">
     import { auth, db } from './firebase-config.js';
     import {
-      collection, query, where, getDocs, orderBy, addDoc
+      collection, query, where, getDocs, orderBy, addDoc, deleteDoc, doc
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
@@ -65,6 +88,12 @@
     if (role !== "seafarer") window.location.href = "index.html";
 
     const messageBox = document.getElementById("messageBox");
+    const container = document.getElementById("jobList");
+    const showOnlyMine = document.getElementById("showOnlyMine");
+    const filterVesselType = document.getElementById("filterVesselType");
+    const filterPosition = document.getElementById("filterPosition");
+    const countInfo = document.getElementById("countInfo");
+
     function showMessage(message, type = 'success') {
       messageBox.className = `alert alert-${type}`;
       messageBox.textContent = message;
@@ -72,52 +101,56 @@
       setTimeout(() => messageBox.style.display = 'none', 4000);
     }
 
-    onAuthStateChanged(auth, async user => {
-      if (!user) return window.location.href = "index.html";
+    let userId = null;
+    let appliedMap = new Map();
+    let allJobs = [];
 
-      const container = document.getElementById("jobList");
-      const appliedSnapshot = await getDocs(query(collection(db, "applications"), where("userId", "==", user.uid)));
-      const appliedJobIds = new Set(appliedSnapshot.docs.map(doc => doc.data().jobId));
+    function renderJobs() {
+      const filterType = filterVesselType.value;
+      const filterPos = filterPosition.value;
+      const onlyMine = showOnlyMine.checked;
 
-      const snapshot = await getDocs(query(collection(db, "jobPosts"), orderBy("createdAt", "desc")));
-      if (snapshot.empty) {
-        container.innerHTML = `<p class='text-muted' data-i18n="noJobs">No active job postings.</p>`;
+      const filtered = allJobs.filter(job => {
+        if (filterType && job.vesselType !== filterType) return false;
+        if (filterPos && job.position !== filterPos) return false;
+        if (onlyMine && !appliedMap.has(job.id)) return false;
+        return true;
+      });
+
+      countInfo.textContent = `Showing ${filtered.length} of ${allJobs.length} job postings`;
+
+      container.innerHTML = "";
+      if (filtered.length === 0) {
+        container.innerHTML = `<tr><td colspan="8" class="text-muted" data-i18n="noJobs">No matching job postings.</td></tr>`;
         return;
       }
 
-      snapshot.forEach(doc => {
-        const job = doc.data();
-        const jobId = doc.id;
-        const alreadyApplied = appliedJobIds.has(jobId);
-        const card = document.createElement("div");
-        card.className = "job-card";
-        card.innerHTML = `
-          <h5>${job.position}</h5>
-          <p><strong data-i18n="vesselType">Vessel Type:</strong> ${job.vesselType}</p>
-          <p><strong data-i18n="vesselName">Vessel Name:</strong> ${job.vesselName || "-"}</p>
-          <p><strong data-i18n="joiningDate">Joining Date:</strong> ${job.joiningDate}</p>
-          <p><strong data-i18n="duration">Duration:</strong> ${job.duration}</p>
-          <p><strong data-i18n="location">Location:</strong> ${job.location}</p>
-          <p><strong data-i18n="notes">Notes:</strong> ${job.notes || "No additional notes."}</p>
-          <button class="btn btn-sm btn-${alreadyApplied ? 'secondary' : 'success'} mt-2"
-            ${alreadyApplied ? 'disabled' : ''} onclick="applyJob('${jobId}')"
-            data-i18n="${alreadyApplied ? 'alreadyApplied' : 'apply'}"></button>`;
-        container.appendChild(card);
+      filtered.forEach(job => {
+        const applied = appliedMap.has(job.id);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${job.position}</td>
+          <td>${job.vesselType}</td>
+          <td>${job.vesselName}</td>
+          <td>${job.joiningDate}</td>
+          <td>${job.contract || '-'}</td>
+          <td>${job.location}</td>
+          <td title="${job.notes || ''}">${(job.notes || '-').slice(0, 30)}${(job.notes && job.notes.length > 30) ? '...' : ''}</td>
+          <td>
+            <button class="btn btn-sm ${applied ? 'btn-danger' : 'btn-success'}" onclick="${applied ? `withdrawApplication('${appliedMap.get(job.id)}', this)` : `applyJob('${job.id}', this)`}">
+              <span data-i18n="${applied ? 'withdraw' : 'apply'}">${applied ? 'Withdraw' : 'Apply'}</span>
+            </button>
+          </td>`;
+        container.appendChild(tr);
       });
+    }
 
-      translateUI();
-    });
-
-    window.applyJob = async function(jobId) {
-      const user = auth.currentUser;
-      if (!user) return showMessage("Please login first.", "danger");
-
-      const snapshot = await getDocs(query(collection(db, "applications"), where("userId", "==", user.uid), where("jobId", "==", jobId)));
-      if (!snapshot.empty) return showMessage("You have already applied to this job.", "warning");
-
+    window.applyJob = async function(jobId, btn) {
+      btn.disabled = true;
+      btn.textContent = "Processing...";
       await addDoc(collection(db, "applications"), {
         jobId,
-        userId: user.uid,
+        userId,
         appliedAt: new Date().toISOString(),
         status: "pending"
       });
@@ -125,34 +158,32 @@
       setTimeout(() => window.location.reload(), 1000);
     };
 
-    const translations = {
-      en: {
-        title: "Job Board", availableJobs: "Available Job Postings", noJobs: "No active job postings.",
-        vesselType: "Vessel Type:", vesselName: "Vessel Name:", joiningDate: "Joining Date:",
-        duration: "Duration:", location: "Location:", notes: "Notes:",
-        apply: "Apply", alreadyApplied: "Already Applied"
-      },
-      tr: {
-        title: "İş Panosu", availableJobs: "Mevcut İş İlanları", noJobs: "Aktif iş ilanı bulunmamaktadır.",
-        vesselType: "Gemi Tipi:", vesselName: "Gemi Adı:", joiningDate: "Katılım Tarihi:",
-        duration: "Süre:", location: "Lokasyon:", notes: "Notlar:",
-        apply: "Başvur", alreadyApplied: "Başvuruldu"
-      }
+    window.withdrawApplication = async function(applicationId, btn) {
+      btn.disabled = true;
+      btn.textContent = "Processing...";
+      await deleteDoc(doc(db, "applications", applicationId));
+      showMessage("Application withdrawn successfully.", "info");
+      setTimeout(() => window.location.reload(), 1000);
     };
 
-    function translateUI() {
-      const selectedLang = localStorage.getItem("language") || "en";
-      document.querySelectorAll("[data-i18n]").forEach(el => {
-        const key = el.getAttribute("data-i18n");
-        if (translations[selectedLang][key]) el.textContent = translations[selectedLang][key];
-      });
-      const switcher = document.getElementById("languageSwitcher");
-      if (switcher) switcher.value = selectedLang;
-    }
+    onAuthStateChanged(auth, async user => {
+      if (!user) return window.location.href = "index.html";
+      userId = user.uid;
 
-    document.addEventListener("DOMContentLoaded", () => {
-      translateUI();
+      const appliedSnapshot = await getDocs(query(collection(db, "applications"), where("userId", "==", userId)));
+      appliedSnapshot.forEach(doc => appliedMap.set(doc.data().jobId, doc.id));
+
+      const jobSnapshot = await getDocs(query(collection(db, "jobPosts"), orderBy("createdAt", "desc")));
+      jobSnapshot.forEach(doc => {
+        allJobs.push({ id: doc.id, ...doc.data() });
+      });
+
+      renderJobs();
     });
+
+    filterVesselType.addEventListener('change', renderJobs);
+    filterPosition.addEventListener('change', renderJobs);
+    showOnlyMine.addEventListener('change', renderJobs);
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
