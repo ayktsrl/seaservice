@@ -44,33 +44,7 @@
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#">🌝 Seafarer Panel</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarContent">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="job-board.html">Job Board</a></li>
-          <li class="nav-item"><a class="nav-link active" href="seafarer-dashboard.html">My CV</a></li>
-          <li class="nav-item"><a class="nav-link" href="my-applications.html">My Applications</a></li>
-        </ul>
-        <div class="dropdown me-2">
-          <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Profile</button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="change-password.html">Change Password</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="#" onclick="logout()">Log Out</a></li>
-          </ul>
-        </div>
-        <select id="languageSwitcher" class="form-select form-select-sm" style="width:auto;">
-          <option value="en">🇬🇧 English</option>
-          <option value="tr">🇹🇷 Türkçe</option>
-        </select>
-      </div>
-    </div>
-  </nav>
+  <div id="navbar-container"></div>
 
   <div class="container-fluid">
     <div class="row flex-column flex-md-row">
@@ -101,10 +75,15 @@
   </div>
 
   <script>
-    function logout() {
-      localStorage.removeItem("role");
-      window.location.href = "index.html";
-    }
+    // Navbar'ı yükle ve ardından JS dosyasını ekle
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById('navbar-container').innerHTML = data;
+        const script = document.createElement("script");
+        script.src = "navbar.js";
+        document.body.appendChild(script);
+      });
 
     function loadPage(page, linkElement) {
       document.getElementById("contentFrame").src = page;

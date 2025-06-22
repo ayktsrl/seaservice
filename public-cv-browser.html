@@ -37,37 +37,25 @@
   </style>
 </head>
 <body class="bg-light p-3">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="company-panel.html">🏢 Company Panel</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link active" href="public-cv-browser.html">CV Browser</a></li>
-          <li class="nav-item"><a class="nav-link" href="create-job.html">Post Job</a></li>
-          <li class="nav-item"><a class="nav-link" href="company-applications.html">Applications</a></li>
-          <li class="nav-item"><a class="nav-link" href="company-ship-list.html">My Ships</a></li>
-          <li class="nav-item"><a class="nav-link" href="company-verify-seaservice.html">Verify Services</a></li>
-          <li class="nav-item"><a class="nav-link" href="evaluate-seafarers.html">Evaluate Seafarers</a></li>
-          <li class="nav-item"><a class="nav-link" href="ship-crew-list.html">Crew List</a></li>
-          <li class="nav-item"><a class="nav-link" href="change-password.html">Change Password</a></li>
-        </ul>
-        <select id="languageSwitcher" class="form-select form-select-sm me-2" style="width: auto;">
-          <option value="en">🇬🇧 English</option>
-          <option value="tr">🇹🇷 Türkçe</option>
-        </select>
-        <button class="btn btn-sm btn-light" id="logoutBtn">Logout</button>
-      </div>
-    </div>
-  </nav>
+  <div id="navbar-container"></div>
 
   <div class="container">
     <h4 class="mb-4">Seafarer CVs</h4>
     <input type="text" id="searchInput" class="form-control mb-4" placeholder="Search by name, nationality, or rank...">
     <div id="cvList"></div>
   </div>
+
+  <!-- Navbar yükleyici -->
+  <script>
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-container").innerHTML = html;
+        const script = document.createElement("script");
+        script.src = "navbar.js";
+        document.body.appendChild(script);
+      });
+  </script>
 
   <script type="module">
     import { auth, db } from './firebase-config.js';
@@ -121,11 +109,6 @@
         (s.nationality || "").toLowerCase().includes(val)
       );
       renderCVList(filtered);
-    });
-
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      localStorage.removeItem("role");
-      signOut(auth).then(() => location.href = "index.html");
     });
   </script>
 

@@ -42,11 +42,15 @@
     <div id="jobList"></div>
   </div>
 
+  <!-- Navbar yükleyici -->
   <script>
     fetch('navbar.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
+        const script = document.createElement("script");
+        script.src = "navbar.js";
+        document.body.appendChild(script);
       });
   </script>
 
