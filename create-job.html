@@ -89,7 +89,7 @@
 
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { doc, collection, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const jobForm = document.getElementById('jobForm');
@@ -109,9 +109,13 @@
       if (!user) return location.href = "index.html";
       userId = user.uid;
 
-      const shipSnap = await getDoc(doc(db, "companies", user.uid));
-      const ships = shipSnap.exists() ? (shipSnap.data().ships || []) : [];
-      vesselSelect.innerHTML = ships.map(s => `<option value="${s}">${s}</option>`).join('');
+      const companyRef = doc(db, "companies", user.uid);
+      const companySnap = await getDoc(companyRef);
+
+      if (companySnap.exists()) {
+        const ships = companySnap.data().ships || [];
+        vesselSelect.innerHTML = ships.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+      }
     });
 
     jobForm.addEventListener('submit', async e => {
