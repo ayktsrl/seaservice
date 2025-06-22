@@ -63,7 +63,7 @@
         document.body.appendChild(script);
       });
 
-    fetch('options-vessel-type.html')
+    fetch('options-vessels.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("filterVesselType").innerHTML = '<option value="">All Vessel Types</option>' + html;
