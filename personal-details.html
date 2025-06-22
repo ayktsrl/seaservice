@@ -68,10 +68,18 @@
           <select class="form-select" id="nationality" name="nationality" required></select>
         </div>
       </div>
+
+      <div class="text-center">
+        <button type="submit" class="btn btn-success">Save</button>
+      </div>
     </form>
   </div>
 
-  <script>
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
     document.querySelectorAll(".restrict").forEach(input => {
       input.addEventListener("input", function () {
         this.value = this.value.toUpperCase().replace(/[^A-Z\s]/g, "");
@@ -86,6 +94,38 @@
         const options = doc.querySelector('select').innerHTML;
         document.getElementById('nationality').innerHTML = options;
       });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      const ref = doc(db, "seafarers", user.uid, "cv", "personalDetails");
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById("firstName").value = data.firstName || "";
+        document.getElementById("lastName").value = data.lastName || "";
+        document.getElementById("middleNames").value = data.middleNames || "";
+        document.getElementById("dob").value = data.dob || "";
+        document.getElementById("birthPlace").value = data.birthPlace || "";
+        document.getElementById("nationality").value = data.nationality || "";
+        if (data.gender === "Male") document.getElementById("male").checked = true;
+        if (data.gender === "Female") document.getElementById("female").checked = true;
+      }
+
+      document.getElementById("personalForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const data = {
+          firstName: document.getElementById("firstName").value,
+          lastName: document.getElementById("lastName").value,
+          middleNames: document.getElementById("middleNames").value,
+          dob: document.getElementById("dob").value,
+          birthPlace: document.getElementById("birthPlace").value,
+          nationality: document.getElementById("nationality").value,
+          gender: document.querySelector("input[name='gender']:checked")?.value || ""
+        };
+        await setDoc(ref, data);
+        alert("Saved to Firebase ✅");
+      });
+    });
   </script>
 </body>
 </html>
