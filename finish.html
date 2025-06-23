@@ -53,7 +53,7 @@
         <button class="btn btn-primary" id="finishBtn" disabled>
           Finished, please notify recruitment department
         </button>
-        <a href="view-application.html" class="btn btn-outline-primary">
+        <a id="viewCvBtn" href="#" class="btn btn-outline-primary" style="display: none;">
           View Application Form
         </a>
       </div>
@@ -116,6 +116,11 @@
       userId = user.uid;
       userEmail = user.email;
       currentUser = user;
+
+      // ✅ View CV link aktif ediliyor
+      const viewLink = document.getElementById("viewCvBtn");
+      viewLink.href = `view-cv.html?userId=${userId}`;
+      viewLink.style.display = "inline-block";
     });
 
     agreeCheck.addEventListener('change', () => {
