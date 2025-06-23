@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,19 +15,15 @@
     <h4 class="mb-4 text-center" data-i18n="availableJobs">Available Job Postings</h4>
     <div class="row mb-3">
       <div class="col-md-4">
-        <select id="filterVesselType" class="form-select">
-        </select>
+        <select id="filterVesselType" class="form-select"></select>
       </div>
       <div class="col-md-4">
-        <select id="filterPosition" class="form-select">
-        </select>
+        <select id="filterPosition" class="form-select"></select>
       </div>
       <div class="col-md-4">
         <div class="form-check">
           <input class="form-check-input" type="checkbox" id="showOnlyMine" />
-          <label class="form-check-label" for="showOnlyMine" data-i18n="showOnlyMine">
-            Show only my applications
-          </label>
+          <label class="form-check-label" for="showOnlyMine" data-i18n="showOnlyMine">Show only my applications</label>
         </div>
       </div>
     </div>
@@ -144,9 +141,28 @@
       });
     }
 
+    async function checkCvCompleteness(uid) {
+      const sections = ["personalDetails", "seaService", "certificates"];
+      for (const section of sections) {
+        const colRef = collection(db, `seafarers/${uid}/cv/${section}/items`);
+        const snap = await getDocs(colRef);
+        if (snap.empty) return false;
+      }
+      return true;
+    }
+
     window.applyJob = async function(jobId, btn) {
       btn.disabled = true;
       btn.textContent = "Processing...";
+
+      const cvComplete = await checkCvCompleteness(userId);
+      if (!cvComplete) {
+        showMessage("Please complete your CV before applying.", "warning");
+        btn.disabled = false;
+        btn.textContent = "Apply";
+        return;
+      }
+
       await addDoc(collection(db, "applications"), {
         jobId,
         userId,
