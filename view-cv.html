@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,7 +39,7 @@
   <!-- Firebase ve CV Script -->
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
     const container = document.getElementById("cvContainer");
@@ -55,19 +56,24 @@
         }
 
         try {
-          const docRef = doc(db, "seafarers", userId);
-          const docSnap = await getDoc(docRef);
+          // Fetch personalDetails
+          const personalSnap = await getDoc(doc(db, `seafarers/${userId}/cv/personalDetails`));
+          const personal = personalSnap.exists() ? personalSnap.data() : {};
 
-          if (!docSnap.exists()) {
-            container.innerHTML = "<p class='text-muted'>CV not found.</p>";
-            return;
-          }
+          // Fetch sea service
+          const seaSnap = await getDocs(collection(db, `seafarers/${userId}/seaService`));
+          const seaList = [];
+          seaSnap.forEach(doc => seaList.push(doc.data()));
 
-          const data = docSnap.data();
-          const personal = data.personalDetails || {};
-          const seaList = data.seaServiceRecords || [];
-          const skills = data.specialSkills || [];
-          const education = data.education || [];
+          // Fetch special skills
+          const skillSnap = await getDocs(collection(db, `seafarers/${userId}/cv/specialSkills/items`));
+          const skills = [];
+          skillSnap.forEach(doc => skills.push(doc.data()));
+
+          // Fetch education
+          const eduSnap = await getDocs(collection(db, `seafarers/${userId}/cv/education/items`));
+          const education = [];
+          eduSnap.forEach(doc => education.push(doc.data().school));
 
           const el = document.createElement("div");
           el.innerHTML = `
@@ -85,8 +91,8 @@
               ${seaList.length > 0 ? seaList.map(s => `
                 <div class="mb-2">
                   <p><strong>Rank:</strong> ${s.rank || ""}</p>
-                  <p><strong>Vessel:</strong> ${s.vesselName || ""} (${s.vesselType || ""})</p>
-                  <p><strong>Joined:</strong> ${s.joinedDate || ""} - <strong>Signed Off:</strong> ${s.signedOffDate || ""}</p>
+                  <p><strong>Vessel:</strong> ${s.vessel || ""} (${s.type || ""})</p>
+                  <p><strong>Start:</strong> ${s.startDate || ""} - <strong>End:</strong> ${s.endDate || ""}</p>
                   <p><strong>GRT/DWT:</strong> ${s.grt || "-"} / ${s.dwt || "-"}</p>
                 </div>
                 <hr/>
