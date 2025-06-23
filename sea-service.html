@@ -1,182 +1,118 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sea Service Records</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <style>
-    @media (max-width: 768px) {
-      h4, h5 { font-size: 1.4rem; text-align: center; }
-      .form-label, .form-control, .btn { font-size: 0.95rem; }
-      .form-box { padding: 15px; }
-      table { font-size: 0.85rem; }
-    }
-  </style>
+  <title>Sea Service</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="bg-light p-4">
-  <div class="container">
-    <h4 class="mb-4">Sea Service Record</h4>
-
-    <form id="seaServiceForm" class="form-box mb-5">
-      <div class="row g-3" id="formFields"></div>
-      <div class="mt-4 text-end">
-        <button type="submit" class="btn btn-success" id="submitBtn">Save Record</button>
-      </div>
-    </form>
-
-    <div>
-      <h5>My Sea Service History</h5>
-      <div class="table-responsive">
-        <table class="table table-striped table-bordered" id="serviceTable">
-          <thead class="table-dark">
-            <tr>
-              <th>Vessel</th><th>Rank</th><th>Company</th><th>IMO</th><th>Type</th><th>Engine</th>
-              <th>GRT</th><th>DWT</th><th>HP</th><th>KW</th><th>Area</th><th>Scope</th>
-              <th>Remarks</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
+<body class="p-4">
+  <h3 class="mb-4">Sea Service History</h3>
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="table-primary text-center">
+        <tr>
+          <th>Vessel</th>
+          <th>IMO</th>
+          <th>Type</th>
+          <th>Engine</th>
+          <th>GRT</th>
+          <th>Rank</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Verified</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="serviceTable"></tbody>
+    </table>
   </div>
+  <button class="btn btn-success mt-3" onclick="addRow()">➕ Add</button>
 
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import {
+      collection, addDoc, getDocs, deleteDoc, updateDoc, doc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    const fields = [
-      "vessel", "rank", "companyId", "imoNumber", "type", "engine", "grt", "dwt",
-      "hp", "kw", "area", "scope", "remarks", "startDate", "endDate"
-    ];
+    let userId = null;
+    let companyId = "DEFAULT_COMPANY_ID"; // bu kullanıcıya göre alınmalı
 
-    const fieldLabels = {
-      vessel: "Vessel Name", rank: "Rank", companyId: "Company (Owner)", imoNumber: "IMO Number",
-      type: "Type", engine: "Engine", grt: "GRT", dwt: "DWT", hp: "HP", kw: "KW",
-      area: "Area of Operation", scope: "Scope of Operation", remarks: "Remarks",
-      startDate: "Start Date", endDate: "End Date"
+    function createInput(value = "", type = "text") {
+      return \`<input class="form-control" type="\${type}" value="\${value}">\`;
+    }
+
+    function addRow(data = {}, docId = null) {
+      const table = document.getElementById("serviceTable");
+      const row = document.createElement("tr");
+      row.dataset.id = docId || "";
+      row.innerHTML = \`
+        <td>\${createInput(data.vessel)}</td>
+        <td>\${createInput(data.imo)}</td>
+        <td>\${createInput(data.type)}</td>
+        <td>\${createInput(data.engine)}</td>
+        <td>\${createInput(data.grt)}</td>
+        <td>\${createInput(data.rank)}</td>
+        <td>\${createInput(data.start, "date")}</td>
+        <td>\${createInput(data.end, "date")}</td>
+        <td class="text-center">\${data.isVerified ? "✅" : "❌"}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary" onclick="saveRow(this)">💾</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteRow(this)">🗑️</button>
+        </td>
+      \`;
+      table.appendChild(row);
+    }
+
+    window.addRow = () => addRow();
+
+    window.saveRow = async function (btn) {
+      const row = btn.closest("tr");
+      const inputs = row.querySelectorAll("input");
+      const data = {
+        vessel: inputs[0].value,
+        imo: inputs[1].value,
+        type: inputs[2].value,
+        engine: inputs[3].value,
+        grt: inputs[4].value,
+        rank: inputs[5].value,
+        start: inputs[6].value,
+        end: inputs[7].value,
+        isVerified: false,
+        companyId: companyId,
+        evaluation: { rating: null, comment: "" }
+      };
+      const id = row.dataset.id;
+      const ref = collection(db, \`seafarers/\${userId}/seaService\`);
+      if (id) {
+        await updateDoc(doc(ref, id), data);
+      } else {
+        const docRef = await addDoc(ref, data);
+        row.dataset.id = docRef.id;
+      }
+      alert("Saved.");
     };
 
-    const formRow = document.getElementById("formFields");
-    fields.forEach(f => {
-      const col = document.createElement("div");
-      col.className = "col-md-3";
-      col.innerHTML = `
-        <label class="form-label">${fieldLabels[f]}</label>
-        <input type="${f.includes('Date') ? 'date' : 'text'}" class="form-control" id="${f}" required>
-      `;
-      formRow.appendChild(col);
-    });
-
-    let currentUser;
-    let editingId = null;
+    window.deleteRow = async function (btn) {
+      const row = btn.closest("tr");
+      const id = row.dataset.id;
+      if (id) {
+        await deleteDoc(doc(db, \`seafarers/\${userId}/seaService/\${id}\`));
+      }
+      row.remove();
+    };
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return location.href = "index.html";
-      currentUser = user;
-      await loadSeaService();
-    });
+      if (!user) return window.location.href = "index.html";
+      userId = user.uid;
 
-    async function loadSeaService() {
-      const ref = collection(db, "seafarers", currentUser.uid, "seaService");
-      const snapshot = await getDocs(ref);
-      const tbody = document.querySelector("#serviceTable tbody");
-      tbody.innerHTML = "";
-
-      snapshot.forEach(docSnap => {
-        const d = docSnap.data();
-        const id = docSnap.id;
-
-        const row = document.createElement("tr");
-        row.id = `row-${id}`;
-        row.innerHTML = `
-          <td>${d.vessel}</td><td>${d.rank}</td><td>${d.companyId}</td><td>${d.imoNumber}</td>
-          <td>${d.type}</td><td>${d.engine}</td><td>${d.grt}</td><td>${d.dwt}</td>
-          <td>${d.hp}</td><td>${d.kw}</td><td>${d.area}</td><td>${d.scope}</td>
-          <td>${d.remarks}</td><td>${d.startDate}</td><td>${d.endDate}</td>
-          <td><span class="badge ${d.isVerified ? 'bg-success' : 'bg-secondary'}">${d.isVerified ? 'Verified' : 'Pending'}</span></td>
-          <td id="action-${id}">
-            <button class="btn btn-sm btn-warning" onclick="enterEditMode('${id}')">Edit</button>
-          </td>
-        `;
-        tbody.appendChild(row);
+      const snap = await getDocs(collection(db, \`seafarers/\${userId}/seaService\`));
+      snap.forEach(docSnap => {
+        addRow(docSnap.data(), docSnap.id);
       });
-    }
-
-    window.enterEditMode = async (id) => {
-      editingId = id;
-
-      const ref = doc(db, "seafarers", currentUser.uid, "seaService", id);
-      const snapshot = await getDocs(collection(db, "seafarers", currentUser.uid, "seaService"));
-      snapshot.forEach(docSnap => {
-        if (docSnap.id === id) {
-          fields.forEach(f => document.getElementById(f).value = docSnap.data()[f] || "");
-          document.getElementById("submitBtn").textContent = "Save";
-          document.getElementById("submitBtn").classList.remove("btn-success");
-          document.getElementById("submitBtn").classList.add("btn-primary");
-          showActionButtons(id);
-        }
-      });
-    };
-
-    function showActionButtons(id) {
-      const actions = document.getElementById(`action-${id}`);
-      actions.innerHTML = `
-        <button class="btn btn-sm btn-primary me-1" onclick="saveEdit()">Save</button>
-        <button class="btn btn-sm btn-secondary me-1" onclick="cancelEdit()">Cancel</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteRecord('${id}')">Delete</button>
-      `;
-    }
-
-    window.saveEdit = async () => {
-      if (!editingId) return;
-
-      const updatedData = {};
-      fields.forEach(field => updatedData[field] = document.getElementById(field).value);
-      updatedData.isVerified = false;
-      updatedData.evaluation = { rating: null, comment: "" };
-
-      await updateDoc(doc(db, "seafarers", currentUser.uid, "seaService", editingId), updatedData);
-
-      editingId = null;
-      document.getElementById("seaServiceForm").reset();
-      document.getElementById("submitBtn").textContent = "Save Record";
-      document.getElementById("submitBtn").classList.remove("btn-primary");
-      document.getElementById("submitBtn").classList.add("btn-success");
-      await loadSeaService();
-    };
-
-    window.cancelEdit = () => {
-      editingId = null;
-      document.getElementById("seaServiceForm").reset();
-      document.getElementById("submitBtn").textContent = "Save Record";
-      document.getElementById("submitBtn").classList.remove("btn-primary");
-      document.getElementById("submitBtn").classList.add("btn-success");
-      loadSeaService();
-    };
-
-    window.deleteRecord = async (id) => {
-      if (confirm("Are you sure you want to delete this record?")) {
-        await deleteDoc(doc(db, "seafarers", currentUser.uid, "seaService", id));
-        await loadSeaService();
-      }
-    };
-
-    document.getElementById("seaServiceForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (editingId) return;
-
-      const f = e.target;
-      const data = {};
-      fields.forEach(field => data[field] = f[field].value);
-      data.isVerified = false;
-      data.evaluation = { rating: null, comment: "" };
-
-      await addDoc(collection(db, "seafarers", currentUser.uid, "seaService"), data);
-      f.reset();
-      await loadSeaService();
     });
   </script>
 </body>

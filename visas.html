@@ -58,28 +58,35 @@
     </table>
   </div>
   <button class="btn btn-success mb-3" onclick="addEmptyRow()">➕ Add Visa</button>
-  <button class="btn btn-primary float-end" onclick="saveVisas()">Save</button>
 
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      doc, collection, getDocs, addDoc, deleteDoc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     let userId = null;
 
-    function addEmptyRow(data = {}) {
+    function createInput(value = "", type = "text") {
+      return `<input class="form-control" type="${type}" value="${value}">`;
+    }
+
+    function addEmptyRow(data = {}, docId = null) {
       const tbody = document.getElementById("visaBody");
       const row = document.createElement("tr");
+      row.dataset.id = docId || ""; // Store document ID for update/delete
       row.innerHTML = `
-        <td><input class="form-control" value="${data.visaFor || ''}"></td>
-        <td><input class="form-control" value="${data.type || ''}"></td>
-        <td><input class="form-control" value="${data.number || ''}"></td>
-        <td><input type="date" class="form-control" value="${data.issued || ''}"></td>
-        <td><input type="date" class="form-control" value="${data.expiry || ''}"></td>
-        <td><input class="form-control" value="${data.place || ''}"></td>
-        <td><input class="form-control" value="${data.remarks || ''}"></td>
-        <td class="action-icons">
-          <button class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()">❌</button>
+        <td>${createInput(data.visaFor)}</td>
+        <td>${createInput(data.type)}</td>
+        <td>${createInput(data.number)}</td>
+        <td>${createInput(data.issued, "date")}</td>
+        <td>${createInput(data.expiry, "date")}</td>
+        <td>${createInput(data.place)}</td>
+        <td>${createInput(data.remarks)}</td>
+        <td>
+          <button class="btn btn-sm btn-primary me-1" onclick="saveVisa(this)">💾</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteVisa(this)">❌</button>
         </td>
       `;
       tbody.appendChild(row);
@@ -87,34 +94,47 @@
 
     window.addEmptyRow = addEmptyRow;
 
-    window.saveVisas = async function () {
-      const rows = document.querySelectorAll("#visaBody tr");
-      const visas = Array.from(rows).map(row => {
-        const inputs = row.querySelectorAll("input");
-        return {
-          visaFor: inputs[0].value,
-          type: inputs[1].value,
-          number: inputs[2].value,
-          issued: inputs[3].value,
-          expiry: inputs[4].value,
-          place: inputs[5].value,
-          remarks: inputs[6].value
-        };
-      });
-      if (!userId) return alert("User not authenticated.");
-      await setDoc(doc(db, "seafarers", userId), { visas }, { merge: true });
+    window.saveVisa = async function (btn) {
+      const row = btn.closest("tr");
+      const inputs = row.querySelectorAll("input");
+      const data = {
+        visaFor: inputs[0].value,
+        type: inputs[1].value,
+        number: inputs[2].value,
+        issued: inputs[3].value,
+        expiry: inputs[4].value,
+        place: inputs[5].value,
+        remarks: inputs[6].value
+      };
+      const id = row.dataset.id;
+      const visaRef = collection(db, `seafarers/${userId}/cv/visas/items`);
+      if (id) {
+        await updateDoc(doc(visaRef, id), data);
+      } else {
+        const newDoc = await addDoc(visaRef, data);
+        row.dataset.id = newDoc.id;
+      }
       alert("Saved successfully!");
+    };
+
+    window.deleteVisa = async function (btn) {
+      const row = btn.closest("tr");
+      const id = row.dataset.id;
+      if (id) {
+        const visaRef = doc(db, `seafarers/${userId}/cv/visas/items/${id}`);
+        await deleteDoc(visaRef);
+      }
+      row.remove();
     };
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return;
       userId = user.uid;
-      const ref = doc(db, "seafarers", userId);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const visas = snap.data().visas || [];
-        visas.forEach(v => addEmptyRow(v));
-      }
+      const visasRef = collection(db, `seafarers/${userId}/cv/visas/items`);
+      const snap = await getDocs(visasRef);
+      snap.forEach(docSnap => {
+        addEmptyRow(docSnap.data(), docSnap.id);
+      });
     });
   </script>
 </body>

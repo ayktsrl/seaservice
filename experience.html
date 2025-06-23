@@ -1,116 +1,102 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sea Experience</title>
+  <title>Experience Summary</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css" />
   <style>
-    .section-title {
-      font-size: 1.6rem;
-      font-weight: 600;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    #totalDays {
-      font-weight: 600;
-      margin-top: 15px;
-      text-align: right;
-    }
     @media (max-width: 768px) {
-      .section-title {
-        font-size: 1.3rem;
-      }
-      .table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-        font-size: 0.9rem;
-      }
-      #totalDays {
-        text-align: center;
-      }
+      h3 { font-size: 1.4rem; text-align: center; }
+      .table { display: block; overflow-x: auto; white-space: nowrap; font-size: 0.9rem; }
     }
   </style>
 </head>
 <body class="bg-light p-4">
   <div class="container">
-    <h4 class="section-title">Sea Experience Summary</h4>
-
+    <h3 class="mb-4 text-center">Verified Sea Service Summary</h3>
     <div class="table-responsive">
-      <table class="table table-bordered table-striped align-middle text-center">
-        <thead class="table-primary">
+      <table class="table table-bordered table-striped">
+        <thead class="table-primary text-center">
           <tr>
             <th>Vessel</th>
-            <th>IMO No</th>
-            <th>Rank</th>
+            <th>IMO</th>
             <th>Type</th>
-            <th>Engine</th>
+            <th>Rank</th>
             <th>GRT</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Duration (days)</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Days</th>
           </tr>
         </thead>
-        <tbody id="experienceTable"></tbody>
+        <tbody id="tableBody"></tbody>
+        <tfoot>
+          <tr class="fw-bold text-center">
+            <td colspan="7">Total Experience</td>
+            <td id="totalDays"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
-
-    <div id="totalDays" class="text-end text-primary"></div>
   </div>
 
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import {
+      collection, getDocs
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-    const tableBody = document.getElementById("experienceTable");
-    const totalDaysEl = document.getElementById("totalDays");
+    let userId = null;
 
     function calculateDays(start, end) {
-      const d1 = new Date(start);
-      const d2 = new Date(end);
-      if (isNaN(d1) || isNaN(d2)) return 0;
-      const diff = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
-      return diff > 0 ? diff : 0;
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      const diff = endDate - startDate;
+      return Math.floor(diff / (1000 * 60 * 60 * 24));
     }
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
-      const colRef = collection(db, `seafarers/${user.uid}/seaService`);
-      const snap = await getDocs(colRef);
-      tableBody.innerHTML = "";
+    function formatDuration(totalDays) {
+      const years = Math.floor(totalDays / 365);
+      const months = Math.floor((totalDays % 365) / 30);
+      const days = totalDays % 30;
+      return \`\${years}y \${months}m \${days}d\`;
+    }
 
-      let totalDays = 0;
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = "index.html";
+      userId = user.uid;
 
-      if (snap.empty) {
-        tableBody.innerHTML = '<tr><td colspan="9" class="text-muted">No sea service records found.</td></tr>';
-        totalDaysEl.textContent = "";
-        return;
-      }
+      const ref = collection(db, \`seafarers/\${userId}/seaService\`);
+      const snapshot = await getDocs(ref);
 
-      snap.forEach(doc => {
+      let total = 0;
+      const tbody = document.getElementById("tableBody");
+
+      snapshot.forEach(doc => {
         const d = doc.data();
-        const duration = calculateDays(d.startDate, d.endDate);
-        totalDays += duration;
+        if (!d.isVerified) return;
+
+        const days = calculateDays(d.start, d.end);
+        total += days;
 
         const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${d.vessel || "-"}</td>
-          <td>${d.imoNumber || "-"}</td>
-          <td>${d.rank || "-"}</td>
-          <td>${d.type || "-"}</td>
-          <td>${d.engine || "-"}</td>
-          <td>${d.grt || "-"}</td>
-          <td>${d.startDate || "-"}</td>
-          <td>${d.endDate || "-"}</td>
-          <td>${duration}</td>
-        `;
-        tableBody.appendChild(row);
+        row.innerHTML = \`
+          <td>\${d.vessel}</td>
+          <td>\${d.imo}</td>
+          <td>\${d.type}</td>
+          <td>\${d.rank}</td>
+          <td>\${d.grt}</td>
+          <td>\${d.start}</td>
+          <td>\${d.end}</td>
+          <td class="text-center">\${days}</td>
+        \`;
+        tbody.appendChild(row);
       });
 
-      totalDaysEl.textContent = `Total Sea Service: ${totalDays} days`;
+      document.getElementById("totalDays").textContent = formatDuration(total);
     });
   </script>
 </body>

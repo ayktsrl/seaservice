@@ -1,171 +1,96 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Personal Details</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
   <style>
-    .form-section {
-      max-width: 100%;
-      margin: auto;
-      padding: 1rem;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.05);
-    }
-    input[type="text"], select {
-      text-transform: uppercase;
-    }
-    @media (min-width: 768px) {
-      .form-section {
-        max-width: 720px;
+    @media (max-width: 768px) {
+      h3 {
+        font-size: 1.5rem;
+        text-align: center;
+      }
+
+      .form-label, .form-control, .form-select {
+        font-size: 0.95rem;
       }
     }
   </style>
 </head>
-<body>
-  <div class="form-section">
-    <h5 class="mb-4 text-center">Personal & Contact Details</h5>
+<body class="p-4 bg-light">
+  <div class="container">
+    <h3 class="mb-4 text-center">Personal Details</h3>
     <form id="personalForm">
-      <div class="row g-2 mb-3">
-        <div class="col-12 col-md-6">
-          <label for="firstName" class="form-label">First Name</label>
-          <input type="text" class="form-control restrict" id="firstName" name="firstName" required>
-        </div>
-        <div class="col-12 col-md-6">
-          <label for="lastName" class="form-label">Last Name</label>
-          <input type="text" class="form-control restrict" id="lastName" name="lastName" required>
-        </div>
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" id="fullName" class="form-control" required /></div>
+        <div class="col-md-6"><label class="form-label">Date of Birth</label><input type="date" id="dob" class="form-control" /></div>
+        <div class="col-md-6"><label class="form-label">Nationality</label><select id="nationality" class="form-select"></select></div>
+        <div class="col-md-6"><label class="form-label">Country</label><select id="country" class="form-select"></select></div>
+        <div class="col-md-6"><label class="form-label">Phone</label><input type="text" id="phone" class="form-control" /></div>
+        <div class="col-md-6"><label class="form-label">Email</label><input type="email" id="email" class="form-control" /></div>
+        <div class="col-md-6"><label class="form-label">Company ID (optional)</label><input type="text" id="companyId" class="form-control" placeholder="e.g., GEDEN001" /></div>
       </div>
-
-      <div class="mb-3">
-        <label for="middleNames" class="form-label">Middle/Other Names</label>
-        <input type="text" class="form-control restrict" id="middleNames" name="middleNames">
-      </div>
-
-      <div class="row g-2 mb-3">
-        <div class="col-12 col-md-6">
-          <label class="form-label">Gender</label>
-          <div>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="gender" id="male" value="Male" checked>
-              <label class="form-check-label" for="male">Male</label>
-            </div>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="gender" id="female" value="Female">
-              <label class="form-check-label" for="female">Female</label>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-md-6">
-          <label for="dob" class="form-label">Date of Birth <small>(dd/mm/yyyy)</small></label>
-          <input type="date" class="form-control" id="dob" name="dob" required>
-        </div>
-      </div>
-
-      <div class="row g-2 mb-3">
-        <div class="col-12 col-md-6">
-          <label for="birthPlace" class="form-label">Place of Birth</label>
-          <input type="text" class="form-control restrict" id="birthPlace" name="birthPlace">
-        </div>
-        <div class="col-12 col-md-6">
-          <label for="nationality" class="form-label">Nationality</label>
-          <select class="form-select" id="nationality" name="nationality" required></select>
-        </div>
-      </div>
-
-      <hr>
-
-      <div class="mb-3">
-        <label for="email" class="form-label">E-mail Address</label>
-        <input type="email" class="form-control" id="email" name="email" required>
-      </div>
-
-      <div class="mb-3">
-        <label for="phone" class="form-label">Phone</label>
-        <input type="text" class="form-control" id="phone" name="phone">
-      </div>
-
-      <div class="mb-3">
-        <label for="country" class="form-label">Country of Residence</label>
-        <select class="form-select" id="country" name="country"></select>
-      </div>
-
-      <div class="mb-3">
-        <label for="city" class="form-label">City of Residence</label>
-        <input type="text" class="form-control restrict" id="city" name="city">
-      </div>
-
-      <div class="mb-3">
-        <label for="zip" class="form-label">Zip Code</label>
-        <input type="text" class="form-control" id="zip" name="zip">
-      </div>
-
-      <div class="mb-3">
-        <label for="address" class="form-label">Address</label>
-        <textarea class="form-control restrict" id="address" name="address" rows="2"></textarea>
-      </div>
-
-      <div class="text-center">
-        <button type="submit" class="btn btn-success">Save</button>
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="reset" class="btn btn-outline-secondary">Clear</button>
       </div>
     </form>
   </div>
 
+  <script>
+    // nationality options
+    fetch("options-nationality.html")
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById("nationality").innerHTML = data;
+        document.getElementById("country").innerHTML = data;
+      });
+  </script>
+
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      doc, getDoc, setDoc
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-    document.querySelectorAll(".restrict").forEach(input => {
-      input.addEventListener("input", function () {
-        this.value = this.value.toUpperCase().replace(/[^A-Z0-9\s.,@+\-]/gi, "");
-      });
+    let userId = null;
+
+    const form = document.getElementById("personalForm");
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = "index.html";
+      userId = user.uid;
+      const docRef = doc(db, "seafarers", userId, "cv", "personalDetails");
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const d = snap.data();
+        form.fullName.value = d.fullName || "";
+        form.dob.value = d.dob || "";
+        form.nationality.value = d.nationality || "";
+        form.country.value = d.country || "";
+        form.phone.value = d.phone || "";
+        form.email.value = d.email || "";
+        form.companyId.value = d.companyId || "";
+      }
     });
 
-    fetch('options-nationality.html')
-      .then(res => res.text())
-      .then(html => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        document.getElementById('nationality').innerHTML = doc.querySelector('select').innerHTML;
-        document.getElementById('country').innerHTML = doc.querySelector('select').innerHTML;
-      });
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
-      const ref = doc(db, "seafarers", user.uid, "cv", "personalDetails");
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
-        ["firstName", "lastName", "middleNames", "dob", "birthPlace", "nationality", "email", "phone", "country", "city", "zip", "address"].forEach(id => {
-          if (data[id]) document.getElementById(id).value = data[id];
-        });
-        if (data.gender === "Male") document.getElementById("male").checked = true;
-        if (data.gender === "Female") document.getElementById("female").checked = true;
-      }
-
-      document.getElementById("personalForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const data = {
-          firstName: document.getElementById("firstName").value,
-          lastName: document.getElementById("lastName").value,
-          middleNames: document.getElementById("middleNames").value,
-          dob: document.getElementById("dob").value,
-          birthPlace: document.getElementById("birthPlace").value,
-          nationality: document.getElementById("nationality").value,
-          gender: document.querySelector("input[name='gender']:checked")?.value || "",
-          email: document.getElementById("email").value,
-          phone: document.getElementById("phone").value,
-          country: document.getElementById("country").value,
-          city: document.getElementById("city").value,
-          zip: document.getElementById("zip").value,
-          address: document.getElementById("address").value
-        };
-        await setDoc(ref, data);
-        alert("Saved to Firebase ✅");
-      });
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const data = {
+        fullName: form.fullName.value,
+        dob: form.dob.value,
+        nationality: form.nationality.value,
+        country: form.country.value,
+        phone: form.phone.value,
+        email: form.email.value,
+        companyId: form.companyId.value || null
+      };
+      await setDoc(doc(db, "seafarers", userId, "cv", "personalDetails"), data);
+      alert("Saved!");
     });
   </script>
 </body>
