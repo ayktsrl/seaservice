@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,32 +6,84 @@
   <title>Personal Details</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    @media (max-width: 768px) {
-      h3 {
-        font-size: 1.5rem;
-        text-align: center;
-      }
-
-      .form-label, .form-control, .form-select {
-        font-size: 0.95rem;
-      }
-    }
-  </style>
 </head>
-<body class="p-4 bg-light">
-  <div class="container">
-    <h3 class="mb-4 text-center">Personal Details</h3>
+<body class="bg-light p-4">
+  <div class="container bg-white p-4 rounded shadow">
+    <h4 class="mb-4">Personal Details (as per passport)</h4>
     <form id="personalForm">
       <div class="row g-3">
-        <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" id="fullName" class="form-control" required /></div>
-        <div class="col-md-6"><label class="form-label">Date of Birth</label><input type="date" id="dob" class="form-control" /></div>
-        <div class="col-md-6"><label class="form-label">Nationality</label><select id="nationality" class="form-select"></select></div>
-        <div class="col-md-6"><label class="form-label">Country</label><select id="country" class="form-select"></select></div>
-        <div class="col-md-6"><label class="form-label">Phone</label><input type="text" id="phone" class="form-control" /></div>
-        <div class="col-md-6"><label class="form-label">Email</label><input type="email" id="email" class="form-control" /></div>
-        <div class="col-md-6"><label class="form-label">Company ID (optional)</label><input type="text" id="companyId" class="form-control" placeholder="e.g., GEDEN001" /></div>
+        <div class="col-md-4">
+          <label class="form-label">First Name</label>
+          <input type="text" id="firstName" class="form-control" required />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Last Name</label>
+          <input type="text" id="lastName" class="form-control" required />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Middle/Other Name</label>
+          <input type="text" id="middleName" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Gender</label>
+          <div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="gender" id="genderMale" value="Male">
+              <label class="form-check-label" for="genderMale">Male</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="Female">
+              <label class="form-check-label" for="genderFemale">Female</label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Date of Birth</label>
+          <input type="date" id="dob" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Place of Birth</label>
+          <input type="text" id="placeOfBirth" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Nationality</label>
+          <select id="nationality" class="form-select"></select>
+        </div>
       </div>
+
+      <hr class="my-4" />
+      <h4 class="mb-4">Contact</h4>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Phone</label>
+          <input type="text" id="phone" class="form-control" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Mobile</label>
+          <input type="text" id="mobile" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Country of Residence</label>
+          <select id="country" class="form-select"></select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">City of Residence</label>
+          <input type="text" id="city" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Zip Code</label>
+          <input type="text" id="zip" class="form-control" />
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Address</label>
+          <textarea id="address" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+
       <div class="mt-4 d-flex justify-content-end gap-2">
         <button type="submit" class="btn btn-primary">Save</button>
         <button type="reset" class="btn btn-outline-secondary">Clear</button>
@@ -41,11 +92,22 @@
   </div>
 
   <script>
-    // nationality options
+    // Nationality dropdown
     fetch("options-nationality.html")
       .then(res => res.text())
       .then(data => {
-        document.getElementById("nationality").innerHTML = data;
+        const parser = new DOMParser();
+        const html = parser.parseFromString(data, "text/html");
+        const options = html.querySelector("#nationalitySelect")?.innerHTML;
+        if (options) {
+          document.getElementById("nationality").innerHTML = options;
+        }
+      });
+
+    // Country dropdown
+    fetch("options-countries.html")
+      .then(res => res.text())
+      .then(data => {
         document.getElementById("country").innerHTML = data;
       });
   </script>
@@ -58,36 +120,51 @@
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
     let userId = null;
-
     const form = document.getElementById("personalForm");
 
     onAuthStateChanged(auth, async user => {
       if (!user) return location.href = "index.html";
       userId = user.uid;
-      const docRef = doc(db, "seafarers", userId, "cv", "personalDetails");
-      const snap = await getDoc(docRef);
+      const ref = doc(db, "seafarers", userId, "cv", "personalDetails");
+      const snap = await getDoc(ref);
       if (snap.exists()) {
         const d = snap.data();
-        form.fullName.value = d.fullName || "";
+        form.firstName.value = d.firstName || "";
+        form.lastName.value = d.lastName || "";
+        form.middleName.value = d.middleName || "";
         form.dob.value = d.dob || "";
+        form.placeOfBirth.value = d.placeOfBirth || "";
         form.nationality.value = d.nationality || "";
         form.country.value = d.country || "";
+        form.city.value = d.city || "";
+        form.zip.value = d.zip || "";
+        form.address.value = d.address || "";
         form.phone.value = d.phone || "";
+        form.mobile.value = d.mobile || "";
         form.email.value = d.email || "";
-        form.companyId.value = d.companyId || "";
+        if (d.gender === "Male") document.getElementById("genderMale").checked = true;
+        if (d.gender === "Female") document.getElementById("genderFemale").checked = true;
       }
     });
 
     form.addEventListener("submit", async e => {
       e.preventDefault();
+      const gender = form.querySelector('input[name="gender"]:checked')?.value || "";
       const data = {
-        fullName: form.fullName.value,
+        firstName: form.firstName.value,
+        lastName: form.lastName.value,
+        middleName: form.middleName.value,
         dob: form.dob.value,
+        placeOfBirth: form.placeOfBirth.value,
         nationality: form.nationality.value,
-        country: form.country.value,
         phone: form.phone.value,
+        mobile: form.mobile.value,
         email: form.email.value,
-        companyId: form.companyId.value || null
+        country: form.country.value,
+        city: form.city.value,
+        zip: form.zip.value,
+        address: form.address.value,
+        gender: gender
       };
       await setDoc(doc(db, "seafarers", userId, "cv", "personalDetails"), data);
       alert("Saved!");

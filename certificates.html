@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,19 +28,20 @@
         <thead class="table-primary text-center">
           <tr>
             <th style="width: 80px;"></th>
-            <th>Certificate Type</th>
+            <th>Category</th>
+            <th>Certificate</th>
             <th>Number</th>
+            <th>Issuing Authority</th>
             <th>Issue Date</th>
             <th>Expiry Date</th>
             <th>Place of Issue</th>
-            <th>Issuing Authority</th>
             <th>Remarks</th>
           </tr>
         </thead>
         <tbody id="certList"></tbody>
         <tfoot>
           <tr>
-            <td colspan="8" class="text-center text-muted small">List all held and valid certificates.</td>
+            <td colspan="9" class="text-center text-muted small">List all valid held National STCW Certificates and non-STCW Certificates.</td>
           </tr>
         </tfoot>
       </table>
@@ -50,8 +50,10 @@
     <div id="certForm" class="form-slide">
       <form id="form">
         <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Certificate Type</label><input type="text" class="form-control" id="type" required></div>
+          <div class="col-md-6"><label class="form-label">Category</label><input type="text" class="form-control" id="category" required></div>
+          <div class="col-md-6"><label class="form-label">Certificate Name</label><input type="text" class="form-control" id="type" required></div>
           <div class="col-md-6"><label class="form-label">Number</label><input type="text" class="form-control" id="number" required></div>
+          <div class="col-md-6"><label class="form-label">Issuing Authority</label><input type="text" class="form-control" id="authority" required></div>
           <div class="col-md-6"><label class="form-label">Issue Date</label><input type="date" class="form-control" id="issue" required></div>
           <div class="col-md-6">
             <label class="form-label">Expiry Date</label>
@@ -61,8 +63,7 @@
               <label class="form-check-label">No expiry date</label>
             </div>
           </div>
-          <div class="col-md-6"><label class="form-label">Place of Issue</label><input type="text" class="form-control" id="place"></div>
-          <div class="col-md-6"><label class="form-label">Issuing Authority</label><input type="text" class="form-control" id="authority" required></div>
+          <div class="col-md-12"><label class="form-label">Place of Issue</label><input type="text" class="form-control" id="place"></div>
           <div class="col-12"><label class="form-label">Remarks</label><textarea class="form-control" id="remarks"></textarea></div>
         </div>
         <div class="d-flex justify-content-end gap-2 mt-4">
@@ -100,14 +101,15 @@
       editId = id;
       formEl.reset();
       if (data) {
-        formEl.type.value = data.type;
-        formEl.number.value = data.number;
-        formEl.issue.value = data.issue;
-        formEl.expiry.value = data.expiry;
+        formEl.category.value = data.category || '';
+        formEl.type.value = data.type || '';
+        formEl.number.value = data.number || '';
+        formEl.authority.value = data.authority || '';
+        formEl.issue.value = data.issue || '';
+        formEl.expiry.value = data.expiry || '';
         formEl.noExpiry.checked = !data.expiry;
-        formEl.place.value = data.place;
-        formEl.authority.value = data.authority;
-        formEl.remarks.value = data.remarks;
+        formEl.place.value = data.place || '';
+        formEl.remarks.value = data.remarks || '';
       }
     }
 
@@ -119,12 +121,13 @@
     formEl.addEventListener('submit', async e => {
       e.preventDefault();
       const data = {
+        category: formEl.category.value,
         type: formEl.type.value,
         number: formEl.number.value,
+        authority: formEl.authority.value,
         issue: formEl.issue.value,
         expiry: formEl.noExpiry.checked ? '' : formEl.expiry.value,
         place: formEl.place.value,
-        authority: formEl.authority.value,
         remarks: formEl.remarks.value
       };
 
@@ -151,12 +154,13 @@
             <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${docSnap.id}", ${JSON.stringify(data)})'>✏️</button>
             <button class="btn btn-sm btn-outline-danger" onclick='deleteCert("${docSnap.id}")'>❌</button>
           </td>
+          <td>${data.category || ''}</td>
           <td>${data.type}</td>
           <td>${data.number}</td>
+          <td>${data.authority}</td>
           <td>${data.issue}</td>
           <td>${data.expiry || '-'}</td>
           <td>${data.place}</td>
-          <td>${data.authority}</td>
           <td>${data.remarks}</td>
         `;
         list.appendChild(row);
