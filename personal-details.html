@@ -21,7 +21,7 @@
     input.form-control[type="text"],
     input.form-control[type="email"],
     textarea.form-control {
-      text-transform: capitalize;
+      text-transform: uppercase;
     }
   </style>
 </head>
@@ -32,15 +32,15 @@
 
       <div class="mb-3">
         <label class="form-label">First Name</label>
-        <input type="text" class="form-control" id="firstName" required />
+        <input type="text" class="form-control only-english" id="firstName" required />
       </div>
       <div class="mb-3">
         <label class="form-label">Last Name</label>
-        <input type="text" class="form-control" id="lastName" required />
+        <input type="text" class="form-control only-english" id="lastName" required />
       </div>
       <div class="mb-3">
         <label class="form-label">Middle/Other Name</label>
-        <input type="text" class="form-control" id="middleName" />
+        <input type="text" class="form-control only-english" id="middleName" />
       </div>
       <div class="mb-3">
         <label class="form-label">Gender</label><br />
@@ -59,7 +59,7 @@
       </div>
       <div class="mb-3">
         <label class="form-label">Place of Birth</label>
-        <input type="text" class="form-control" id="birthPlace" />
+        <input type="text" class="form-control only-english" id="birthPlace" />
       </div>
       <div class="mb-3">
         <label class="form-label">Nationality</label>
@@ -71,7 +71,7 @@
 
       <div class="mb-3">
         <label class="form-label">Email</label>
-        <input type="email" class="form-control" id="email" required />
+        <input type="email" class="form-control only-english" id="email" required />
       </div>
       <div class="mb-3">
         <label class="form-label">Phone</label>
@@ -87,7 +87,7 @@
       </div>
       <div class="mb-3">
         <label class="form-label">City of Residence</label>
-        <input type="text" class="form-control" id="city" />
+        <input type="text" class="form-control only-english" id="city" />
       </div>
       <div class="mb-3">
         <label class="form-label">Zip Code</label>
@@ -95,7 +95,7 @@
       </div>
       <div class="mb-3">
         <label class="form-label">Address</label>
-        <textarea class="form-control" id="address" rows="2"></textarea>
+        <textarea class="form-control only-english" id="address" rows="2"></textarea>
       </div>
       <button type="submit" class="btn btn-primary mt-3">Save</button>
     </form>
@@ -113,6 +113,18 @@
       .then(html => {
         document.getElementById("residence").innerHTML = html;
       });
+
+    document.querySelectorAll('.only-english').forEach(input => {
+      input.addEventListener('input', () => {
+        const regex = /^[A-Z0-9 .,'-]*$/;
+        if (!regex.test(input.value.toUpperCase())) {
+          alert("Please use only English uppercase characters.");
+          input.value = input.value.replace(/[^A-Za-z0-9 .,'-]/g, '').toUpperCase();
+        } else {
+          input.value = input.value.toUpperCase();
+        }
+      });
+    });
   </script>
 
   <script type="module" src="scripts/personal-details.js"></script>
