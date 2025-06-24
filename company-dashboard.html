@@ -71,7 +71,6 @@
     </div>
   </div>
 
-  <!-- Navbar yükleyici -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
@@ -85,25 +84,25 @@
 
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { collection, getDocs, query, where, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     onAuthStateChanged(auth, async user => {
       if (!user) return location.href = "index.html";
 
-      const [jobSnap, appSnap, seaSnap] = await Promise.all([
-        getDocs(query(collection(db, "jobPosts"), where("companyId", "==", user.uid))),
-        getDocs(collection(db, "applications")),
-        getDocs(collection(db, "seafarers"))
+      const companyId = user.uid;
+
+      const [jobSnap, appSnap, shipSnap, seaSnap] = await Promise.all([
+        getDocs(collection(db, `companies/${companyId}/jobPosts`)),
+        getDocs(collection(db, `companies/${companyId}/applications`)),
+        getDocs(collection(db, `companies/${companyId}/ships`)),
+        getDocs(collection(db, "seafarers"))  // public, herkese açık
       ]);
 
       document.getElementById("jobCount").textContent = jobSnap.size;
       document.getElementById("applicationCount").textContent = appSnap.size;
+      document.getElementById("shipCount").textContent = shipSnap.size;
       document.getElementById("seafarerCount").textContent = seaSnap.size;
-
-      const companyDoc = await getDoc(doc(db, "companies", user.uid));
-      const shipList = companyDoc.exists() ? (companyDoc.data().ships || []) : [];
-      document.getElementById("shipCount").textContent = shipList.length;
     });
   </script>
 

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,7 +75,7 @@
   <script type="module">
     import { auth, db } from './firebase-config.js';
     import {
-      collection, query, where, getDocs, orderBy, addDoc, deleteDoc, doc
+      collection, collectionGroup, query, where, getDocs, orderBy, addDoc, deleteDoc, doc
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
@@ -188,7 +187,7 @@
       const appliedSnapshot = await getDocs(query(collection(db, "applications"), where("userId", "==", userId)));
       appliedSnapshot.forEach(doc => appliedMap.set(doc.data().jobId, doc.id));
 
-      const jobSnapshot = await getDocs(query(collection(db, "jobPosts"), orderBy("createdAt", "desc")));
+      const jobSnapshot = await getDocs(query(collectionGroup(db, "jobPosts"), orderBy("createdAt", "desc")));
       jobSnapshot.forEach(doc => {
         allJobs.push({ id: doc.id, ...doc.data() });
       });

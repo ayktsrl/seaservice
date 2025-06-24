@@ -97,23 +97,23 @@
   <script type="module">
     import { auth, db } from './firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { doc, collection, setDoc, query, where, getDocs, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { doc, collection, setDoc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const jobForm = document.getElementById('jobForm');
     const vesselSelect = document.getElementById('vesselName');
 
     let userId = null;
-    let shipMap = {}; // vessel name to type
+    let shipMap = {};
 
     onAuthStateChanged(auth, async user => {
       if (!user) return location.href = "index.html";
       userId = user.uid;
 
-      const q = query(collection(db, "ships"), where("companyId", "==", userId));
-      const querySnapshot = await getDocs(q);
+      const shipsRef = collection(db, `companies/${userId}/ships`);
+      const shipSnap = await getDocs(shipsRef);
 
       let options = "";
-      querySnapshot.forEach(doc => {
+      shipSnap.forEach(doc => {
         const shipData = doc.data();
         shipMap[shipData.name] = shipData.type;
         options += `<option value="${shipData.name}">${shipData.name}</option>`;
@@ -126,7 +126,6 @@
       e.preventDefault();
       const selectedVessel = jobForm.vesselName.value;
       const data = {
-        companyId: userId,
         position: jobForm.position.value,
         vesselName: selectedVessel,
         vesselType: shipMap[selectedVessel] || '',
@@ -136,8 +135,8 @@
         notes: jobForm.notes.value,
         createdAt: new Date().toISOString()
       };
-      const newRef = doc(collection(db, "jobPosts"));
-      await setDoc(newRef, data);
+      const jobRef = doc(collection(db, `companies/${userId}/jobPosts`));
+      await setDoc(jobRef, data);
       document.getElementById("message").textContent = "Job posted successfully!";
       jobForm.reset();
     });

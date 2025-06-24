@@ -115,7 +115,6 @@
     </div>
   </div>
 
-  <!-- Navbar yükleyici -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
@@ -127,17 +126,17 @@
       });
   </script>
 
-  <!-- Firebase ve scriptler -->
   <script type="module">
     import { auth, db } from './firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import {
-      collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where
+      collection, getDocs, addDoc, updateDoc, deleteDoc, doc
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     let userId = null;
     let ships = [];
     let editShipId = null;
+    let shipCollectionRef = null;
 
     async function loadShipTypes() {
       const res = await fetch('options-vessels.html');
@@ -150,6 +149,7 @@
     onAuthStateChanged(auth, async user => {
       if (!user) return location.href = "index.html";
       userId = user.uid;
+      shipCollectionRef = collection(db, `companies/${userId}/ships`);
       await loadShips();
     });
 
@@ -157,8 +157,7 @@
       const container = document.getElementById('shipList');
       container.innerHTML = '';
       ships = [];
-      const q = query(collection(db, 'ships'), where('companyId', '==', userId));
-      const snapshot = await getDocs(q);
+      const snapshot = await getDocs(shipCollectionRef);
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
         ships.push({ id: docSnap.id, ...data });
@@ -194,14 +193,13 @@
             </div>
           </div>
         `;
-        document.getElementById('shipList').appendChild(div);
+        container.appendChild(div);
       });
     }
 
     document.getElementById('shipForm').addEventListener('submit', async e => {
       e.preventDefault();
       const shipData = {
-        companyId: userId,
         name: document.getElementById('shipName').value,
         type: document.getElementById('shipType').value,
         loa: parseFloat(document.getElementById('loa').value) || null,
@@ -212,9 +210,9 @@
       };
 
       if (editShipId) {
-        await updateDoc(doc(db, 'ships', editShipId), shipData);
+        await updateDoc(doc(db, `companies/${userId}/ships`, editShipId), shipData);
       } else {
-        await addDoc(collection(db, 'ships'), shipData);
+        await addDoc(shipCollectionRef, shipData);
       }
 
       editShipId = null;
@@ -238,7 +236,7 @@
 
     window.deleteShip = async (id) => {
       if (!confirm('Are you sure you want to delete this ship?')) return;
-      await deleteDoc(doc(db, 'ships', id));
+      await deleteDoc(doc(db, `companies/${userId}/ships`, id));
       await loadShips();
     };
 

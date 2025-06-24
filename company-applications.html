@@ -79,7 +79,7 @@
     </div>
   </div>
 
-  <!-- Navbar yükleyici -->
+  <!-- Navbar -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
@@ -91,9 +91,10 @@
       });
   </script>
 
+  <!-- Firebase Script -->
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { collection, getDocs, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     let currentUser;
@@ -103,15 +104,18 @@
     onAuthStateChanged(auth, async user => {
       if (!user) return location.href = "index.html";
       currentUser = user;
-      const snapshot = await getDocs(collection(db, "applications"));
+
+      const appRef = collection(db, `companies/${currentUser.uid}/applications`);
+      const snapshot = await getDocs(appRef);
       applications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       renderApplications();
       loadShips();
     });
 
     async function loadShips() {
-      const companyDoc = await getDoc(doc(db, "companies", currentUser.uid));
-      const ships = companyDoc.data()?.ships || [];
+      const shipRef = collection(db, `companies/${currentUser.uid}/ships`);
+      const shipSnap = await getDocs(shipRef);
+      const ships = shipSnap.docs.map(d => d.data());
       const shipSelect = document.getElementById("shipSelect");
       shipSelect.innerHTML = ships.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
     }
@@ -128,7 +132,7 @@
 
     window.viewDetails = async (id) => {
       selectedAppId = id;
-      const docSnap = await getDoc(doc(db, "applications", id));
+      const docSnap = await getDoc(doc(db, `companies/${currentUser.uid}/applications`, id));
       const data = docSnap.data();
       const seafarerId = data.seafarerId;
       document.getElementById("modalContent").innerText = `Seafarer ID: ${seafarerId}\nStatus: ${data.status || 'pending'}`;
@@ -143,7 +147,8 @@
     async function updateApplication(status) {
       const hrNote = document.getElementById("hrNote").value;
       const assignedShip = document.getElementById("shipSelect").value;
-      await updateDoc(doc(db, "applications", selectedAppId), {
+      const ref = doc(db, `companies/${currentUser.uid}/applications`, selectedAppId);
+      await updateDoc(ref, {
         status,
         hrNote,
         assignedShip
@@ -152,6 +157,38 @@
       renderApplications();
       bootstrap.Modal.getInstance(document.getElementById("detailsModal")).hide();
     }
+
+    window.exportToExcel = () => {
+      if (!applications.length) return alert("No applications to export.");
+      const data = applications.map(app => ({
+        Position: app.position,
+        Status: app.status,
+        AssignedShip: app.assignedShip || "",
+        Note: app.hrNote || ""
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Applications");
+      XLSX.writeFile(wb, "applications.xlsx");
+    };
+
+    window.exportToPDF = () => {
+      if (!applications.length) return alert("No applications to export.");
+      const { jsPDF } = window.jspdf;
+      const docPdf = new jsPDF();
+      let y = 10;
+      applications.forEach(app => {
+        docPdf.text(`Position: ${app.position}`, 10, y);
+        y += 6;
+        docPdf.text(`Status: ${app.status}`, 10, y);
+        y += 6;
+        docPdf.text(`Assigned Ship: ${app.assignedShip || '-'}`, 10, y);
+        y += 6;
+        docPdf.text(`Note: ${app.hrNote || '-'}`, 10, y);
+        y += 10;
+      });
+      docPdf.save("applications.pdf");
+    };
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
