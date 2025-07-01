@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Applications</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    @media (max-width: 768px) {
+      .application-card {
+        padding: 15px;
+        border-radius: 10px;
+      }
+      .application-card h5 {
+        font-size: 1.1rem;
+      }
+      .application-card p {
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+      }
+      .btn, input.form-control {
+        font-size: 0.95rem;
+      }
+      h4.text-center {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <div class="container py-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3 gap-2">
+      <h4 class="text-center">My Job Applications</h4>
+      <button class="btn btn-outline-success" onclick="exportApplications()">Export to Excel</button>
+    </div>
+    <div class="mb-3">
+      <input id="searchInput" class="form-control" placeholder="Search by position or vessel name">
+    </div>
+    <div id="applicationList"></div>
+  </div>
+
+  <script>
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-container").innerHTML = html;
+        const script = document.createElement("script");
+        script.src = "navbar.js";
+        document.body.appendChild(script);
+      });
+  </script>
+
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import {
+      query, where, getDocs, doc, getDoc, collection, collectionGroup
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    let allApplications = [];
+    let currentUser;
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return window.location.href = "index.html";
+      currentUser = user;
+      await loadApplications();
+    });
+
+    async function loadApplications() {
+      const container = document.getElementById("applicationList");
+      container.innerHTML = "";
+      allApplications = [];
+
+      const q = query(collection(db, "applications"), where("userId", "==", currentUser.uid));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        container.innerHTML = "<p class='text-muted'>You haven't applied to any jobs yet.</p>";
+        return;
+      }
+
+      for (const docSnap of snapshot.docs) {
+        const appData = docSnap.data();
+        const jobQuery = query(collectionGroup(db, "jobPosts"), where("jobId", "==", appData.jobId));
+        const jobDocs = await getDocs(jobQuery);
+
+        let job = {};
+        jobDocs.forEach(j => job = j.data());
+
+        const fullData = {
+          ...appData,
+          position: job.position || "Unknown",
+          vesselName: job.vesselName || "-",
+          vesselType: job.vesselType || "-",
+          location: job.location || "-",
+          joiningDate: job.joiningDate || "-",
+          duration: job.duration || "-",
+          status: appData.status,
+          appliedAt: appData.appliedAt
+        };
+        allApplications.push(fullData);
+      }
+      renderApplications(allApplications);
+    }
+
+    function renderApplications(applications) {
+      const container = document.getElementById("applicationList");
+      container.innerHTML = "";
+
+      applications.forEach(app => {
+        const card = document.createElement("div");
+        card.className = "application-card";
+        card.innerHTML = `
+          <h5>${app.position} (${app.vesselType})</h5>
+          <p><strong>Vessel:</strong> ${app.vesselName}</p>
+          <p><strong>Location:</strong> ${app.location}</p>
+          <p><strong>Joining:</strong> ${app.joiningDate} | Duration: ${app.duration}</p>
+          <p><strong>Applied At:</strong> ${new Date(app.appliedAt).toLocaleString()}</p>
+          <p><strong>Status:</strong> <span class="${statusColor(app.status)}">${app.status}</span></p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function statusColor(status) {
+      if (status === "approved") return "text-success fw-bold";
+      if (status === "rejected") return "text-danger fw-bold";
+      return "text-warning fw-bold";
+    }
+
+    window.exportApplications = () => {
+      const data = allApplications.map(app => ({
+        Position: app.position,
+        Vessel: app.vesselName,
+        Location: app.location,
+        Joining: app.joiningDate,
+        Duration: app.duration,
+        Status: app.status,
+        AppliedAt: app.appliedAt
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Applications");
+      XLSX.writeFile(wb, "applications.xlsx");
+    };
+
+    document.getElementById("searchInput").addEventListener("input", e => {
+      const term = e.target.value.toLowerCase();
+      const filtered = allApplications.filter(app =>
+        app.position.toLowerCase().includes(term) ||
+        app.vesselName.toLowerCase().includes(term)
+      );
+      renderApplications(filtered);
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

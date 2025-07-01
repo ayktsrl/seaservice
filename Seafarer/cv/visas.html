@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Visas</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    @media (max-width: 768px) {
+      h3 {
+        font-size: 1.4rem;
+        text-align: center;
+      }
+
+      .visa-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      .visa-table th,
+      .visa-table td {
+        font-size: 0.85rem;
+        vertical-align: middle;
+      }
+
+      .btn {
+        font-size: 0.9rem;
+      }
+
+      .float-end {
+        float: none !important;
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body class="p-4">
+  <h3 class="mb-4">Visas</h3>
+  <div class="table-responsive">
+    <table class="table table-bordered visa-table" id="visaTable">
+      <thead class="table-primary">
+        <tr>
+          <th>Visa For</th>
+          <th>Type of Visa</th>
+          <th>Number</th>
+          <th>Issued</th>
+          <th>Expiry</th>
+          <th>Place of Issue</th>
+          <th>Remarks</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="visaBody"></tbody>
+    </table>
+  </div>
+  <button class="btn btn-success mb-3" onclick="addEmptyRow()">➕ Add Visa</button>
+
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import {
+      doc, collection, getDocs, addDoc, deleteDoc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    let userId = null;
+
+    function createInput(value = "", type = "text") {
+      return `<input class="form-control" type="${type}" value="${value}">`;
+    }
+
+    function addEmptyRow(data = {}, docId = null) {
+      const tbody = document.getElementById("visaBody");
+      const row = document.createElement("tr");
+      row.dataset.id = docId || ""; // Store document ID for update/delete
+      row.innerHTML = `
+        <td>${createInput(data.visaFor)}</td>
+        <td>${createInput(data.type)}</td>
+        <td>${createInput(data.number)}</td>
+        <td>${createInput(data.issued, "date")}</td>
+        <td>${createInput(data.expiry, "date")}</td>
+        <td>${createInput(data.place)}</td>
+        <td>${createInput(data.remarks)}</td>
+        <td>
+          <button class="btn btn-sm btn-primary me-1" onclick="saveVisa(this)">💾</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteVisa(this)">❌</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    window.addEmptyRow = addEmptyRow;
+
+    window.saveVisa = async function (btn) {
+      const row = btn.closest("tr");
+      const inputs = row.querySelectorAll("input");
+      const data = {
+        visaFor: inputs[0].value,
+        type: inputs[1].value,
+        number: inputs[2].value,
+        issued: inputs[3].value,
+        expiry: inputs[4].value,
+        place: inputs[5].value,
+        remarks: inputs[6].value
+      };
+      const id = row.dataset.id;
+      const visaRef = collection(db, `seafarers/${userId}/cv/visas/items`);
+      if (id) {
+        await updateDoc(doc(visaRef, id), data);
+      } else {
+        const newDoc = await addDoc(visaRef, data);
+        row.dataset.id = newDoc.id;
+      }
+      alert("Saved successfully!");
+    };
+
+    window.deleteVisa = async function (btn) {
+      const row = btn.closest("tr");
+      const id = row.dataset.id;
+      if (id) {
+        const visaRef = doc(db, `seafarers/${userId}/cv/visas/items/${id}`);
+        await deleteDoc(visaRef);
+      }
+      row.remove();
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      userId = user.uid;
+      const visasRef = collection(db, `seafarers/${userId}/cv/visas/items`);
+      const snap = await getDocs(visasRef);
+      snap.forEach(docSnap => {
+        addEmptyRow(docSnap.data(), docSnap.id);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Documents</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-light p-4">
+  <div class="container bg-white p-4 rounded shadow">
+    <h4 class="mb-4">Documents</h4>
+    <form id="docForm">
+      <!-- Passport Section -->
+      <div class="border rounded p-3 mb-4">
+        <h5 class="mb-3">Passport</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Passport Issue Country</label>
+            <select id="passportCountry" class="form-select"></select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Passport Number</label>
+            <input type="text" id="passportNumber" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Passport Issue Date</label>
+            <input type="date" id="passportIssue" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Passport Expiry Date</label>
+            <input type="date" id="passportExpiry" class="form-control" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Seaman Book Section -->
+      <div class="border rounded p-3">
+        <h5 class="mb-3">Seaman Book</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Seaman Book Issue Country</label>
+            <select id="seamanBookCountry" class="form-select"></select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Seaman Book Number</label>
+            <input type="text" id="seamanBookNumber" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Seaman Book Issue Date</label>
+            <input type="date" id="seamanBookIssue" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Seaman Book Expiry Date</label>
+            <input type="date" id="seamanBookExpiry" class="form-control" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Save button -->
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="submit" class="btn btn-primary" id="saveBtn">Save</button>
+        <span id="saveStatus" class="ms-3 text-success fade-text" style="display: none;">✓ Saved!</span>
+      </div>
+    </form>
+  </div>
+
+  <!-- Load Country Options -->
+  <script>
+    fetch("options-countries.html")
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById("passportCountry").innerHTML = data;
+        document.getElementById("seamanBookCountry").innerHTML = data;
+      });
+  </script>
+
+  <!-- Firebase Load/Save -->
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import {
+      doc, setDoc, getDoc
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+    const form = document.getElementById("docForm");
+    const saveBtn = document.getElementById("saveBtn");
+    const saveStatus = document.getElementById("saveStatus");
+
+    let userId = null;
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = 'index.html';
+      userId = user.uid;
+
+      const ref = doc(db, "seafarers", userId, "cv", "documents");
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const d = snap.data();
+        form.passportCountry.value = d.passportCountry || '';
+        form.passportNumber.value = d.passportNumber || '';
+        form.passportIssue.value = d.passportIssue || '';
+        form.passportExpiry.value = d.passportExpiry || '';
+        form.seamanBookCountry.value = d.seamanBookCountry || '';
+        form.seamanBookNumber.value = d.seamanBookNumber || '';
+        form.seamanBookIssue.value = d.seamanBookIssue || '';
+        form.seamanBookExpiry.value = d.seamanBookExpiry || '';
+      }
+    });
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      saveBtn.disabled = true;
+      saveStatus.style.display = 'none';
+
+      const data = {
+        passportCountry: form.passportCountry.value,
+        passportNumber: form.passportNumber.value,
+        passportIssue: form.passportIssue.value,
+        passportExpiry: form.passportExpiry.value,
+        seamanBookCountry: form.seamanBookCountry.value,
+        seamanBookNumber: form.seamanBookNumber.value,
+        seamanBookIssue: form.seamanBookIssue.value,
+        seamanBookExpiry: form.seamanBookExpiry.value
+      };
+
+      await setDoc(doc(db, "seafarers", userId, "cv", "documents"), data);
+
+      saveStatus.style.display = 'inline';
+      saveStatus.classList.remove('hide');
+      setTimeout(() => {
+        saveStatus.classList.add('hide');
+        saveBtn.disabled = false;
+      }, 1500);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Education</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    @media (max-width: 768px) {
+      h4 { font-size: 1.4rem; text-align: center; }
+      .table { display: block; overflow-x: auto; white-space: nowrap; font-size: 0.9rem; }
+      .form-label, .form-control, .form-check-label, .btn { font-size: 0.9rem; }
+      .add-btn { width: 40px; height: 40px; font-size: 1.2rem; padding: 0; }
+      .form-slide { padding: 15px; }
+    }
+  </style>
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <h4 class="fw-bold">Education</h4>
+      <button class="btn btn-success rounded-circle add-btn" onclick="openForm()">+</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="table-primary text-center">
+          <tr>
+            <th style="width: 80px;"></th>
+            <th>Institution</th>
+            <th>Qualification</th>
+            <th>Field of Study</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Location</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="educationList"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="8" class="text-center text-muted small">List all education and qualifications</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div id="educationForm" class="form-slide">
+      <form id="form">
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label">Institution</label><input type="text" class="form-control" id="institution" required></div>
+          <div class="col-md-6"><label class="form-label">Qualification</label><input type="text" class="form-control" id="qualification"></div>
+          <div class="col-md-6"><label class="form-label">Field of Study</label><input type="text" class="form-control" id="field"></div>
+          <div class="col-md-6"><label class="form-label">From</label><input type="date" class="form-control" id="from"></div>
+          <div class="col-md-6"><label class="form-label">To</label><input type="date" class="form-control" id="to"></div>
+          <div class="col-md-6"><label class="form-label">Location</label><input type="text" class="form-control" id="location"></div>
+          <div class="col-12"><label class="form-label">Remarks</label><textarea class="form-control" id="remarks"></textarea></div>
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <button type="submit" class="btn btn-primary" id="submitBtn">Add</button>
+          <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import {
+      collection, addDoc, updateDoc, deleteDoc, getDocs, doc
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+    let userId = null;
+    let editId = null;
+
+    const formEl = document.getElementById('form');
+    const list = document.getElementById('educationList');
+    const container = document.getElementById('educationForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = 'index.html';
+      userId = user.uid;
+      await render();
+    });
+
+    window.openForm = function (id = null, data = null) {
+      container.classList.add('active');
+      submitBtn.textContent = id ? 'Save' : 'Add';
+      editId = id;
+      formEl.reset();
+      if (data) {
+        formEl.institution.value = data.institution;
+        formEl.qualification.value = data.qualification;
+        formEl.field.value = data.field;
+        formEl.from.value = data.from;
+        formEl.to.value = data.to;
+        formEl.location.value = data.location;
+        formEl.remarks.value = data.remarks;
+      }
+    };
+
+    window.closeForm = function () {
+      container.classList.remove('active');
+      editId = null;
+    };
+
+    formEl.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = {
+        institution: formEl.institution.value,
+        qualification: formEl.qualification.value,
+        field: formEl.field.value,
+        from: formEl.from.value,
+        to: formEl.to.value,
+        location: formEl.location.value,
+        remarks: formEl.remarks.value
+      };
+
+      const ref = collection(db, `seafarers/${userId}/cv/education/items`);
+      if (editId) {
+        await updateDoc(doc(ref, editId), data);
+      } else {
+        await addDoc(ref, data);
+      }
+
+      await render();
+      closeForm();
+    });
+
+    async function render() {
+      list.innerHTML = '';
+      const ref = collection(db, `seafarers/${userId}/cv/education/items`);
+      const snap = await getDocs(ref);
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${docSnap.id}", ${JSON.stringify(data)})'>✏️</button>
+            <button class="btn btn-sm btn-outline-danger" onclick='deleteEducation("${docSnap.id}")'>❌</button>
+          </td>
+          <td>${data.institution}</td>
+          <td>${data.qualification}</td>
+          <td>${data.field}</td>
+          <td>${data.from}</td>
+          <td>${data.to}</td>
+          <td>${data.location}</td>
+          <td>${data.remarks}</td>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    window.deleteEducation = async function (id) {
+      if (confirm('Are you sure you want to delete this entry?')) {
+        await deleteDoc(doc(db, `seafarers/${userId}/cv/education/items/${id}`));
+        await render();
+      }
+    };
+  </script>
+</body>
+</html>

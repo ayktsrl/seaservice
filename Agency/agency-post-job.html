@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Post a Job - Agency</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
+    <a class="navbar-brand" href="agency-dashboard.html">Agency Panel</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="agency-dashboard.html">Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="agency-post-job.html">Post Job</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="agency-job-list.html">My Jobs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="agency-seafarers.html">Seafarers</a>
+        </li>
+      </ul>
+      <button id="logoutBtn" class="btn btn-outline-light">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <div class="container py-5">
+    <h2 class="mb-4 text-center">Post a New Job</h2>
+
+    <form id="jobForm" class="mx-auto" style="max-width: 600px;">
+      <div class="mb-3">
+        <label for="rank" class="form-label">Position / Rank</label>
+        <input type="text" class="form-control" id="rank" required />
+      </div>
+      <div class="mb-3">
+        <label for="vesselType" class="form-label">Vessel Type</label>
+        <input type="text" class="form-control" id="vesselType" required />
+      </div>
+      <div class="mb-3">
+        <label for="joiningDate" class="form-label">Joining Date</label>
+        <input type="date" class="form-control" id="joiningDate" required />
+      </div>
+      <div class="mb-3">
+        <label for="duration" class="form-label">Contract Duration</label>
+        <input type="text" class="form-control" id="duration" placeholder="e.g. 6 months" required />
+      </div>
+      <div class="mb-3">
+        <label for="salary" class="form-label">Salary (USD)</label>
+        <input type="number" class="form-control" id="salary" required />
+      </div>
+      <div class="mb-3">
+        <label for="description" class="form-label">Description / Requirements</label>
+        <textarea class="form-control" id="description" rows="4"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Post Job</button>
+      <div id="successMsg" class="text-success mt-3 text-center"></div>
+      <div id="errorMsg" class="text-danger mt-2 text-center"></div>
+    </form>
+  </div>
+
+  <!-- Logout Script -->
+  <script type="module">
+    document.getElementById("logoutBtn")?.addEventListener("click", () => {
+      localStorage.removeItem("role");
+      window.location.href = "login.html";
+    });
+  </script>
+
+  <!-- Firebase Save Job Script -->
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const form = document.getElementById("jobForm");
+    const successMsg = document.getElementById("successMsg");
+    const errorMsg = document.getElementById("errorMsg");
+
+    let agencyId = null;
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        agencyId = user.uid;
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      successMsg.textContent = "";
+      errorMsg.textContent = "";
+
+      const data = {
+        agencyId: agencyId,
+        rank: document.getElementById("rank").value.trim(),
+        vesselType: document.getElementById("vesselType").value.trim(),
+        joiningDate: document.getElementById("joiningDate").value,
+        duration: document.getElementById("duration").value.trim(),
+        salary: parseFloat(document.getElementById("salary").value),
+        description: document.getElementById("description").value.trim(),
+        createdAt: serverTimestamp()
+      };
+
+      try {
+        await addDoc(collection(db, "jobPosts"), data);
+        successMsg.textContent = "Job post submitted successfully.";
+        form.reset();
+      } catch (error) {
+        errorMsg.textContent = "Error: " + error.message;
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

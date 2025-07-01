@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seafarer CV</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=2">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <div id="navbar-container"></div>
+
+  <!-- CV Content -->
+  <div class="container py-4">
+    <h3 class="text-center mb-4">Seafarer CV</h3>
+    <div id="cvContainer"></div>
+    <div class="text-center mt-4">
+      <a href="public-cv-browser.html" class="btn btn-secondary">← Back to List</a>
+      <button id="downloadPdfBtn" class="btn btn-success ms-2">📄 Download PDF</button>
+    </div>
+  </div>
+
+  <!-- Navbar Loader -->
+  <script>
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById('navbar-container').innerHTML = data;
+        const script = document.createElement("script");
+        script.src = "navbar.js";
+        document.body.appendChild(script);
+      });
+  </script>
+
+  <!-- Firebase ve CV Script -->
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+    const container = document.getElementById("cvContainer");
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get("userId");
+
+    if (!userId) {
+      container.innerHTML = "<p class='text-danger'>Invalid user ID</p>";
+    } else {
+      onAuthStateChanged(auth, async user => {
+        if (!user) {
+          window.location.href = "index.html";
+          return;
+        }
+
+        try {
+          // Fetch personalDetails
+          const personalSnap = await getDoc(doc(db, `seafarers/${userId}/cv/personalDetails`));
+          const personal = personalSnap.exists() ? personalSnap.data() : {};
+
+          // Fetch sea service
+          const seaSnap = await getDocs(collection(db, `seafarers/${userId}/seaService`));
+          const seaList = [];
+          seaSnap.forEach(doc => seaList.push(doc.data()));
+
+          // Fetch special skills
+          const skillSnap = await getDocs(collection(db, `seafarers/${userId}/cv/specialSkills/items`));
+          const skills = [];
+          skillSnap.forEach(doc => skills.push(doc.data()));
+
+          // Fetch education
+          const eduSnap = await getDocs(collection(db, `seafarers/${userId}/cv/education/items`));
+          const education = [];
+          eduSnap.forEach(doc => education.push(doc.data().school));
+
+          const el = document.createElement("div");
+          el.innerHTML = `
+            <div class="cv-section">
+              <h5 class="section-title">Personal Details</h5>
+              <p><strong>Full Name:</strong> ${personal.fullName || "-"}</p>
+              <p><strong>Email:</strong> ${personal.email || "-"}</p>
+              <p><strong>Phone:</strong> ${personal.phone || "-"}</p>
+              <p><strong>Nationality:</strong> ${personal.nationality || "-"}</p>
+              <p><strong>Date of Birth:</strong> ${personal.dob || "-"}</p>
+            </div>
+
+            <div class="cv-section">
+              <h5 class="section-title">Sea Service</h5>
+              ${seaList.length > 0 ? seaList.map(s => `
+                <div class="mb-2">
+                  <p><strong>Rank:</strong> ${s.rank || ""}</p>
+                  <p><strong>Vessel:</strong> ${s.vessel || ""} (${s.type || ""})</p>
+                  <p><strong>Start:</strong> ${s.startDate || ""} - <strong>End:</strong> ${s.endDate || ""}</p>
+                  <p><strong>GRT/DWT:</strong> ${s.grt || "-"} / ${s.dwt || "-"}</p>
+                </div>
+                <hr/>
+              `).join("") : "<p>No sea service records.</p>"}
+            </div>
+
+            <div class="cv-section">
+              <h5 class="section-title">Special Skills</h5>
+              ${skills.length > 0 ? `<ul>${skills.map(k => `<li>${k.skill} - ${k.remark}</li>`).join("")}</ul>` : "<p>No skills listed.</p>"}
+            </div>
+
+            <div class="cv-section">
+              <h5 class="section-title">Education</h5>
+              ${education.length > 0 ? `<ul>${education.map(e => `<li>${e}</li>`).join("")}</ul>` : "<p>No education details provided.</p>"}
+            </div>
+          `;
+
+          container.appendChild(el);
+        } catch (err) {
+          container.innerHTML = `<p class="text-danger">Error loading CV: ${err.message}</p>`;
+        }
+      });
+    }
+
+    // PDF button handler
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("downloadPdfBtn").addEventListener("click", () => {
+        const element = document.getElementById("cvContainer");
+        const opt = {
+          margin:       0.5,
+          filename:     'seafarer_cv.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2 },
+          jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+      });
+    });
+  </script>
+</body>
+</html>

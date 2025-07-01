@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Qualifications</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    @media (max-width: 768px) {
+      .form-label {
+        font-size: 0.95rem;
+      }
+
+      .form-select,
+      .form-control,
+      .btn {
+        font-size: 0.95rem;
+      }
+
+      .section-title {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .form-box {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <form id="qualificationsForm" class="form-box bg-white rounded shadow-sm">
+      <div class="section-title">Qualifications</div>
+
+      <div class="mb-3">
+        <label class="form-label">Rank Applied</label>
+        <select class="form-select" id="rankApplied"></select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Lowest Rank Acceptable</label>
+        <select class="form-select" id="lowestRank"></select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Preferred Vessel Type</label>
+        <select class="form-select" id="vesselType"></select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Readiness Date</label>
+        <input type="date" class="form-control" id="readiness" />
+      </div>
+
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    async function loadOptions(selectId, file) {
+      const res = await fetch(file);
+      const html = await res.text();
+      document.getElementById(selectId).innerHTML = html;
+    }
+
+    loadOptions("rankApplied", "options-ranks.html");
+    loadOptions("lowestRank", "options-ranks.html");
+    loadOptions("vesselType", "options-vessels.html");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      const ref = doc(db, "seafarers", user.uid, "cv", "qualifications");
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById("rankApplied").value = data.rankApplied || "";
+        document.getElementById("lowestRank").value = data.lowestRank || "";
+        document.getElementById("vesselType").value = data.vesselType || "";
+        document.getElementById("readiness").value = data.readiness || "";
+      }
+    });
+
+    document.getElementById("qualificationsForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      if (!user) return;
+      const ref = doc(db, "seafarers", user.uid, "cv", "qualifications");
+      const data = {
+        rankApplied: document.getElementById("rankApplied").value,
+        lowestRank: document.getElementById("lowestRank").value,
+        vesselType: document.getElementById("vesselType").value,
+        readiness: document.getElementById("readiness").value
+      };
+      await setDoc(ref, data);
+      alert("Qualifications saved.");
+    });
+  </script>
+</body>
+</html>

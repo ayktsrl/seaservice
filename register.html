@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Register</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h2 class="mb-4 text-center">Register</h2>
+    <form id="registerForm" class="mx-auto" style="max-width: 400px;">
+      <div class="mb-3">
+        <label class="form-label">User Type</label><br />
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="userType" id="seafarerRadio" value="seafarer" checked />
+          <label class="form-check-label" for="seafarerRadio">Seafarer</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="userType" id="companyRadio" value="company" />
+          <label class="form-check-label" for="companyRadio">Company</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="userType" id="agencyRadio" value="agency" />
+          <label class="form-check-label" for="agencyRadio">Agency</label>
+        </div>
+      </div>
+
+      <div id="agencyFields" style="display: none;">
+        <div class="mb-3">
+          <label for="agencyName" class="form-label">Agency Name</label>
+          <input type="text" class="form-control" id="agencyName" />
+        </div>
+        <div class="mb-3">
+          <label for="managerName" class="form-label">Manager Name</label>
+          <input type="text" class="form-control" id="managerName" />
+        </div>
+        <div class="mb-3">
+          <label for="phone" class="form-label">Phone Number</label>
+          <input type="tel" class="form-control" id="phone" />
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="emailInput" class="form-label">Email address</label>
+        <input type="email" class="form-control" id="emailInput" required />
+      </div>
+      <div class="mb-3">
+        <label for="passwordInput" class="form-label">Password</label>
+        <input type="password" class="form-control" id="passwordInput" required minlength="6" />
+      </div>
+      <div class="mb-3">
+        <label for="confirmPasswordInput" class="form-label">Confirm Password</label>
+        <input type="password" class="form-control" id="confirmPasswordInput" required minlength="6" />
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Register</button>
+    </form>
+    <div id="errorMsg" class="text-danger mt-3 text-center"></div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const form = document.getElementById("registerForm");
+    const errorMsg = document.getElementById("errorMsg");
+    const agencyFields = document.getElementById("agencyFields");
+
+    const userTypeRadios = document.querySelectorAll('input[name="userType"]');
+    userTypeRadios.forEach(radio => {
+      radio.addEventListener("change", () => {
+        if (document.getElementById("agencyRadio").checked) {
+          agencyFields.style.display = "block";
+        } else {
+          agencyFields.style.display = "none";
+        }
+      });
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = "";
+
+      const userType = document.querySelector('input[name="userType"]:checked').value;
+      const email = document.getElementById("emailInput").value.trim();
+      const password = document.getElementById("passwordInput").value;
+      const confirmPassword = document.getElementById("confirmPasswordInput").value;
+
+      if (password !== confirmPassword) {
+        errorMsg.textContent = "Passwords do not match.";
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
+
+        let collectionName = "";
+        let redirectURL = "";
+        let data = {
+          email: email,
+          createdAt: new Date().toISOString()
+        };
+
+        if (userType === "seafarer") {
+          collectionName = "seafarers";
+          redirectURL = "seafarer-dashboard.html";
+        } else if (userType === "company") {
+          collectionName = "companies";
+          redirectURL = "company-dashboard.html";
+        } else if (userType === "agency") {
+          collectionName = "agencies";
+          redirectURL = "agency-dashboard.html";
+          data.agencyName = document.getElementById("agencyName").value.trim();
+          data.managerName = document.getElementById("managerName").value.trim();
+          data.phone = document.getElementById("phone").value.trim();
+        }
+
+        await setDoc(doc(db, collectionName, uid), data);
+
+        window.location.href = redirectURL;
+      } catch (error) {
+        errorMsg.textContent = error.message;
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
