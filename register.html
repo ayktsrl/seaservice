@@ -50,10 +50,6 @@
         <label for="passwordInput" class="form-label">Password</label>
         <input type="password" class="form-control" id="passwordInput" required minlength="6" />
       </div>
-      <div class="mb-3">
-        <label for="confirmPasswordInput" class="form-label">Confirm Password</label>
-        <input type="password" class="form-control" id="confirmPasswordInput" required minlength="6" />
-      </div>
       <button type="submit" class="btn btn-primary w-100">Register</button>
     </form>
     <div id="errorMsg" class="text-danger mt-3 text-center"></div>
@@ -71,11 +67,7 @@
     const userTypeRadios = document.querySelectorAll('input[name="userType"]');
     userTypeRadios.forEach(radio => {
       radio.addEventListener("change", () => {
-        if (document.getElementById("agencyRadio").checked) {
-          agencyFields.style.display = "block";
-        } else {
-          agencyFields.style.display = "none";
-        }
+        agencyFields.style.display = document.getElementById("agencyRadio").checked ? "block" : "none";
       });
     });
 
@@ -86,12 +78,6 @@
       const userType = document.querySelector('input[name="userType"]:checked').value;
       const email = document.getElementById("emailInput").value.trim();
       const password = document.getElementById("passwordInput").value;
-      const confirmPassword = document.getElementById("confirmPasswordInput").value;
-
-      if (password !== confirmPassword) {
-        errorMsg.textContent = "Passwords do not match.";
-        return;
-      }
 
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -112,14 +98,13 @@
           redirectURL = "company-dashboard.html";
         } else if (userType === "agency") {
           collectionName = "agencies";
-          redirectURL = "agency-dashboard.html";
+          redirectURL = "Agency/agency-dashboard.html";
           data.agencyName = document.getElementById("agencyName").value.trim();
           data.managerName = document.getElementById("managerName").value.trim();
           data.phone = document.getElementById("phone").value.trim();
         }
 
         await setDoc(doc(db, collectionName, uid), data);
-
         window.location.href = redirectURL;
       } catch (error) {
         errorMsg.textContent = error.message;
