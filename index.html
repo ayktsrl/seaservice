@@ -8,21 +8,27 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="login-wrapper">
-    <h2 class="form-title">Login</h2>
-    <form id="loginForm">
-      <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input type="email" class="form-control" id="email" required />
+  <div class="container py-5">
+    <div class="text-center mb-4">
+      <img src="logo.png" alt="App Symbol" style="width: 100px; height: 100px;" />
+      <h2 class="form-title mt-3">Login</h2>
+    </div>
+
+    <div class="login-wrapper mx-auto" style="max-width: 400px;">
+      <form id="loginForm">
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" class="form-control" id="email" required />
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" class="form-control" id="password" required />
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+      </form>
+      <div class="text-center mt-3">
+        <a href="register.html">Don't have an account? Register</a>
       </div>
-      <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input type="password" class="form-control" id="password" required />
-      </div>
-      <button type="submit" class="btn btn-primary w-100">Login</button>
-    </form>
-    <div class="text-center mt-3">
-      <a href="register.html">Don't have an account? Register</a>
     </div>
   </div>
 

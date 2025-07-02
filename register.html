@@ -27,21 +27,6 @@
         </div>
       </div>
 
-      <div id="agencyFields" style="display: none;">
-        <div class="mb-3">
-          <label for="agencyName" class="form-label">Agency Name</label>
-          <input type="text" class="form-control" id="agencyName" />
-        </div>
-        <div class="mb-3">
-          <label for="managerName" class="form-label">Manager Name</label>
-          <input type="text" class="form-control" id="managerName" />
-        </div>
-        <div class="mb-3">
-          <label for="phone" class="form-label">Phone Number</label>
-          <input type="tel" class="form-control" id="phone" />
-        </div>
-      </div>
-
       <div class="mb-3">
         <label for="emailInput" class="form-label">Email address</label>
         <input type="email" class="form-control" id="emailInput" required />
@@ -62,14 +47,6 @@
 
     const form = document.getElementById("registerForm");
     const errorMsg = document.getElementById("errorMsg");
-    const agencyFields = document.getElementById("agencyFields");
-
-    const userTypeRadios = document.querySelectorAll('input[name="userType"]');
-    userTypeRadios.forEach(radio => {
-      radio.addEventListener("change", () => {
-        agencyFields.style.display = document.getElementById("agencyRadio").checked ? "block" : "none";
-      });
-    });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -99,9 +76,6 @@
         } else if (userType === "agency") {
           collectionName = "agencies";
           redirectURL = "Agency/agency-dashboard.html";
-          data.agencyName = document.getElementById("agencyName").value.trim();
-          data.managerName = document.getElementById("managerName").value.trim();
-          data.phone = document.getElementById("phone").value.trim();
         }
 
         await setDoc(doc(db, collectionName, uid), data);
