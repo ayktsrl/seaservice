@@ -26,7 +26,7 @@ function setupNavbarEvents() {
   }
 }
 
-// Navbar sonradan eklendiği için kısa süre bekleyip setup'ı çağır
+// Navbar yüklendikten sonra biraz bekleyip event'ları bağla
 window.addEventListener("load", () => {
-  setTimeout(setupNavbarEvents, 200);  // 200ms beklemek güvenlidir
+  setTimeout(setupNavbarEvents, 200);
 });
