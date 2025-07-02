@@ -1,17 +1,27 @@
-document.getElementById("logoutBtn")?.addEventListener("click", () => {
-  localStorage.removeItem("role");
-  window.location.href = "../index.html";
-});
+document.addEventListener("DOMContentLoaded", () => {
+  const goToDashboardBtn = document.getElementById("goToDashboardBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-document.getElementById("goToDashboardBtn")?.addEventListener("click", () => {
-  const role = localStorage.getItem("role");
-  if (role === "seafarer") {
-    window.location.href = "Seafarer/seafarer-dashboard.html";
-  } else if (role === "company") {
-    window.location.href = "Company/company-dashboard.html";
-  } else if (role === "agency") {
-    window.location.href = "Agency/agency-dashboard.html";
-  } else {
-    window.location.href = "../index.html";
+  if (goToDashboardBtn) {
+    goToDashboardBtn.addEventListener("click", () => {
+      const role = localStorage.getItem("role");
+
+      if (role === "seafarer") {
+        window.location.href = "/Seafarer/seafarer-dashboard.html";
+      } else if (role === "company") {
+        window.location.href = "/Company/company-dashboard.html";
+      } else if (role === "owner") {
+        window.location.href = "/Owner/owner-dashboard.html";
+      } else if (role === "manager") {
+        window.location.href = "/Company/company-dashboard.html";
+      }
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("role");
+      window.location.href = "../index.html";
+    });
   }
 });
