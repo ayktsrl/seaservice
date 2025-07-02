@@ -44,19 +44,17 @@
 
   <!-- Navbar yükle -->
   <script>
-    // Erişim kontrolü
     const role = localStorage.getItem("role");
     if (role !== "seafarer") {
       window.location.href = "../index.html";
     }
 
-    // Navbar yükle
-    fetch('Seafarer/navbar.html')
+    fetch('navbar.html')  // ✅ doğru yol
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "Seafarer/navbar.js";
+        script.src = "navbar.js";  // ✅ doğru yol
         document.body.appendChild(script);
       });
   </script>
