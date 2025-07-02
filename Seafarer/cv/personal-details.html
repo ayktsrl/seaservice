@@ -2,21 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Personal Details</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../../style.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     @media (max-width: 768px) {
-      .form-label {
-        font-size: 0.95rem;
-      }
-      .form-control, .form-select {
-        font-size: 0.95rem;
-      }
-      h4, h5 {
-        font-size: 1.2rem;
-      }
+      .form-label { font-size: 0.95rem; }
+      .form-control, .form-select { font-size: 0.95rem; }
+      h4, h5 { font-size: 1.2rem; }
     }
     input.form-control[type="text"],
     input.form-control[type="email"],
@@ -101,33 +95,26 @@
     </form>
   </div>
 
-  <script>
-    fetch('options/options-nationality.html')
+  <!-- Script -->
+  <script type="module">
+    if (localStorage.getItem("role") !== "seafarer") {
+      window.top.location.href = "../../index.html";
+    }
+
+    fetch('../../options/options-nationality.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("nationality").innerHTML = html;
       });
 
-    fetch('options/options-countries.html')
+    fetch('../../options/options-countries.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("residence").innerHTML = html;
       });
-
-    document.querySelectorAll('.only-english').forEach(input => {
-      input.addEventListener('input', () => {
-        const regex = /^[A-Z0-9 .,'-]*$/;
-        if (!regex.test(input.value.toUpperCase())) {
-          alert("Please use only English uppercase characters.");
-          input.value = input.value.replace(/[^A-Za-z0-9 .,'-]/g, '').toUpperCase();
-        } else {
-          input.value = input.value.toUpperCase();
-        }
-      });
-    });
   </script>
 
-  <script type="module" src="scripts/personal-details.js"></script>
+  <script type="module" src="../../scripts/personal-details.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

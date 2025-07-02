@@ -5,14 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CV Browser</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
   <style>
     @media (max-width: 768px) {
-      h4 {
-        font-size: 1.4rem;
-        text-align: center;
-      }
-
+      h4 { font-size: 1.4rem; text-align: center; }
       .cv-card {
         border: 1px solid #ddd;
         padding: 15px;
@@ -21,18 +17,9 @@
         background-color: #fff;
         font-size: 0.95rem;
       }
-
-      .cv-card h5 {
-        font-size: 1.1rem;
-      }
-
-      .form-control {
-        font-size: 0.95rem;
-      }
-
-      .btn-sm {
-        width: 100%;
-      }
+      .cv-card h5 { font-size: 1.1rem; }
+      .form-control { font-size: 0.95rem; }
+      .btn-sm { width: 100%; }
     }
   </style>
 </head>
@@ -45,28 +32,33 @@
     <div id="cvList"></div>
   </div>
 
-  <!-- Navbar yükleyici -->
+  <!-- Navbar -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "navbar.js";
+        script.src = "../scripts/navbar.js";
         document.body.appendChild(script);
       });
   </script>
 
+  <!-- Firebase -->
   <script type="module">
-    import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    if (localStorage.getItem("role") !== "company") {
+      window.location.href = "../index.html";
+    }
+
+    import { auth, db } from '../firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     let cvData = [];
     const container = document.getElementById("cvList");
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return location.href = "index.html";
+      if (!user) return location.href = "../index.html";
 
       const seafarersRef = collection(db, "seafarers");
       const snapshot = await getDocs(seafarersRef);
@@ -96,7 +88,7 @@
           <p><strong>Nationality:</strong> ${seafarer.nationality || "-"}</p>
           <p><strong>Phone:</strong> ${seafarer.phone || "-"}</p>
           <p><strong>Email:</strong> ${seafarer.email || "-"}</p>
-          <a class="btn btn-primary btn-sm mt-2" href="view-cv.html?seafarerId=${seafarer.id}" target="_blank">View Full CV</a>
+          <a class="btn btn-primary btn-sm mt-2" href="../Seafarer/view-cv.html?seafarerId=${seafarer.id}" target="_blank">View Full CV</a>
         `;
         container.appendChild(div);
       });

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Company Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
   <style>
     @media (max-width: 768px) {
       .stat-card {
@@ -16,17 +16,14 @@
         box-shadow: 0 0 8px rgba(0,0,0,0.1);
         text-align: center;
       }
-
       .stat-card p {
         font-size: 1rem;
         margin-bottom: 5px;
       }
-
       .stat-card h3 {
         font-size: 2rem;
         margin-bottom: 10px;
       }
-
       .stat-card a.btn {
         width: 100%;
         font-size: 0.95rem;
@@ -71,25 +68,29 @@
     </div>
   </div>
 
-  <!-- Navbar yükleyici -->
+  <!-- Navbar -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "navbar.js";
+        script.src = "../scripts/navbar.js";
         document.body.appendChild(script);
       });
   </script>
 
   <script type="module">
-    import { auth, db } from './firebase-config.js';
+    if (localStorage.getItem("role") !== "company") {
+      window.location.href = "../index.html";
+    }
+
+    import { auth, db } from '../firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return location.href = "index.html";
+      if (!user) return location.href = "../index.html";
 
       const companyId = user.uid;
 
@@ -97,7 +98,7 @@
         getDocs(collection(db, `companies/${companyId}/jobPosts`)),
         getDocs(collection(db, `companies/${companyId}/applications`)),
         getDocs(collection(db, `companies/${companyId}/ships`)),
-        getDocs(collection(db, "seafarers")) // tüm sistemdeki seafarer sayısı
+        getDocs(collection(db, "seafarers"))
       ]);
 
       document.getElementById("jobCount").textContent = jobSnap.size;

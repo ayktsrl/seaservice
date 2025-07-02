@@ -2,115 +2,87 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Company Ship List</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ship List</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../style.css" />
   <style>
-    .ship-card {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 10px;
-      margin-top: 10px;
-    }
-
     @media (max-width: 768px) {
-      body {
-        padding: 10px;
-      }
-
-      .form-box {
-        background: #fff;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-      }
-
-      .search-export-wrapper {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .form-control,
-      .btn {
-        font-size: 0.95rem;
-      }
-
-      .btn {
-        width: 100%;
-      }
-
-      .ship-card {
-        border: 1px solid #ccc;
-        padding: 15px;
-        margin-bottom: 15px;
-      }
-
-      .ship-card .card-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-      }
-
-      .card-buttons {
-        margin-top: 15px;
-        display: flex;
-        gap: 10px;
-        flex-direction: column;
-      }
-
-      .card-buttons button {
-        width: 100%;
-      }
+      h3 { text-align: center; font-size: 1.4rem; margin-bottom: 1rem; }
+      .table { font-size: 0.9rem; }
+      .form-control, .form-select, .btn { font-size: 0.9rem; }
+      .form-control::placeholder { font-size: 0.85rem; }
     }
   </style>
 </head>
 <body>
   <div id="navbar-container"></div>
 
-  <div class="container">
-    <div class="form-box shadow-sm">
-      <div class="search-export-wrapper mb-3">
-        <input type="text" id="searchInput" class="form-control" placeholder="Search by ship name, type..." />
-        <button class="btn btn-outline-success" onclick="exportShips()">Export to Excel</button>
-      </div>
+  <div class="container mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <h3 class="mb-0">Ship List</h3>
+      <button class="btn btn-sm btn-outline-primary" onclick="openForm()">➕ Add Ship</button>
+    </div>
 
-      <div id="shipList"></div>
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Photo</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>LOA</th>
+            <th>DWT</th>
+            <th>GRT</th>
+            <th>Build Year</th>
+            <th>Build Place</th>
+            <th style="width: 80px;"></th>
+          </tr>
+        </thead>
+        <tbody id="shipList"></tbody>
+      </table>
+    </div>
 
-      <hr />
-
-      <h5>Add / Update Ship</h5>
-      <form id="shipForm" class="mt-3">
-        <div class="mb-3">
-          <label for="shipName" class="form-label">Ship Name</label>
-          <input type="text" class="form-control" id="shipName" required />
+    <div class="bg-white p-4 rounded shadow-sm mb-4 d-none" id="shipFormBox">
+      <form id="shipForm">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Ship Name</label>
+            <input type="text" class="form-control" id="name" required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Ship Type</label>
+            <select class="form-select" id="type" required></select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">LOA</label>
+            <input type="text" class="form-control" id="loa" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">DWT</label>
+            <input type="text" class="form-control" id="dwt" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">GRT</label>
+            <input type="text" class="form-control" id="grt" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Build Year</label>
+            <input type="text" class="form-control" id="buildYear" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Build Place</label>
+            <input type="text" class="form-control" id="buildPlace" />
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Photo URL</label>
+            <input type="text" class="form-control" id="photo" placeholder="https://..." />
+          </div>
         </div>
-        <div class="mb-3">
-          <label for="shipType" class="form-label">Ship Type</label>
-          <select class="form-select" id="shipType" required></select>
+        <div class="d-flex justify-content-end gap-2 mt-3">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancel</button>
         </div>
-        <div class="mb-3">
-          <label for="loa" class="form-label">LOA (Length Overall)</label>
-          <input type="number" class="form-control" id="loa" min="0" step="0.1" />
-        </div>
-        <div class="mb-3">
-          <label for="dwt" class="form-label">DWT (Deadweight Tonnage)</label>
-          <input type="number" class="form-control" id="dwt" min="0" step="0.1" />
-        </div>
-        <div class="mb-3">
-          <label for="grt" class="form-label">GRT (Gross Register Tonnage)</label>
-          <input type="number" class="form-control" id="grt" min="0" step="0.1" />
-        </div>
-        <div class="mb-3">
-          <label for="buildPlace" class="form-label">Build Place</label>
-          <input type="text" class="form-control" id="buildPlace" />
-        </div>
-        <div class="mb-3">
-          <label for="buildYear" class="form-label">Build Year</label>
-          <input type="number" class="form-control" id="buildYear" min="1800" max="2099" step="1" />
-        </div>
-        <button type="submit" class="btn btn-primary w-100">Save Ship</button>
       </form>
     </div>
   </div>
@@ -121,144 +93,90 @@
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "navbar.js";
+        script.src = "../scripts/navbar.js";
         document.body.appendChild(script);
       });
   </script>
 
   <script type="module">
-    import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    if (localStorage.getItem("role") !== "company") {
+      window.location.href = "../index.html";
+    }
+
+    import { auth, db } from '../firebase-config.js';
     import {
-      collection, getDocs, addDoc, updateDoc, deleteDoc, doc
+      collection, getDocs, addDoc, deleteDoc, doc
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-    let userId = null;
-    let ships = [];
-    let editShipId = null;
-    let shipCollectionRef = null;
+    const formBox = document.getElementById("shipFormBox");
+    const form = document.getElementById("shipForm");
+    const list = document.getElementById("shipList");
 
-    async function loadShipTypes() {
-      const res = await fetch('options-vessels.html');
-      const html = await res.text();
-      document.getElementById('shipType').innerHTML = html;
-    }
+    let companyId;
 
-    loadShipTypes();
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return location.href = "../index.html";
+      companyId = user.uid;
+      await render();
 
-    onAuthStateChanged(auth, async user => {
-      if (!user) return location.href = "index.html";
-      userId = user.uid;
-      shipCollectionRef = collection(db, `companies/${userId}/ships`);
-      await loadShips();
+      const res = await fetch("../options/options-vessels.html");
+      document.getElementById("type").innerHTML = await res.text();
     });
 
-    async function loadShips() {
-      const container = document.getElementById('shipList');
-      container.innerHTML = '';
-      ships = [];
-      const snapshot = await getDocs(shipCollectionRef);
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        ships.push({ id: docSnap.id, ...data });
-      });
-      renderShipList(ships);
-    }
-
-    function renderShipList(list) {
-      const container = document.getElementById('shipList');
-      container.innerHTML = '';
-      if (list.length === 0) {
-        container.innerHTML = '<p class="text-muted">No ships found.</p>';
-        return;
-      }
-
-      list.forEach(ship => {
-        const div = document.createElement('div');
-        div.className = 'ship-card shadow-sm';
-        div.innerHTML = `
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h5 class="card-title">${ship.name}</h5>
-              <p>Type: ${ship.type}</p>
-              <p>LOA: ${ship.loa || '-'}</p>
-              <p>DWT: ${ship.dwt || '-'}</p>
-              <p>GRT: ${ship.grt || '-'}</p>
-              <p>Build Place: ${ship.buildPlace || '-'}</p>
-              <p>Build Year: ${ship.buildYear || '-'}</p>
-            </div>
-            <div class="card-buttons">
-              <button class="btn btn-sm btn-primary" onclick="editShip('${ship.id}')">Edit</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteShip('${ship.id}')">Delete</button>
-            </div>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    document.getElementById('shipForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const shipData = {
-        name: document.getElementById('shipName').value,
-        type: document.getElementById('shipType').value,
-        loa: parseFloat(document.getElementById('loa').value) || null,
-        dwt: parseFloat(document.getElementById('dwt').value) || null,
-        grt: parseFloat(document.getElementById('grt').value) || null,
-        buildPlace: document.getElementById('buildPlace').value,
-        buildYear: parseInt(document.getElementById('buildYear').value) || null,
-      };
-
-      if (editShipId) {
-        await updateDoc(doc(db, `companies/${userId}/ships`, editShipId), shipData);
-      } else {
-        await addDoc(shipCollectionRef, shipData);
-      }
-
-      editShipId = null;
-      e.target.reset();
-      await loadShips();
-    });
-
-    window.editShip = (id) => {
-      const ship = ships.find(s => s.id === id);
-      if (!ship) return;
-      editShipId = id;
-      document.getElementById('shipName').value = ship.name;
-      document.getElementById('shipType').value = ship.type;
-      document.getElementById('loa').value = ship.loa || '';
-      document.getElementById('dwt').value = ship.dwt || '';
-      document.getElementById('grt').value = ship.grt || '';
-      document.getElementById('buildPlace').value = ship.buildPlace || '';
-      document.getElementById('buildYear').value = ship.buildYear || '';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.openForm = () => {
+      form.reset();
+      formBox.classList.remove("d-none");
     };
+
+    window.closeForm = () => {
+      formBox.classList.add("d-none");
+    };
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = {
+        name: form.name.value,
+        type: form.type.value,
+        loa: form.loa.value,
+        dwt: form.dwt.value,
+        grt: form.grt.value,
+        buildYear: form.buildYear.value,
+        buildPlace: form.buildPlace.value,
+        photo: form.photo.value
+      };
+      await addDoc(collection(db, `companies/${companyId}/ships`), data);
+      closeForm();
+      await render();
+    });
+
+    async function render() {
+      list.innerHTML = "";
+      const snap = await getDocs(collection(db, `companies/${companyId}/ships`));
+      snap.forEach(docSnap => {
+        const s = docSnap.data();
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><img src="${s.photo}" alt="" width="80" class="img-thumbnail" onerror="this.src='https://via.placeholder.com/80'" /></td>
+          <td>${s.name}</td>
+          <td>${s.type}</td>
+          <td>${s.loa}</td>
+          <td>${s.dwt}</td>
+          <td>${s.grt}</td>
+          <td>${s.buildYear}</td>
+          <td>${s.buildPlace}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteShip('${docSnap.id}')">❌</button></td>
+        `;
+        list.appendChild(row);
+      });
+    }
 
     window.deleteShip = async (id) => {
-      if (!confirm('Are you sure you want to delete this ship?')) return;
-      await deleteDoc(doc(db, `companies/${userId}/ships`, id));
-      await loadShips();
-    };
-
-    function exportShips() {
-      if (!ships.length) {
-        alert('No ships to export.');
-        return;
+      if (confirm("Are you sure you want to delete this ship?")) {
+        await deleteDoc(doc(db, `companies/${companyId}/ships/${id}`));
+        await render();
       }
-      const data = ships.map(s => ({
-        Name: s.name,
-        Type: s.type,
-        LOA: s.loa,
-        DWT: s.dwt,
-        GRT: s.grt,
-        'Build Place': s.buildPlace,
-        'Build Year': s.buildYear,
-      }));
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Ships');
-      XLSX.writeFile(wb, 'ship-list.xlsx');
-    }
+    };
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

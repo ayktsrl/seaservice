@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Flag Books</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../../style.css" />
   <style>
     @media (max-width: 768px) {
       h4 { font-size: 1.4rem; text-align: center; }
@@ -73,7 +72,11 @@
   </div>
 
   <script type="module">
-    import { auth, db } from './firebase-config.js';
+    if (localStorage.getItem("role") !== "seafarer") {
+      window.top.location.href = "../../index.html";
+    }
+
+    import { auth, db } from '../../firebase-config.js';
     import {
       collection, addDoc, updateDoc, deleteDoc, getDocs, doc
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -88,7 +91,7 @@
     const submitBtn = document.getElementById('submitBtn');
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return window.location.href = 'index.html';
+      if (!user) return location.href = "../../index.html";
       userId = user.uid;
       await render();
     });

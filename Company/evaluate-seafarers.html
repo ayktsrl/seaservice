@@ -5,31 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Evaluate Seafarers</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../style.css" />
   <style>
     @media (max-width: 768px) {
-      h3 {
-        font-size: 1.4rem;
-        text-align: center;
-      }
-
-      .list-group-item {
-        font-size: 0.95rem;
-      }
-
-      select.form-select-sm,
-      input.form-control-sm,
-      button.btn-sm {
-        font-size: 0.9rem;
-      }
-
-      .row.g-2 > * {
-        margin-bottom: 8px;
-      }
-
-      .container {
-        padding: 10px;
-      }
+      h3 { font-size: 1.4rem; text-align: center; }
+      .list-group-item { font-size: 0.95rem; }
+      select.form-select-sm, input.form-control-sm, button.btn-sm { font-size: 0.9rem; }
+      .row.g-2 > * { margin-bottom: 8px; }
+      .container { padding: 10px; }
     }
   </style>
 </head>
@@ -42,20 +25,23 @@
     <ul id="evaluationList" class="list-group"></ul>
   </div>
 
-  <!-- Navbar yükleyici -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "navbar.js";
+        script.src = "../scripts/navbar.js";
         document.body.appendChild(script);
       });
   </script>
 
   <script type="module">
-    import { auth, db } from './firebase-config.js';
+    if (localStorage.getItem("role") !== "company") {
+      window.location.href = "../index.html";
+    }
+
+    import { auth, db } from '../firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { collectionGroup, updateDoc, doc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -63,7 +49,7 @@
     let serviceList = [];
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return location.href = "index.html";
+      if (!user) return location.href = "../index.html";
       currentUser = user;
       await loadEvaluations();
     });

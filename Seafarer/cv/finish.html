@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Finish Application</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../../style.css" />
   <style>
     @media (max-width: 768px) {
       .form-box {
@@ -70,7 +69,11 @@
   </div>
 
   <script type="module">
-    import { auth } from './firebase-config.js';
+    if (localStorage.getItem("role") !== "seafarer") {
+      window.top.location.href = "../../index.html";
+    }
+
+    import { auth } from '../../firebase-config.js';
     import {
       getDocs, deleteDoc, doc, collection
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -81,7 +84,7 @@
       EmailAuthProvider,
       reauthenticateWithCredential
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { db } from './firebase-config.js';
+    import { db } from '../../firebase-config.js';
 
     const agreeCheck = document.getElementById('agreeCheck');
     const finishBtn = document.getElementById('finishBtn');
@@ -95,14 +98,14 @@
     let currentUser = null;
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return window.location.href = 'index.html';
+      if (!user) return window.location.href = "../../index.html";
       userId = user.uid;
       userEmail = user.email;
       currentUser = user;
 
       // Show View CV
       const viewLink = document.getElementById("viewCvBtn");
-      viewLink.href = `view-cv.html?userId=${userId}`;
+      viewLink.href = `../view-cv.html?userId=${userId}`;
       viewLink.style.display = "inline-block";
     });
 
@@ -148,7 +151,7 @@
         await deleteUser(currentUser);
         await signOut(auth);
         alert('Your account and all application content have been permanently deleted.');
-        location.href = 'index.html';
+        location.href = "../../index.html";
 
       } catch (e) {
         reauthError.textContent = e.message;

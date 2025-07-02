@@ -11,7 +11,7 @@
   <div class="container py-5">
     <div class="text-center mb-4">
       <img src="logo.png" alt="App Symbol" style="width: 100px; height: 100px;" />
-          </div>
+    </div>
 
     <div class="login-wrapper mx-auto" style="max-width: 400px;">
       <form id="loginForm">
@@ -49,13 +49,17 @@
 
         const seafarerDoc = await getDoc(doc(db, "seafarers", uid));
         const companyDoc = await getDoc(doc(db, "companies", uid));
+        const agencyDoc = await getDoc(doc(db, "agencies", uid));
 
         if (companyDoc.exists()) {
           localStorage.setItem("role", "company");
-          window.location.href = "company-dashboard.html";
+          window.location.href = "Company/company-dashboard.html";
         } else if (seafarerDoc.exists()) {
           localStorage.setItem("role", "seafarer");
-          window.location.href = "job-board.html";
+          window.location.href = "Seafarer/seafarer-dashboard.html";
+        } else if (agencyDoc.exists()) {
+          localStorage.setItem("role", "agency");
+          window.location.href = "Agency/agency-dashboard.html";
         } else {
           alert("Unknown user role.");
         }
