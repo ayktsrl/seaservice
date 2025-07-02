@@ -25,12 +25,12 @@
 
   <!-- Navbar Loader -->
   <script>
-    fetch('Seafarer/navbar.html')
+    fetch('navbar.html')
       .then(res => res.text())
       .then(data => {
         document.getElementById('navbar-container').innerHTML = data;
         const script = document.createElement("script");
-        script.src = "Seafarer/navbar.js";
+        script.src = "navbar.js";
         document.body.appendChild(script);
       });
   </script>

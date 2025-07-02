@@ -2,79 +2,82 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="editCV">Edit CV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit My CV</title>
   <link rel="stylesheet" href="../style.css" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
-    .cv-frame {
+    @media (max-width: 768px) {
+      h4 {
+        font-size: 1.4rem;
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+
+      .nav-pills .nav-link {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      iframe {
+        height: 600px;
+      }
+    }
+
+    iframe {
       width: 100%;
       border: none;
-      min-height: 70vh;
-    }
-    .nav-link.active {
-      font-weight: bold;
-    }
-    nav.nav {
-      overflow-x: auto;
-      white-space: nowrap;
+      min-height: 720px;
     }
   </style>
 </head>
-<body>
+<body class="bg-light">
   <div id="navbar-container"></div>
 
-  <div class="container-fluid mt-3">
-    <div class="row mb-3">
-      <div class="col-12">
-        <nav class="nav nav-pills flex-row flex-wrap justify-content-center gap-2">
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/personal-details.html', this)">Personal Details</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/documents.html', this)">Documents</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/sea-service.html', this)">Sea Service</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/certificates.html', this)">Certificates</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/vaccinations.html', this)">Vaccinations</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/visas.html', this)">Visas</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/flag-books.html', this)">Flag Books</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/licenses.html', this)">Licenses</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/experience.html', this)">Experience</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/special-skills.html', this)">Skills</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/references.html', this)">References</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/education.html', this)">Education</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/qualifications.html', this)">Qualifications</a>
-          <a class="nav-link btn btn-outline-primary" onclick="loadSection('cv/finish.html', this)">Finish</a>
-        </nav>
+  <div class="container mt-4">
+    <h4 id="sectionTitle" class="text-center">🧾 Personal Details</h4>
+    <div class="row mt-4">
+      <div class="col-md-3 mb-3">
+        <div class="nav flex-column nav-pills gap-2">
+          <button class="nav-link" onclick="loadSection('personal-details.html', this)">Personal Details</button>
+          <button class="nav-link" onclick="loadSection('education.html', this)">Education</button>
+          <button class="nav-link" onclick="loadSection('certificates.html', this)">Certificates</button>
+          <button class="nav-link" onclick="loadSection('licenses.html', this)">Licenses</button>
+          <button class="nav-link" onclick="loadSection('flag-books.html', this)">Flag Documents</button>
+          <button class="nav-link" onclick="loadSection('vaccinations.html', this)">Vaccinations</button>
+          <button class="nav-link" onclick="loadSection('visas.html', this)">Visas</button>
+          <button class="nav-link" onclick="loadSection('documents.html', this)">Documents</button>
+          <button class="nav-link" onclick="loadSection('experience.html', this)">Experience</button>
+          <button class="nav-link" onclick="loadSection('sea-service.html', this)">Sea Service</button>
+          <button class="nav-link" onclick="loadSection('qualifications.html', this)">Qualifications</button>
+          <button class="nav-link" onclick="loadSection('special-skills.html', this)">Special Skills</button>
+          <button class="nav-link" onclick="loadSection('references.html', this)">References</button>
+          <button class="nav-link" onclick="loadSection('finish.html', this)">Finish</button>
+        </div>
       </div>
-    </div>
-
-    <div class="row mb-2">
-      <div class="col-12 text-center">
-        <h5 id="sectionTitle">🧾 Personal Details</h5>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-12">
-        <iframe id="cvFrame" class="cv-frame" src="cv/personal-details.html"></iframe>
+      <div class="col-md-9">
+        <iframe id="cvFrame" src="personal-details.html"></iframe>
       </div>
     </div>
   </div>
 
   <script>
-    // Erişim kontrolü
+    // Role kontrolü
     if (localStorage.getItem("role") !== "seafarer") {
       window.location.href = "../index.html";
     }
 
     // Navbar yükle
-    fetch('Seafarer/navbar.html')
+    fetch('navbar.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "Seafarer/navbar.js";
+        script.src = "navbar.js";
         document.body.appendChild(script);
       });
 
+    // Sekme yükleyici
     function loadSection(page, el) {
       document.getElementById("cvFrame").src = page;
       document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
