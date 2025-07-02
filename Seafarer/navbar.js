@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+function setupNavbarEvents() {
   const goToDashboardBtn = document.getElementById("goToDashboardBtn");
   const logoutBtn = document.getElementById("logoutBtn");
 
@@ -24,4 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "../index.html";
     });
   }
+}
+
+// Navbar sonradan eklendiği için kısa süre bekleyip setup'ı çağır
+window.addEventListener("load", () => {
+  setTimeout(setupNavbarEvents, 200);  // 200ms beklemek güvenlidir
 });
