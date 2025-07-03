@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Experience Summary</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../style.css" />
+  <style>
+    @media (max-width: 768px) {
+      h3 { font-size: 1.4rem; text-align: center; }
+      .table { display: block; overflow-x: auto; white-space: nowrap; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <h3 class="mb-4 text-center">Verified Sea Service Summary</h3>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead class="table-primary text-center">
+          <tr>
+            <th>Vessel</th>
+            <th>IMO</th>
+            <th>Type</th>
+            <th>Rank</th>
+            <th>GRT</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Days</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+        <tfoot>
+          <tr class="fw-bold text-center">
+            <td colspan="7">Total Experience</td>
+            <td id="totalDays"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    if (localStorage.getItem("role") !== "seafarer") {
+      window.top.location.href = "../../index.html";
+    }
+
+    import { auth, db } from '../../firebase-config.js';
+    import {
+      collection, getDocs
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+    let userId = null;
+
+    function calculateDays(start, end) {
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      const diff = endDate - startDate;
+      return Math.floor(diff / (1000 * 60 * 60 * 24));
+    }
+
+    function formatDuration(totalDays) {
+      const years = Math.floor(totalDays / 365);
+      const months = Math.floor((totalDays % 365) / 30);
+      const days = totalDays % 30;
+      return `${years}y ${months}m ${days}d`;
+    }
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = "../../index.html";
+      userId = user.uid;
+
+      const ref = collection(db, `seafarers/${userId}/seaService`);
+      const snapshot = await getDocs(ref);
+
+      let total = 0;
+      const tbody = document.getElementById("tableBody");
+
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        if (!d.isVerified) return;
+
+        const days = calculateDays(d.start, d.end);
+        total += days;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${d.vessel}</td>
+          <td>${d.imo}</td>
+          <td>${d.type}</td>
+          <td>${d.rank}</td>
+          <td>${d.grt}</td>
+          <td>${d.start}</td>
+          <td>${d.end}</td>
+          <td class="text-center">${days}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById("totalDays").textContent = formatDuration(total);
+    });
+  </script>
+</body>
+</html>

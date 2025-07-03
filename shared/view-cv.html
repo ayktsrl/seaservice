@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Seafarer CV</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="bg-light">
+
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+
+  <!-- CV Content -->
+  <div class="container py-5">
+    <h2 class="mb-4 text-center">Seafarer CV</h2>
+
+    <div id="cvContainer" class="border p-4 bg-white shadow-sm rounded">
+      <p><strong>Full Name:</strong> <span id="fullName">Loading...</span></p>
+      <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+      <p><strong>Rank:</strong> <span id="rank">Loading...</span></p>
+      <p><strong>Experience:</strong> <span id="experience">Loading...</span></p>
+      <p><strong>Certificates:</strong></p>
+      <ul id="certificatesList">
+        <li>Loading...</li>
+      </ul>
+    </div>
+
+    <div id="errorMsg" class="text-danger text-center mt-4"></div>
+  </div>
+
+  <!-- Firebase Load CV -->
+  <script type="module">
+    import { db } from '../firebase-config.js';
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const uid = urlParams.get("uid");
+
+    const fullName = document.getElementById("fullName");
+    const email = document.getElementById("email");
+    const rank = document.getElementById("rank");
+    const experience = document.getElementById("experience");
+    const certificatesList = document.getElementById("certificatesList");
+    const errorMsg = document.getElementById("errorMsg");
+
+    async function loadCV() {
+      try {
+        const docRef = doc(db, "seafarers", uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          fullName.textContent = data.fullName || "-";
+          email.textContent = data.email || "-";
+          rank.textContent = data.rank || "-";
+          experience.textContent = data.experience || "-";
+
+          certificatesList.innerHTML = "";
+          if (Array.isArray(data.certificates) && data.certificates.length > 0) {
+            data.certificates.forEach(cert => {
+              certificatesList.innerHTML += `<li>${cert}</li>`;
+            });
+          } else {
+            certificatesList.innerHTML = "<li>No certificates listed.</li>";
+          }
+        } else {
+          errorMsg.textContent = "Seafarer not found.";
+        }
+      } catch (error) {
+        errorMsg.textContent = "Error loading CV: " + error.message;
+      }
+    }
+
+    loadCV();
+  </script>
+
+  <!-- Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Navbar Loader (Role Based) -->
+  <script>
+    const role = localStorage.getItem("role");
+
+    let navbarFile = "";
+    if (role === "company") {
+      navbarFile = "../Company/navbar-company.html";
+    } else if (role === "agency") {
+      navbarFile = "../Agency/agency-navbar.html";
+    } else {
+      navbarFile = "../Seafarer/navbar.html";
+    }
+
+    fetch(navbarFile)
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-container").innerHTML = html;
+        const script = document.createElement("script");
+        script.src = "../navbar.js";
+        document.body.appendChild(script);
+      });
+  </script>
+</body>
+</html>
