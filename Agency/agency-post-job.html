@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Post a Job - Agency</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="bg-light">
+
+  <!-- Navbar -->
+  <div id="navbar-container"></div>
+
+  <!-- Page Content -->
+  <div class="container py-5">
+    <h2 class="mb-4 text-center">Post a New Job</h2>
+
+    <form id="jobForm" class="mx-auto" style="max-width: 600px;">
+      <div class="mb-3">
+        <label for="rank" class="form-label">Position / Rank</label>
+        <input type="text" class="form-control" id="rank" required />
+      </div>
+      <div class="mb-3">
+        <label for="vesselType" class="form-label">Vessel Type</label>
+        <input type="text" class="form-control" id="vesselType" required />
+      </div>
+      <div class="mb-3">
+        <label for="joiningDate" class="form-label">Joining Date</label>
+        <input type="date" class="form-control" id="joiningDate" required />
+      </div>
+      <div class="mb-3">
+        <label for="duration" class="form-label">Contract Duration</label>
+        <input type="text" class="form-control" id="duration" placeholder="e.g. 6 months" required />
+      </div>
+      <div class="mb-3">
+        <label for="salary" class="form-label">Salary (USD)</label>
+        <input type="number" class="form-control" id="salary" required />
+      </div>
+      <div class="mb-3">
+        <label for="description" class="form-label">Description / Requirements</label>
+        <textarea class="form-control" id="description" rows="4"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Post Job</button>
+      <div id="successMsg" class="text-success mt-3 text-center"></div>
+      <div id="errorMsg" class="text-danger mt-2 text-center"></div>
+    </form>
+  </div>
+
+  <!-- Firebase Save Job Script -->
+  <script type="module">
+    import { auth, db } from '../firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const form = document.getElementById("jobForm");
+    const successMsg = document.getElementById("successMsg");
+    const errorMsg = document.getElementById("errorMsg");
+
+    let agencyId = null;
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        agencyId = user.uid;
+      } else {
+        window.location.href = "../login.html";
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      successMsg.textContent = "";
+      errorMsg.textContent = "";
+
+      const data = {
+        creatorId: agencyId,
+        creatorType: "agency",
+        position: document.getElementById("rank").value.trim(),
+        vesselType: document.getElementById("vesselType").value.trim(),
+        joiningDate: document.getElementById("joiningDate").value,
+        duration: document.getElementById("duration").value.trim(),
+        salary: parseFloat(document.getElementById("salary").value),
+        description: document.getElementById("description").value.trim(),
+        createdAt: serverTimestamp()
+      };
+
+      try {
+        await addDoc(collection(db, "jobPosts"), data);
+        successMsg.textContent = "Job post submitted successfully.";
+        form.reset();
+      } catch (error) {
+        errorMsg.textContent = "Error: " + error.message;
+      }
+    });
+  </script>
+
+  <!-- Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Navbar Loader -->
+  <script>
+    fetch("agency-navbar.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-container").innerHTML = html;
+        const script = document.createElement("script");
+        script.src = "navbar.js";
+        document.body.appendChild(script);
+      });
+  </script>
+</body>
+</html>
