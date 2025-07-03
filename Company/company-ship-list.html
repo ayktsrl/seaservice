@@ -87,13 +87,14 @@
     </div>
   </div>
 
+  <!-- Navbar -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "../scripts/navbar.js";
+        script.src = "navbar.js"; // ✅ doğru klasör düzeltildi
         document.body.appendChild(script);
       });
   </script>

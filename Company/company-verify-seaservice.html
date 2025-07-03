@@ -41,17 +41,19 @@
     <ul id="pendingList" class="list-group"></ul>
   </div>
 
+  <!-- Navbar -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "../scripts/navbar.js";
+        script.src = "navbar.js"; // ✅ düzeltildi
         document.body.appendChild(script);
       });
   </script>
 
+  <!-- Firebase Logic -->
   <script type="module">
     if (localStorage.getItem("role") !== "company") {
       window.location.href = "../index.html";

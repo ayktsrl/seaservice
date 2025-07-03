@@ -8,23 +8,6 @@
   <link rel="stylesheet" href="../style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    @media (max-width: 768px) {
-      .application-card {
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        font-size: 0.95rem;
-        background-color: #fff;
-        box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      }
-      #detailsModal .modal-dialog { max-width: 95%; margin: 1rem auto; }
-      #detailsModal .modal-footer { flex-direction: column; gap: 10px; }
-      #detailsModal .modal-footer > * { width: 100%; }
-      .d-flex.flex-wrap.justify-content-between.gap-2 { flex-direction: column; }
-      input.form-control-sm, select.form-select-sm, button.btn-sm { font-size: 0.9rem; }
-    }
-  </style>
 </head>
 <body>
   <div id="navbar-container"></div>
@@ -59,14 +42,14 @@
     </div>
   </div>
 
-  <!-- Navbar -->
+  <!-- Navbar Loader -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "../scripts/navbar.js";
+        script.src = "navbar.js";
         document.body.appendChild(script);
       });
   </script>

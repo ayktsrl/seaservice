@@ -39,7 +39,7 @@
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "../scripts/navbar.js";
+        script.src = "navbar.js"; // ✅ düzeltildi
         document.body.appendChild(script);
       });
   </script>
