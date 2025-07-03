@@ -36,6 +36,7 @@
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
+        script.type = "module"; // 👈 EKLENDİ
         script.src = "navbar.js";
         document.body.appendChild(script);
       });
