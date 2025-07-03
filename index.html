@@ -16,8 +16,8 @@
     <div class="login-wrapper mx-auto" style="max-width: 400px;">
       <form id="loginForm">
         <div class="mb-3">
-          <label for="email" class="form-label">Email</label>
-          <input type="email" class="form-control" id="email" required />
+          <label for="loginInput" class="form-label">Email or Username</label>
+          <input type="text" class="form-control" id="loginInput" required />
         </div>
         <div class="mb-3">
           <label for="password" class="form-label">Password</label>
@@ -34,35 +34,79 @@
   <script type="module">
     import { auth, db } from './firebase-config.js';
     import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import {
+      doc, getDoc, collection, query, where, getDocs
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const form = document.getElementById("loginForm");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("email").value;
+
+      const loginInput = document.getElementById("loginInput").value.trim();
       const password = document.getElementById("password").value;
 
+      const isEmail = loginInput.includes("@");
+      let email = loginInput;
+      let username = null;
+      let role = null;
+
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const uid = userCredential.user.uid;
+        if (!isEmail) {
+          // Kullanıcı adı verildi, tüm koleksiyonlarda ara
+          const collections = ["seafarers", "companies", "agencies"];
+          for (const col of collections) {
+            const userRef = doc(db, col, loginInput);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              role = col.slice(0, -1); // "seafarers" → "seafarer"
+              username = loginInput;
+              email = userSnap.data().email;
+              break;
+            }
+          }
 
-        const seafarerDoc = await getDoc(doc(db, "seafarers", uid));
-        const companyDoc = await getDoc(doc(db, "companies", uid));
-        const agencyDoc = await getDoc(doc(db, "agencies", uid));
-
-        if (companyDoc.exists()) {
-          localStorage.setItem("role", "company");
-          window.location.href = "Company/company-dashboard.html";
-        } else if (seafarerDoc.exists()) {
-          localStorage.setItem("role", "seafarer");
-          window.location.href = "Seafarer/seafarer-dashboard.html";
-        } else if (agencyDoc.exists()) {
-          localStorage.setItem("role", "agency");
-          window.location.href = "Agency/agency-dashboard.html";
-        } else {
-          alert("Unknown user role.");
+          if (!email) {
+            alert("Username not found.");
+            return;
+          }
         }
+
+        // Email ile giriş yap
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+        // Eğer email ile giriş yapıldıysa, role tespiti için tekrar tarama yap
+        if (!role) {
+          const uid = userCredential.user.uid;
+          const collections = ["seafarers", "companies", "agencies"];
+          for (const col of collections) {
+            const q = query(collection(db, col), where("email", "==", email));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+              role = col.slice(0, -1);
+              username = snap.docs[0].id;
+              break;
+            }
+          }
+        }
+
+        if (!role || !username) {
+          alert("User role could not be determined.");
+          return;
+        }
+
+        // Local storage'a yaz ve yönlendir
+        localStorage.setItem("role", role);
+        localStorage.setItem("username", username);
+
+        const redirectMap = {
+          seafarer: "Seafarer/seafarer-dashboard.html",
+          company: "Company/company-dashboard.html",
+          agency: "Agency/agency-dashboard.html"
+        };
+
+        window.location.href = redirectMap[role];
+
       } catch (error) {
         alert("Login failed: " + error.message);
       }
