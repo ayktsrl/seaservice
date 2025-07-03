@@ -73,8 +73,9 @@
       errorMsg.textContent = "";
 
       const data = {
-        agencyId: agencyId,
-        rank: document.getElementById("rank").value.trim(),
+        creatorId: agencyId,
+        creatorType: "agency",
+        position: document.getElementById("rank").value.trim(),
         vesselType: document.getElementById("vesselType").value.trim(),
         joiningDate: document.getElementById("joiningDate").value,
         duration: document.getElementById("duration").value.trim(),

@@ -72,7 +72,7 @@
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "navbar.js"; // ✅ düzeltildi
+        script.src = "navbar.js";
         document.body.appendChild(script);
       });
 
@@ -97,10 +97,11 @@
 
     import { auth, db } from '../firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { doc, collection, setDoc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { doc, collection, setDoc, getDocs, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const jobForm = document.getElementById('jobForm');
     const vesselSelect = document.getElementById('vesselName');
+    const messageBox = document.getElementById('message');
 
     let userId = null;
     let shipMap = {};
@@ -124,8 +125,11 @@
 
     jobForm.addEventListener('submit', async e => {
       e.preventDefault();
+
       const selectedVessel = jobForm.vesselName.value;
-      const data = {
+      const jobData = {
+        creatorId: userId,
+        creatorType: "company",
         position: jobForm.position.value,
         vesselName: selectedVessel,
         vesselType: shipMap[selectedVessel] || '',
@@ -133,12 +137,22 @@
         contract: jobForm.contract.value,
         location: jobForm.location.value,
         notes: jobForm.notes.value,
-        createdAt: new Date().toISOString()
+        createdAt: serverTimestamp()
       };
-      const jobRef = doc(collection(db, `companies/${userId}/jobPosts`));
-      await setDoc(jobRef, data);
-      document.getElementById("message").textContent = "Job posted successfully!";
-      jobForm.reset();
+
+      try {
+        // Save under company private path
+        const companyRef = doc(collection(db, `companies/${userId}/jobPosts`));
+        await setDoc(companyRef, jobData);
+
+        // Save to shared jobPosts
+        await addDoc(collection(db, "jobPosts"), jobData);
+
+        messageBox.textContent = "Job posted successfully!";
+        jobForm.reset();
+      } catch (err) {
+        messageBox.textContent = "Error: " + err.message;
+      }
     });
   </script>
 

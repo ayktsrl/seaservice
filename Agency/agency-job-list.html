@@ -19,7 +19,7 @@
       <table class="table table-bordered table-hover">
         <thead class="table-primary">
           <tr>
-            <th>Rank</th>
+            <th>Position</th>
             <th>Vessel Type</th>
             <th>Joining Date</th>
             <th>Duration</th>
@@ -52,7 +52,8 @@
       try {
         const q = query(
           collection(db, "jobPosts"),
-          where("agencyId", "==", user.uid),
+          where("creatorId", "==", user.uid),
+          where("creatorType", "==", "agency"),
           orderBy("createdAt", "desc")
         );
 
@@ -67,7 +68,7 @@
             const job = doc.data();
             jobTableBody.innerHTML += `
               <tr>
-                <td>${job.rank || "-"}</td>
+                <td>${job.position || "-"}</td>
                 <td>${job.vesselType || "-"}</td>
                 <td>${job.joiningDate || "-"}</td>
                 <td>${job.duration || "-"}</td>

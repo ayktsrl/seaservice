@@ -16,17 +16,14 @@
         box-shadow: 0 0 8px rgba(0,0,0,0.1);
         text-align: center;
       }
-
       .stat-card p {
         font-size: 1rem;
         margin-bottom: 5px;
       }
-
       .stat-card h3 {
         font-size: 2rem;
         margin-bottom: 10px;
       }
-
       .stat-card a.btn {
         width: 100%;
         font-size: 0.95rem;
@@ -71,17 +68,19 @@
     </div>
   </div>
 
+  <!-- Navbar yükle -->
   <script>
     fetch('navbar-company.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.src = "navbar.js"; // ✅ düzeltildi
+        script.src = "navbar.js";
         document.body.appendChild(script);
       });
   </script>
 
+  <!-- Firebase verileri -->
   <script type="module">
     if (localStorage.getItem("role") !== "company") {
       window.location.href = "../index.html";
@@ -89,15 +88,21 @@
 
     import { auth, db } from '../firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     onAuthStateChanged(auth, async user => {
       if (!user) return location.href = "../index.html";
 
       const companyId = user.uid;
 
+      const jobQuery = query(
+        collection(db, "jobPosts"),
+        where("creatorId", "==", companyId),
+        where("creatorType", "==", "company")
+      );
+
       const [jobSnap, appSnap, shipSnap, seaSnap] = await Promise.all([
-        getDocs(collection(db, `companies/${companyId}/jobPosts`)),
+        getDocs(jobQuery),
         getDocs(collection(db, `companies/${companyId}/applications`)),
         getDocs(collection(db, `companies/${companyId}/ships`)),
         getDocs(collection(db, "seafarers"))
