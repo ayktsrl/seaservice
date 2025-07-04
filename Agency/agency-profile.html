@@ -109,10 +109,14 @@
   <!-- Navbar yükleme scripti -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      fetch("../navbar.html")
+      fetch("agency-navbar.html")
         .then(res => res.text())
         .then(html => {
           document.getElementById("navbarContainer").innerHTML = html;
+          const script = document.createElement("script");
+          script.type = "module";
+          script.src = "navbar.js";
+          document.body.appendChild(script);
         });
     });
   </script>
