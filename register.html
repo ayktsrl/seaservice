@@ -100,14 +100,17 @@
           return;
         }
 
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
 
         const data = {
+          uid: uid,
           email: email,
           username: username,
           userType: userType,
           createdAt: new Date().toISOString()
         };
+
         await setDoc(usernameRef, data);
 
         localStorage.setItem("username", username);

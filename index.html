@@ -61,15 +61,16 @@
             const userRef = doc(db, col, loginInput);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
-              role = col.slice(0, -1);
-              username = loginInput;
-              email = userSnap.data().email;
+              const data = userSnap.data();
+              role = data.userType;
+              username = data.username || loginInput;
+              email = data.email;
               break;
             }
           }
 
-          if (!email) {
-            errorMsg.textContent = "Username not found.";
+          if (!email || !role) {
+            errorMsg.textContent = "Username not found or role missing.";
             return;
           }
         }
@@ -83,7 +84,7 @@
             const snap = await getDocs(q);
             if (!snap.empty) {
               const docData = snap.docs[0].data();
-              role = docData.userType || col.slice(0, -1);
+              role = docData.userType;
               username = docData.username || snap.docs[0].id;
               break;
             }
@@ -91,7 +92,7 @@
         }
 
         if (!role || !username) {
-          errorMsg.textContent = "User role could not be determined.";
+          errorMsg.textContent = "User role or username could not be determined.";
           return;
         }
 
@@ -104,7 +105,7 @@
           agency: "Agency/agency-dashboard.html"
         };
 
-        const redirectURL = redirectMap[role];
+        const redirectURL = redirectMap[role.toLowerCase()];
         console.log("Redirecting to:", redirectURL);
 
         if (!redirectURL) {
