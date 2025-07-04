@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="text-center mb-4">
+      <img src="logo.png" alt="App Symbol" style="width: 100px; height: 100px;" />
+    </div>
+
+    <div class="login-wrapper mx-auto" style="max-width: 400px;">
+      <form id="loginForm">
+        <div class="mb-3">
+          <label for="loginInput" class="form-label">Email or Username</label>
+          <input type="text" class="form-control" id="loginInput" required />
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" class="form-control" id="password" required />
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+        <div id="errorMsg" class="text-danger mt-3 text-center"></div>
+      </form>
+      <div class="text-center mt-3">
+        <a href="register.html">Don't have an account? Register</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase login logic -->
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { doc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const form = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = '';
+
+      const loginInput = document.getElementById('loginInput').value.trim();
+      const password = document.getElementById('password').value;
+
+      const isEmail = loginInput.includes('@');
+      let email = loginInput;
+      let username = null;
+      let role = null;
+
+      try {
+        // Username login flow
+        if (!isEmail) {
+          const collections = ['seafarers', 'companies', 'agencies'];
+          for (const col of collections) {
+            const userRef = doc(db, col, loginInput);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              const data = userSnap.data();
+              role = data.userType;
+              username = data.username || loginInput;
+              email = data.email;
+              break;
+            }
+          }
+          if (!email || !role) {
+            errorMsg.textContent = 'Username not found or role missing.';
+            return;
+          }
+        }
+
+        // Firebase Auth sign-in
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+        // If role not yet determined by username flow, determine by email
+        if (!role) {
+          const collections = ['seafarers', 'companies', 'agencies'];
+          for (const col of collections) {
+            const q = query(collection(db, col), where('email', '==', email));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+              const docData = snap.docs[0].data();
+              role = docData.userType;
+              username = docData.username || snap.docs[0].id;
+              break;
+            }
+          }
+        }
+
+        if (!role || !username) {
+          errorMsg.textContent = 'User role or username could not be determined.';
+          return;
+        }
+
+        // Save to localStorage
+        localStorage.setItem('role', role);
+        localStorage.setItem('username', username);
+
+        // Redirect to common dashboard
+        window.location.href = 'home.html';
+
+      } catch (error) {
+        console.error('Login error:', error);
+        errorMsg.textContent = 'Login failed: ' + error.message;
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

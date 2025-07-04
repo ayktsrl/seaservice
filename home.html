@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-light">
+
+  <!-- Common Navbar -->
+  <div id="navbar-container"></div>
+
+  <!-- Agency Section -->
+  <section id="agency-section" class="role-section" style="display:none;">
+    <div class="container py-5">
+      <h2 class="mb-4 text-center">Welcome back, <span id="agencyUsername"></span></h2>
+      <div class="row g-4 text-center">
+        <div class="col-md-3">
+          <div class="card bg-info text-white shadow">
+            <div class="card-body">
+              <h5>Total Job Posts</h5>
+              <h2 id="totalJobs">--</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-success text-white shadow">
+            <div class="card-body">
+              <h5>Applications Received</h5>
+              <h2 id="totalApplicants">--</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-warning text-dark shadow">
+            <div class="card-body">
+              <h5>Active Job Posts</h5>
+              <h2 id="activeJobs">--</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-secondary text-white shadow">
+            <div class="card-body">
+              <h5>Seafarer Profiles</h5>
+              <h2 id="totalSeafarers">--</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row mt-5 justify-content-center">
+        <div class="col-md-4"><a href="agency-post-job.html" class="btn btn-primary w-100">Post a New Job</a></div>
+        <div class="col-md-4"><a href="agency-job-list.html" class="btn btn-outline-secondary w-100">View My Job Posts</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Company Section -->
+  <section id="company-section" class="role-section" style="display:none;">
+    <div class="container py-5">
+      <h3 class="mb-4 text-center">Company Dashboard</h3>
+      <div class="row" id="statCards">
+        <div class="col-md-3 col-6">
+          <div class="stat-card">
+            <p>Total Jobs</p><h3 id="jobCount">-</h3>
+            <a href="create-job.html" class="btn btn-sm btn-outline-primary">Go</a>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="stat-card">
+            <p>Total Applications</p><h3 id="applicationCount">-</h3>
+            <a href="company-applications.html" class="btn btn-sm btn-outline-primary">Go</a>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="stat-card">
+            <p>Total Seafarers</p><h3 id="seafarerCount">-</h3>
+            <a href="public-cv-browser.html" class="btn btn-sm btn-outline-primary">Go</a>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="stat-card">
+            <p>Total Ships</p><h3 id="shipCount">-</h3>
+            <a href="company-ship-list.html" class="btn btn-sm btn-outline-primary">Go</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Seafarer Section -->
+  <section id="seafarer-section" class="role-section" style="display:none;">
+    <div class="container py-5">
+      <h2 class="mb-4 text-center">Welcome to Seafarer Dashboard</h2>
+      <div class="row g-4 justify-content-center">
+        <div class="col-md-4"><a href="edit-cv-panel.html" class="btn btn-primary w-100">My CV</a></div>
+        <div class="col-md-4"><a href="my-applications.html" class="btn btn-secondary w-100">My Applications</a></div>
+        <div class="col-md-4"><a href="../shared/job-board.html" class="btn btn-success w-100">Find Jobs</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navbar Fetch & User Injection -->
+  <script>
+    fetch('common-navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+        const username = localStorage.getItem('username');
+        if (username) {
+          const el = document.getElementById('usernameDisplay');
+          if (el) el.textContent = username;
+        }
+        const logout = document.getElementById('logoutBtn');
+        if (logout) logout.addEventListener('click', () => {
+          localStorage.removeItem('role');
+          window.location.href = 'login.html';
+        });
+      });
+  </script>
+
+  <!-- Firebase Auth & Role Logic -->
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { collection, query, where, getDocs, onSnapshot, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    onAuthStateChanged(auth, async user => {
+      const role = localStorage.getItem('role');
+      if (!user || !role) return window.location.href = 'login.html';
+
+      // Hide all sections
+      document.querySelectorAll('.role-section').forEach(s => s.style.display = 'none');
+      // Show current
+      const activeSection = document.getElementById(`${role}-section`);
+      if (activeSection) activeSection.style.display = 'block';
+
+      // Role-specific data fetch
+      if (role === 'agency') {
+        const username = localStorage.getItem('username');
+        document.getElementById('agencyUsername').textContent = username;
+        const jobsQ = query(collection(db,'jobPosts'), where('agency','==', username));
+        onSnapshot(jobsQ, snap => {
+          document.getElementById('totalJobs').textContent = snap.size;
+          document.getElementById('activeJobs').textContent = snap.docs.filter(d=>d.data().status==='active').length;
+        });
+        onSnapshot(query(collection(db,'applications'),where('agency','==',username)), snap=>{
+          document.getElementById('totalApplicants').textContent = snap.size;
+        });
+        onSnapshot(collection(db,'seafarers'), snap=>{
+          document.getElementById('totalSeafarers').textContent = snap.size;
+        });
+      } else if (role === 'company') {
+        const uid = user.uid;
+        const jobSnap = await getDocs(query(collection(db,'jobPosts'), where('creatorId','==',uid), where('creatorType','==','company'), orderBy('createdAt','desc')));
+        const appSnap = await getDocs(collection(db,`companies/${uid}/applications`));
+        const shipSnap = await getDocs(collection(db,`companies/${uid}/ships`));
+        const seaSnap = await getDocs(collection(db,'seafarers'));
+        document.getElementById('jobCount').textContent = jobSnap.size;
+        document.getElementById('applicationCount').textContent = appSnap.size;
+        document.getElementById('shipCount').textContent = shipSnap.size;
+        document.getElementById('seafarerCount').textContent = seaSnap.size;
+      } else if (role === 'seafarer') {
+        // no dynamic data needed for seafarer dashboard
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

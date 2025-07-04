@@ -1,0 +1,269 @@
+/* --------------------------------
+   Genel Body ve Container Ayarları
+---------------------------------*/
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f2f5;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 15px;
+}
+
+/* --------------------------------
+   Login Sayfası (Ortak Giriş Formları)
+---------------------------------*/
+.login-wrapper {
+  max-width: 400px;
+  width: 100%;
+  margin: 60px auto;
+  padding: 30px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-title {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+/* --------------------------------
+   Navbar ve Genel Butonlar
+---------------------------------*/
+.navbar {
+  margin-bottom: 20px;
+}
+
+.btn {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.3s ease;
+  border-radius: 5px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.btn-outline-primary {
+  color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+/* --------------------------------
+   Form Elemanları ve Inputlar
+---------------------------------*/
+.form-control,
+.form-select,
+textarea {
+  border-radius: 5px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  transition: border-color 0.3s ease;
+  font-size: 1rem;
+}
+
+.form-control:focus,
+.form-select:focus,
+textarea:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* --------------------------------
+   Tablo Responsive Ayarları
+---------------------------------*/
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table th,
+.table td {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* --------------------------------
+   Genel Başlıklar ve Paragraflar
+---------------------------------*/
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  margin-bottom: 1rem;
+}
+
+/* --------------------------------
+   Kart ve Box Stilleri
+---------------------------------*/
+.form-box, .section-box, .ship-card, .stat-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+/* --------------------------------
+   Sidebar ve CV Panel Özel Stilleri
+---------------------------------*/
+.sidebar a {
+  display: block;
+  padding: 10px 12px;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+iframe#contentFrame {
+  width: 100%;
+  height: 75vh;
+  border: none;
+}
+
+#saveBtnContainer {
+  display: flex;
+  justify-content: end;
+  padding: 10px 0;
+}
+
+/* --------------------------------
+   Responsive ve Mobil Ayarlar
+---------------------------------*/
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.6rem; }
+  h3 { font-size: 1.4rem; }
+  h4 { font-size: 1.2rem; }
+
+  .form-control,
+  .form-select,
+  textarea,
+  .btn {
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 0.5rem 1rem;
+  }
+
+  .navbar-collapse {
+    background: #007bff;
+    padding: 10px;
+  }
+
+  .d-flex.justify-content-between {
+    flex-direction: column !important;
+    gap: 10px;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .ship-card, .application-card, .stat-card {
+    font-size: 0.95rem;
+    padding: 15px;
+  }
+
+  .search-export-wrapper,
+  .btn-group {
+    flex-direction: column !important;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-footer > * {
+    width: 100%;
+  }
+
+  iframe#contentFrame {
+    height: 60vh;
+  }
+
+  #saveBtnContainer {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* --------------------------------
+   Özel Durumlar ve İnce Ayarlar
+---------------------------------*/
+.form-check-label {
+  font-size: 0.95rem;
+}
+
+button.btn-sm {
+  min-width: 80px;
+}
+
+.mb-3 {
+  margin-bottom: 1rem !important;
+}
+
+.mt-3 {
+  margin-top: 1rem !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+/* --------------------------------
+   CV Görünümü için Ek Stiller
+---------------------------------*/
+.cv-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+/* --------------------------------
+   Seafarer App ikon stili düzeltmesi
+---------------------------------*/
+.navbar-brand i {
+  margin-right: 5px;
+}

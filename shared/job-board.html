@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Board</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <div id="navbar-container"></div>
+
+  <div class="container py-4">
+    <h2 class="mb-4 text-center">Available Job Posts</h2>
+
+    <table class="table table-bordered table-hover">
+      <thead class="table-light">
+        <tr>
+          <th>Position</th>
+          <th>Vessel Type</th>
+          <th>Join Date</th>
+          <th>Duration</th>
+          <th>Salary (USD)</th>
+        </tr>
+      </thead>
+      <tbody id="jobList">
+        <tr><td colspan="5" class="text-center">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const role = localStorage.getItem("role");
+    let navbarFile = "";
+    if (role === "company") {
+      navbarFile = "../Company/navbar-company.html";
+    } else if (role === "agency") {
+      navbarFile = "../Agency/agency-navbar.html";
+    } else {
+      navbarFile = "../Seafarer/navbar.html";
+    }
+
+    fetch(navbarFile)
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-container").innerHTML = html;
+        const script = document.createElement("script");
+        script.src = "../navbar.js";
+        document.body.appendChild(script);
+      });
+  </script>
+
+  <script type="module">
+    import { db } from '../firebase-config.js';
+    import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const jobList = document.getElementById("jobList");
+
+    async function fetchJobs() {
+      try {
+        const querySnapshot = await getDocs(collection(db, "jobPosts"));
+        jobList.innerHTML = "";
+
+        if (querySnapshot.empty) {
+          jobList.innerHTML = `<tr><td colspan="5" class="text-center">No job posts found.</td></tr>`;
+          return;
+        }
+
+        querySnapshot.forEach(doc => {
+          const job = doc.data();
+          jobList.innerHTML += `
+            <tr>
+              <td>${job.position || '-'}</td>
+              <td>${job.vesselType || '-'}</td>
+              <td>${job.joinDate || '-'}</td>
+              <td>${job.duration || '-'}</td>
+              <td>${job.salary || '-'}</td>
+            </tr>
+          `;
+        });
+      } catch (error) {
+        jobList.innerHTML = `<tr><td colspan="5" class="text-danger text-center">Error loading jobs: ${error.message}</td></tr>`;
+      }
+    }
+
+    fetchJobs();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
