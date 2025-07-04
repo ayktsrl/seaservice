@@ -9,6 +9,27 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="bg-light">
+
+  <!-- Ortak Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('common-navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+        const user = localStorage.getItem('username');
+        if (user) {
+          const el = document.getElementById('usernameDisplay');
+          if (el) el.textContent = user;
+        }
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('role');
+          window.location.href = 'index.html';
+        });
+      });
+  </script>
+
   <div class="container py-5">
     <div class="text-center mb-4">
       <img src="logo.png" alt="App Symbol" style="width: 100px; height: 100px;" />

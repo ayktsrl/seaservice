@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ship Crew List</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    @media (max-width: 768px) {
+      h4 {
+        font-size: 1.4rem;
+        text-align: center;
+      }
+      .crew-box {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+      }
+      .form-control, .form-select, .btn {
+        font-size: 0.95rem;
+      }
+      table {
+        font-size: 0.9rem;
+      }
+      .table-responsive {
+        overflow-x: auto;
+      }
+      .d-flex.justify-content-end {
+        justify-content: center !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-light p-3">
+
+  <!-- Ortak Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('../common-navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-container").innerHTML = html;
+        const user = localStorage.getItem('username');
+        if (user) {
+          const el = document.getElementById('usernameDisplay');
+          if (el) el.textContent = user;
+        }
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('role');
+          localStorage.removeItem('username');
+          window.location.href = '../index.html';
+        });
+      });
+  </script>
+
+  <div class="container">
+    <div class="crew-box shadow-sm">
+      <h4 class="mb-4">Crew List for Selected Ship</h4>
+      <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search by name or rank">
+
+      <form id="addCrewForm" class="row g-3 mb-3">
+        <div class="col-md-4"><input type="text" class="form-control" id="fullName" placeholder="Full Name" required /></div>
+        <div class="col-md-3"><input type="text" class="form-control" id="rank" placeholder="Rank" required /></div>
+        <div class="col-md-3"><input type="date" class="form-control" id="joinDate" required /></div>
+        <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Add</button></div>
+      </form>
+
+      <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-outline-success" onclick="exportToExcel()">Export to Excel</button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Rank</th>
+              <th>Joining Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="crewTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script type="module">
+    if (localStorage.getItem("role") !== "company") {
+      window.location.href = "../index.html";
+    }
+
+    import { auth, db } from '../firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const params = new URLSearchParams(window.location.search);
+    const shipId = params.get("shipId");
+
+    let companyId = null;
+    let crewPath = null;
+    let allCrew = [];
+
+    const crewTable = document.getElementById("crewTableBody");
+    const form = document.getElementById("addCrewForm");
+    const searchInput = document.getElementById("searchInput");
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return location.href = "../index.html";
+      companyId = user.uid;
+      crewPath = `companies/${companyId}/ships/${shipId}/crew`;
+      await loadCrew();
+    });
+
+    async function loadCrew() {
+      crewTable.innerHTML = "";
+      const crewRef = collection(db, crewPath);
+      const snapshot = await getDocs(crewRef);
+      allCrew = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+      renderCrewList(allCrew);
+    }
+
+    function renderCrewList(list) {
+      crewTable.innerHTML = "";
+      list.forEach(crew => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${crew.fullName}</td>
+          <td>${crew.rank}</td>
+          <td>${crew.joinDate}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteCrew('${crew.id}')">Delete</button></td>
+        `;
+        crewTable.appendChild(tr);
+      });
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById("fullName").value;
+      const rank = document.getElementById("rank").value;
+      const joinDate = document.getElementById("joinDate").value;
+
+      await addDoc(collection(db, crewPath), {
+        fullName,
+        rank,
+        joinDate
+      });
+
+      form.reset();
+      loadCrew();
+    });
+
+    window.deleteCrew = async (id) => {
+      if (!confirm("Are you sure you want to delete this crew member?")) return;
+      await deleteDoc(doc(db, crewPath, id));
+      loadCrew();
+    };
+
+    window.exportToExcel = () => {
+      const data = allCrew.map(c => ({ Name: c.fullName, Rank: c.rank, JoiningDate: c.joinDate }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Crew");
+      XLSX.writeFile(wb, "crew-list.xlsx");
+    };
+
+    searchInput.addEventListener("input", (e) => {
+      const val = e.target.value.toLowerCase();
+      const filtered = allCrew.filter(c =>
+        (c.fullName || "").toLowerCase().includes(val) ||
+        (c.rank || "").toLowerCase().includes(val)
+      );
+      renderCrewList(filtered);
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

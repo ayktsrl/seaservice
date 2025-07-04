@@ -9,8 +9,26 @@
 </head>
 <body class="bg-light">
 
-  <!-- Navbar -->
+  <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
+  <script>
+    fetch('../common-navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-container").innerHTML = html;
+        const user = localStorage.getItem('username');
+        if (user) {
+          const el = document.getElementById('usernameDisplay');
+          if (el) el.textContent = user;
+        }
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('role');
+          localStorage.removeItem('username');
+          window.location.href = '../index.html';
+        });
+      });
+  </script>
 
   <!-- CV Content -->
   <div class="container py-5">
@@ -33,10 +51,10 @@
   <!-- Firebase Load CV -->
   <script type="module">
     import { db } from '../firebase-config.js';
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const urlParams = new URLSearchParams(window.location.search);
-    const uid = urlParams.get("uid");
+    const userId = urlParams.get("userId") || urlParams.get("uid"); // Hem eski hem yeni query desteği
 
     const fullName = document.getElementById("fullName");
     const email = document.getElementById("email");
@@ -46,27 +64,58 @@
     const errorMsg = document.getElementById("errorMsg");
 
     async function loadCV() {
+      if (!userId) {
+        errorMsg.textContent = "No seafarer specified.";
+        return;
+      }
       try {
-        const docRef = doc(db, "seafarers", uid);
-        const docSnap = await getDoc(docRef);
+        // Personal details
+        const personalRef = doc(db, "seafarers", userId, "cv", "personalDetails");
+        const qualRef = doc(db, "seafarers", userId, "cv", "qualifications");
+        const certCol = collection(db, "seafarers", userId, "cv", "certificates/items");
+        const seaServiceCol = collection(db, "seafarers", userId, "seaService");
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          fullName.textContent = data.fullName || "-";
-          email.textContent = data.email || "-";
-          rank.textContent = data.rank || "-";
-          experience.textContent = data.experience || "-";
+        // Full Name, Email
+        const personalSnap = await getDoc(personalRef);
+        let fName = "-", mail = "-";
+        if (personalSnap.exists()) {
+          const d = personalSnap.data();
+          fName = ((d.firstName || "") + " " + (d.middleName || "") + " " + (d.lastName || "")).replace(/\s+/g, " ").trim();
+          mail = d.email || "-";
+        }
+        fullName.textContent = fName;
+        email.textContent = mail;
 
-          certificatesList.innerHTML = "";
-          if (Array.isArray(data.certificates) && data.certificates.length > 0) {
-            data.certificates.forEach(cert => {
-              certificatesList.innerHTML += `<li>${cert}</li>`;
-            });
-          } else {
-            certificatesList.innerHTML = "<li>No certificates listed.</li>";
+        // Rank
+        const qualSnap = await getDoc(qualRef);
+        rank.textContent = (qualSnap.exists() && qualSnap.data().rankApplied) ? qualSnap.data().rankApplied : "-";
+
+        // Experience (toplam onaylı gün sayısı)
+        let totalDays = 0;
+        const seaSnaps = await getDocs(seaServiceCol);
+        seaSnaps.forEach(doc => {
+          const d = doc.data();
+          if (d.isVerified && d.start && d.end) {
+            const s = new Date(d.start), e = new Date(d.end);
+            const diff = Math.floor((e - s) / (1000 * 60 * 60 * 24));
+            if (!isNaN(diff) && diff > 0) totalDays += diff;
           }
+        });
+        const years = Math.floor(totalDays / 365), months = Math.floor((totalDays % 365) / 30), days = totalDays % 30;
+        experience.textContent = (totalDays > 0)
+          ? `${years}y ${months}m ${days}d (${totalDays} days)`
+          : "-";
+
+        // Certificates (liste)
+        certificatesList.innerHTML = "";
+        const certSnaps = await getDocs(certCol);
+        if (certSnaps.size === 0) {
+          certificatesList.innerHTML = "<li>No certificates listed.</li>";
         } else {
-          errorMsg.textContent = "Seafarer not found.";
+          certSnaps.forEach(doc => {
+            const d = doc.data();
+            certificatesList.innerHTML += `<li><b>${d.type || d.category || "Certificate"}</b> - ${d.number || ""} (${d.expiry || "No Expiry"})</li>`;
+          });
         }
       } catch (error) {
         errorMsg.textContent = "Error loading CV: " + error.message;
@@ -76,30 +125,6 @@
     loadCV();
   </script>
 
-  <!-- Bootstrap -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Navbar Loader (Role Based) -->
-  <script>
-    const role = localStorage.getItem("role");
-
-    let navbarFile = "";
-    if (role === "company") {
-      navbarFile = "../Company/navbar-company.html";
-    } else if (role === "agency") {
-      navbarFile = "../Agency/agency-navbar.html";
-    } else {
-      navbarFile = "../Seafarer/navbar.html";
-    }
-
-    fetch(navbarFile)
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("navbar-container").innerHTML = html;
-        const script = document.createElement("script");
-        script.src = "../navbar.js";
-        document.body.appendChild(script);
-      });
-  </script>
 </body>
 </html>

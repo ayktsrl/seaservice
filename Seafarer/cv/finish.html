@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Finish Application</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../style.css" />
+  <style>
+    @media (max-width: 768px) {
+      .form-box {
+        padding: 20px;
+        background: #fff;
+        border-radius: 12px;
+      }
+      p { font-size: 0.95rem; }
+      .btn { font-size: 0.95rem; width: 100%; margin-top: 10px; }
+      .btn-group { flex-direction: column; gap: 10px; }
+      .form-check-label { font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body class="bg-light p-4">
+  <!-- Ortak Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('../../common-navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("navbar-container").innerHTML = html;
+        const user = localStorage.getItem('username');
+        if (user) {
+          const el = document.getElementById('usernameDisplay');
+          if (el) el.textContent = user;
+        }
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('role');
+          localStorage.removeItem('username');
+          window.location.href = '../../index.html';
+        });
+      });
+  </script>
+
+  <div class="container">
+    <div class="form-box text-center shadow-sm bg-white p-4 rounded">
+      <p>
+        I hereby certify that the information given above is true and correct to the best of my knowledge and belief...
+      </p>
+      <div class="form-check d-flex justify-content-center mb-4">
+        <input class="form-check-input me-2" type="checkbox" id="agreeCheck">
+        <label class="form-check-label" for="agreeCheck">I agree with the declaration.</label>
+      </div>
+      <p>
+        If you have finished completing the resume you can click the Finish button below and notify the recruitment department.
+      </p>
+      <div class="btn-group d-flex justify-content-center flex-wrap">
+        <button class="btn btn-primary" id="finishBtn" disabled>
+          Finished, please notify recruitment department
+        </button>
+        <a id="viewCvBtn" href="#" class="btn btn-outline-primary" style="display: none;">
+          View Application Form
+        </a>
+      </div>
+      <p class="mt-4">
+        If you wish to withdraw the application please press the button below. All your application content will be permanently deleted.
+      </p>
+      <button class="btn btn-outline-danger" id="withdrawBtn">Withdraw Application</button>
+    </div>
+  </div>
+
+  <div class="modal fade" id="reauthModal" tabindex="-1" aria-labelledby="reauthModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="reauthForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="reauthModalLabel">Verify Password</h5>
+          </div>
+          <div class="modal-body">
+            <p>Please re-enter your password to confirm.</p>
+            <input type="password" class="form-control" id="reauthPassword" required placeholder="Password" />
+            <div id="reauthError" class="text-danger mt-2"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger">Confirm & Withdraw</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    if (localStorage.getItem("role") !== "seafarer") {
+      window.top.location.href = "../../index.html";
+    }
+
+    import { auth, db } from '../../firebase-config.js';
+    import {
+      getDocs, deleteDoc, doc, collection
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import {
+      onAuthStateChanged,
+      deleteUser,
+      signOut,
+      EmailAuthProvider,
+      reauthenticateWithCredential
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+    const agreeCheck = document.getElementById('agreeCheck');
+    const finishBtn = document.getElementById('finishBtn');
+    const withdrawBtn = document.getElementById('withdrawBtn');
+    const reauthPassword = document.getElementById("reauthPassword");
+    const reauthForm = document.getElementById("reauthForm");
+    const reauthError = document.getElementById("reauthError");
+
+    let userId = null;
+    let userEmail = null;
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) return window.location.href = "../../index.html";
+      userId = user.uid;
+      userEmail = user.email;
+      currentUser = user;
+
+      // Show View CV
+      const viewLink = document.getElementById("viewCvBtn");
+      viewLink.href = `../view-cv.html?userId=${userId}`;
+      viewLink.style.display = "inline-block";
+    });
+
+    agreeCheck.addEventListener('change', () => {
+      finishBtn.disabled = !agreeCheck.checked;
+    });
+
+    finishBtn.addEventListener('click', () => {
+      alert("Your application has been marked as complete. The recruitment department will be notified.");
+    });
+
+    withdrawBtn.addEventListener('click', () => {
+      const modal = new bootstrap.Modal(document.getElementById('reauthModal'));
+      modal.show();
+    });
+
+    reauthForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      reauthError.textContent = "";
+      const password = reauthPassword.value;
+
+      try {
+        const credential = EmailAuthProvider.credential(userEmail, password);
+        await reauthenticateWithCredential(currentUser, credential);
+
+        const sections = [
+          "personalDetails", "qualifications", "documents", "certificates", "licenses",
+          "vaccinations", "visas", "flagbooks", "seaService", "experience", "specialSkills",
+          "references", "education"
+        ];
+
+        for (let sec of sections) {
+          const colRef = collection(db, `seafarers/${userId}/cv/${sec}/items`);
+          const snap = await getDocs(colRef);
+          for (let docSnap of snap.docs) {
+            await deleteDoc(docSnap.ref);
+          }
+        }
+
+        await deleteDoc(doc(db, `seafarers/${userId}/cv/personalDetails`));
+        await deleteDoc(doc(db, `seafarers/${userId}/cv/qualifications`));
+
+        await deleteUser(currentUser);
+        await signOut(auth);
+        alert('Your account and all application content have been permanently deleted.');
+        location.href = "../../index.html";
+
+      } catch (e) {
+        reauthError.textContent = e.message;
+      }
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

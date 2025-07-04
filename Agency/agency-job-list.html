@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Job Posts - Agency</title>
+  <link rel="icon" href="/favicon.ico" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body class="bg-light">
+
+  <!-- Ortak Navbar -->
+  <div id="navbar-container"></div>
+  <script>
+    fetch('../common-navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+        const user = localStorage.getItem('username');
+        if (user) {
+          const el = document.getElementById('usernameDisplay');
+          if (el) el.textContent = user;
+        }
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.addEventListener('click', () => {
+          localStorage.removeItem('role');
+          localStorage.removeItem('username');
+          window.location.href = '../index.html';
+        });
+      });
+  </script>
+
+  <!-- Page Content -->
+  <div class="container py-5">
+    <h2 class="mb-4 text-center">My Job Posts</h2>
+    <div id="jobList" class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead class="table-primary">
+          <tr>
+            <th>Position</th>
+            <th>Vessel Type</th>
+            <th>Joining Date</th>
+            <th>Duration</th>
+            <th>Salary (USD)</th>
+          </tr>
+        </thead>
+        <tbody id="jobTableBody">
+          <tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="errorMsg" class="text-danger text-center mt-3"></div>
+  </div>
+
+  <!-- Firebase Job Fetch Script -->
+  <script type="module">
+    import { auth, db } from '../firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { collection, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const jobTableBody = document.getElementById('jobTableBody');
+    const errorMsg = document.getElementById('errorMsg');
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = '../index.html';
+        return;
+      }
+
+      try {
+        const q = query(
+          collection(db, 'jobPosts'),
+          where('creatorId', '==', user.uid),
+          where('creatorType', '==', 'agency'),
+          orderBy('createdAt', 'desc')
+        );
+
+        const snapshot = await getDocs(q);
+        jobTableBody.innerHTML = '';
+
+        if (snapshot.empty) {
+          jobTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No job posts found.</td></tr>`;
+        } else {
+          snapshot.forEach(doc => {
+            const job = doc.data();
+            jobTableBody.innerHTML += `
+              <tr>
+                <td>${job.position || '-'}</td>
+                <td>${job.vesselType || '-'}</td>
+                <td>${job.joiningDate || '-'}</td>
+                <td>${job.duration || '-'}</td>
+                <td>${job.salary ? '$' + job.salary : '-'}</td>
+              </tr>
+            `;
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching job posts:', error);
+        errorMsg.textContent = 'Error fetching job posts: ' + error.message;
+      }
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

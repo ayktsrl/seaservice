@@ -10,8 +10,26 @@
 </head>
 <body class="bg-light">
 
-  <!-- Common Navbar -->
+  <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
+  <script>
+    fetch('common-navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+        const username = localStorage.getItem('username');
+        if (username) {
+          const el = document.getElementById('usernameDisplay');
+          if (el) el.textContent = username;
+        }
+        const logout = document.getElementById('logoutBtn');
+        if (logout) logout.addEventListener('click', () => {
+          localStorage.removeItem('role');
+          localStorage.removeItem('username');
+          window.location.href = 'index.html'; // login.html değil!
+        });
+      });
+  </script>
 
   <!-- Agency Section -->
   <section id="agency-section" class="role-section" style="display:none;">
@@ -98,29 +116,10 @@
       <div class="row g-4 justify-content-center">
         <div class="col-md-4"><a href="edit-cv-panel.html" class="btn btn-primary w-100">My CV</a></div>
         <div class="col-md-4"><a href="my-applications.html" class="btn btn-secondary w-100">My Applications</a></div>
-        <div class="col-md-4"><a href="../shared/job-board.html" class="btn btn-success w-100">Find Jobs</a></div>
+        <div class="col-md-4"><a href="shared/job-board.html" class="btn btn-success w-100">Find Jobs</a></div>
       </div>
     </div>
   </section>
-
-  <!-- Navbar Fetch & User Injection -->
-  <script>
-    fetch('common-navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
-        const username = localStorage.getItem('username');
-        if (username) {
-          const el = document.getElementById('usernameDisplay');
-          if (el) el.textContent = username;
-        }
-        const logout = document.getElementById('logoutBtn');
-        if (logout) logout.addEventListener('click', () => {
-          localStorage.removeItem('role');
-          window.location.href = 'login.html';
-        });
-      });
-  </script>
 
   <!-- Firebase Auth & Role Logic -->
   <script type="module">
@@ -130,7 +129,7 @@
 
     onAuthStateChanged(auth, async user => {
       const role = localStorage.getItem('role');
-      if (!user || !role) return window.location.href = 'login.html';
+      if (!user || !role) return window.location.href = 'index.html';
 
       // Hide all sections
       document.querySelectorAll('.role-section').forEach(s => s.style.display = 'none');
