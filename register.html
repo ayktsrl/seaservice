@@ -80,8 +80,6 @@
         userType === "agency" ? "Agency/agency-dashboard.html" :
         null;
 
-      console.log("Redirecting to:", redirectURL);
-
       if (!redirectURL) {
         errorMsg.textContent = "Invalid user type selected.";
         return;
@@ -103,8 +101,11 @@
         }
 
         await createUserWithEmailAndPassword(auth, email, password);
+
         const data = {
           email: email,
+          username: username,
+          userType: userType,
           createdAt: new Date().toISOString()
         };
         await setDoc(usernameRef, data);

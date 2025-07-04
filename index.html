@@ -82,8 +82,9 @@
             const q = query(collection(db, col), where("email", "==", email));
             const snap = await getDocs(q);
             if (!snap.empty) {
-              role = col.slice(0, -1);
-              username = snap.docs[0].id;
+              const docData = snap.docs[0].data();
+              role = docData.userType || col.slice(0, -1);
+              username = docData.username || snap.docs[0].id;
               break;
             }
           }
