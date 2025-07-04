@@ -14,17 +14,49 @@
 
   <!-- Dashboard Content -->
   <div class="container py-5">
-    <h2 class="mb-4 text-center">Welcome to Agency Dashboard</h2>
+    <h2 class="mb-4 text-center">Welcome back, <span id="dashboardUsername">Agency</span></h2>
 
-    <div class="row g-4 justify-content-center">
+    <div class="row g-4 text-center">
+      <div class="col-md-3">
+        <div class="card bg-info text-white shadow">
+          <div class="card-body">
+            <h5>Total Job Posts</h5>
+            <h2 id="totalJobs">--</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success text-white shadow">
+          <div class="card-body">
+            <h5>Applications Received</h5>
+            <h2 id="totalApplicants">--</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-warning text-dark shadow">
+          <div class="card-body">
+            <h5>Active Job Posts</h5>
+            <h2 id="activeJobs">--</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-secondary text-white shadow">
+          <div class="card-body">
+            <h5>Seafarer Profiles</h5>
+            <h2 id="totalSeafarers">--</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt-5 justify-content-center">
       <div class="col-md-4">
-        <a href="agency-post-job.html" class="btn btn-primary w-100">Post Job</a>
+        <a href="agency-post-job.html" class="btn btn-primary w-100">Post a New Job</a>
       </div>
       <div class="col-md-4">
-        <a href="agency-job-list.html" class="btn btn-secondary w-100">My Job Posts</a>
-      </div>
-      <div class="col-md-4">
-        <a href="agency-seafarers.html" class="btn btn-success w-100">Browse Seafarers</a>
+        <a href="agency-job-list.html" class="btn btn-outline-secondary w-100">View My Job Posts</a>
       </div>
     </div>
   </div>
@@ -36,10 +68,58 @@
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
         const script = document.createElement("script");
-        script.type = "module"; // 👈 EKLENDİ
+        script.type = "module";
         script.src = "navbar.js";
         document.body.appendChild(script);
       });
+  </script>
+
+  <!-- Firebase + Data Logic -->
+  <script type="module">
+    import { app } from './firebase-config.js';
+    import {
+      getDatabase,
+      ref,
+      onValue
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const db = getDatabase(app);
+    const username = localStorage.getItem('username');
+    if (username) {
+      document.getElementById('dashboardUsername').textContent = username;
+    }
+
+    // Job Posts
+    onValue(ref(db, 'jobPosts'), (snapshot) => {
+      let total = 0;
+      let active = 0;
+      snapshot.forEach(child => {
+        const data = child.val();
+        if (data.agency === username) {
+          total++;
+          if (data.status === "active") active++;
+        }
+      });
+      document.getElementById('totalJobs').textContent = total;
+      document.getElementById('activeJobs').textContent = active;
+    });
+
+    // Applications
+    onValue(ref(db, 'applications'), (snapshot) => {
+      let count = 0;
+      snapshot.forEach(child => {
+        const data = child.val();
+        if (data.agency === username) {
+          count++;
+        }
+      });
+      document.getElementById('totalApplicants').textContent = count;
+    });
+
+    // Seafarers
+    onValue(ref(db, 'seafarers'), (snapshot) => {
+      document.getElementById('totalSeafarers').textContent = snapshot.size;
+    });
   </script>
 
   <!-- Bootstrap -->

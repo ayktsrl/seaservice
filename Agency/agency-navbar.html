@@ -23,6 +23,7 @@
         </a>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
           <li><a class="dropdown-item" href="agency-profile.html">Edit Profile</a></li>
+          <li><a class="dropdown-item" href="change-password.html">Change Password</a></li>
           <li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
         </ul>
@@ -30,3 +31,17 @@
     </ul>
   </div>
 </nav>
+
+<script>
+  // Kullanıcı adını localStorage'dan çek ve göster
+  const storedUsername = localStorage.getItem('username');
+  if (storedUsername) {
+    document.getElementById('usernameDisplay').textContent = storedUsername;
+  }
+
+  // Logout işlemi
+  document.getElementById('logoutBtn').addEventListener('click', function () {
+    localStorage.removeItem('role'); // sadece rol siliniyor
+    window.location.href = 'login.html'; // login sayfasına yönlendir
+  });
+</script>
