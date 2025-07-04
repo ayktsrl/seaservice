@@ -48,9 +48,11 @@
   </div>
 
   <script type="module">
-    import { auth, db } from './firebase-config.js';
+    import { auth, firestore } from './firebase-config.js';
     import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { doc, setDoc, getDoc, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      doc, setDoc, getDoc, query, collection, where, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const form = document.getElementById("registerForm");
     const errorMsg = document.getElementById("errorMsg");
@@ -86,14 +88,14 @@
       }
 
       try {
-        const usernameRef = doc(db, collectionName, username);
+        const usernameRef = doc(firestore, collectionName, username);
         const usernameSnap = await getDoc(usernameRef);
         if (usernameSnap.exists()) {
           errorMsg.textContent = "Username already in use.";
           return;
         }
 
-        const q = query(collection(db, collectionName), where("email", "==", email));
+        const q = query(collection(firestore, collectionName), where("email", "==", email));
         const existingEmail = await getDocs(q);
         if (!existingEmail.empty) {
           errorMsg.textContent = "Email already registered.";
