@@ -47,9 +47,8 @@
     <div id="errorMsg" class="text-danger mt-3 text-center"></div>
   </div>
 
-  <!-- Firebase Scripts -->
   <script type="module">
-    import { auth, firestore } from './firebase-config.js';
+    import { auth, db } from './firebase-config.js';
     import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
       doc, setDoc, getDoc, query, collection, where, getDocs
@@ -81,23 +80,17 @@
         const redirectURL =
           userType === "seafarer" ? "Seafarer/seafarer-dashboard.html" :
           userType === "company" ? "Company/company-dashboard.html" :
-          userType === "agency" ? "Agency/agency-dashboard.html" :
-          null;
-
-        if (!redirectURL) {
-          errorMsg.textContent = "Invalid user type selected.";
-          return;
-        }
+          "Agency/agency-dashboard.html";
 
         try {
-          const usernameRef = doc(firestore, collectionName, username);
+          const usernameRef = doc(db, collectionName, username);
           const usernameSnap = await getDoc(usernameRef);
           if (usernameSnap.exists()) {
             errorMsg.textContent = "Username already in use.";
             return;
           }
 
-          const q = query(collection(firestore, collectionName), where("email", "==", email));
+          const q = query(collection(db, collectionName), where("email", "==", email));
           const existingEmail = await getDocs(q);
           if (!existingEmail.empty) {
             errorMsg.textContent = "Email already registered.";
@@ -108,10 +101,10 @@
           const uid = userCredential.user.uid;
 
           const data = {
-            uid: uid,
-            email: email,
-            username: username,
-            userType: userType,
+            uid,
+            email,
+            username,
+            userType,
             createdAt: new Date().toISOString()
           };
 
@@ -124,6 +117,7 @@
 
         } catch (err) {
           errorMsg.textContent = err.message;
+          console.error("Registration error:", err);
         }
       });
     });
