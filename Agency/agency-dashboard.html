@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Agency Dashboard</title>
+  <link rel="icon" href="/favicon.ico" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="../style.css" />
 </head>
@@ -74,50 +75,41 @@
       });
   </script>
 
-  <!-- Firebase + Data Logic -->
+  <!-- Firebase + Firestore Logic -->
   <script type="module">
-    import { app } from '../firebase-config.js';
+    import { db } from '../firebase-config.js';
     import {
-      getDatabase,
-      ref,
-      onValue
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+      collection,
+      query,
+      where,
+      onSnapshot
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    const db = getDatabase(app);
     const username = localStorage.getItem('username');
     if (username) {
       document.getElementById('dashboardUsername').textContent = username;
     }
 
-    // Job Posts
-    onValue(ref(db, 'jobPosts'), (snapshot) => {
-      let total = 0;
-      let active = 0;
-      snapshot.forEach(child => {
-        const data = child.val();
-        if (data.agency === username) {
-          total++;
-          if (data.status === "active") active++;
-        }
-      });
+    // Total & Active Job Posts
+    const jobsRef = collection(db, 'jobPosts');
+    const jobsQuery = query(jobsRef, where('agency', '==', username));
+    onSnapshot(jobsQuery, snapshot => {
+      const total = snapshot.size;
+      const active = snapshot.docs.filter(doc => doc.data().status === 'active').length;
       document.getElementById('totalJobs').textContent = total;
       document.getElementById('activeJobs').textContent = active;
     });
 
-    // Applications
-    onValue(ref(db, 'applications'), (snapshot) => {
-      let count = 0;
-      snapshot.forEach(child => {
-        const data = child.val();
-        if (data.agency === username) {
-          count++;
-        }
-      });
-      document.getElementById('totalApplicants').textContent = count;
+    // Applications Received
+    const appsRef = collection(db, 'applications');
+    const appsQuery = query(appsRef, where('agency', '==', username));
+    onSnapshot(appsQuery, snapshot => {
+      document.getElementById('totalApplicants').textContent = snapshot.size;
     });
 
-    // Seafarers
-    onValue(ref(db, 'seafarers'), (snapshot) => {
+    // Seafarer Profiles
+    const seafarersRef = collection(db, 'seafarers');
+    onSnapshot(seafarersRef, snapshot => {
       document.getElementById('totalSeafarers').textContent = snapshot.size;
     });
   </script>
