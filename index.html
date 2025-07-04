@@ -24,6 +24,7 @@
           <input type="password" class="form-control" id="password" required />
         </div>
         <button type="submit" class="btn btn-primary w-100">Login</button>
+        <div id="errorMsg" class="text-danger mt-3 text-center"></div>
       </form>
       <div class="text-center mt-3">
         <a href="register.html">Don't have an account? Register</a>
@@ -39,9 +40,11 @@
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const form = document.getElementById("loginForm");
+    const errorMsg = document.getElementById("errorMsg");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      errorMsg.textContent = "";
 
       const loginInput = document.getElementById("loginInput").value.trim();
       const password = document.getElementById("password").value;
@@ -53,13 +56,12 @@
 
       try {
         if (!isEmail) {
-          // Kullanıcı adı verildi, tüm koleksiyonlarda ara
           const collections = ["seafarers", "companies", "agencies"];
           for (const col of collections) {
             const userRef = doc(db, col, loginInput);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
-              role = col.slice(0, -1); // "seafarers" → "seafarer"
+              role = col.slice(0, -1);
               username = loginInput;
               email = userSnap.data().email;
               break;
@@ -67,17 +69,14 @@
           }
 
           if (!email) {
-            alert("Username not found.");
+            errorMsg.textContent = "Username not found.";
             return;
           }
         }
 
-        // Email ile giriş yap
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
-        // Eğer email ile giriş yapıldıysa, role tespiti için tekrar tarama yap
         if (!role) {
-          const uid = userCredential.user.uid;
           const collections = ["seafarers", "companies", "agencies"];
           for (const col of collections) {
             const q = query(collection(db, col), where("email", "==", email));
@@ -91,11 +90,10 @@
         }
 
         if (!role || !username) {
-          alert("User role could not be determined.");
+          errorMsg.textContent = "User role could not be determined.";
           return;
         }
 
-        // Local storage'a yaz ve yönlendir
         localStorage.setItem("role", role);
         localStorage.setItem("username", username);
 
@@ -105,10 +103,18 @@
           agency: "Agency/agency-dashboard.html"
         };
 
-        window.location.href = redirectMap[role];
+        const redirectURL = redirectMap[role];
+        console.log("Redirecting to:", redirectURL);
+
+        if (!redirectURL) {
+          errorMsg.textContent = "Invalid role for redirect.";
+          return;
+        }
+
+        window.location.href = redirectURL;
 
       } catch (error) {
-        alert("Login failed: " + error.message);
+        errorMsg.textContent = "Login failed: " + error.message;
       }
     });
   </script>
