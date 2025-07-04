@@ -1,4 +1,3 @@
-<!-- register.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,43 +9,48 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="bg-light">
-  <div class="container py-5">
-    <h2 class="mb-4 text-center">Register</h2>
-    <form id="registerForm" class="mx-auto" style="max-width: 400px;">
-      <div class="mb-3">
-        <label class="form-label">User Type</label><br />
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="userType" value="seafarer" checked />
-          <label class="form-check-label">Seafarer</label>
+  <div class="container d-flex flex-column align-items-center justify-content-center" style="min-height:100vh;">
+    <div class="mb-3 mt-5">
+      <img src="logo.png" alt="App Symbol" style="width: 90px;" />
+      <div class="text-center mt-2 fw-bold text-primary fs-5">Register</div>
+    </div>
+    <div class="card p-4 shadow" style="max-width: 400px; width: 100%;">
+      <form id="registerForm">
+        <div class="mb-3">
+          <label class="form-label">User Type</label><br />
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="userType" value="seafarer" checked />
+            <label class="form-check-label">Seafarer</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="userType" value="company" />
+            <label class="form-check-label">Company</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="userType" value="agency" />
+            <label class="form-check-label">Agency</label>
+          </div>
         </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="userType" value="company" />
-          <label class="form-check-label">Company</label>
+
+        <div class="mb-3">
+          <label for="usernameInput" class="form-label">Username</label>
+          <input type="text" class="form-control" id="usernameInput" required />
         </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="userType" value="agency" />
-          <label class="form-check-label">Agency</label>
+        <div class="mb-3">
+          <label for="emailInput" class="form-label">Email address</label>
+          <input type="email" class="form-control" id="emailInput" required />
         </div>
+        <div class="mb-3">
+          <label for="passwordInput" class="form-label">Password</label>
+          <input type="password" class="form-control" id="passwordInput" required minlength="6" />
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Register</button>
+        <div id="errorMsg" class="text-danger mt-3 text-center"></div>
+      </form>
+      <div class="mt-3 text-center">
+        <a href="index.html" class="small">Already have an account? Login</a>
       </div>
-
-      <div class="mb-3">
-        <label for="usernameInput" class="form-label">Username</label>
-        <input type="text" class="form-control" id="usernameInput" required />
-      </div>
-
-      <div class="mb-3">
-        <label for="emailInput" class="form-label">Email address</label>
-        <input type="email" class="form-control" id="emailInput" required />
-      </div>
-
-      <div class="mb-3">
-        <label for="passwordInput" class="form-label">Password</label>
-        <input type="password" class="form-control" id="passwordInput" required minlength="6" />
-      </div>
-
-      <button type="submit" class="btn btn-primary w-100">Register</button>
-    </form>
-    <div id="errorMsg" class="text-danger mt-3 text-center"></div>
+    </div>
   </div>
 
   <script type="module">
@@ -79,26 +83,26 @@
                                     'agencies';
 
         try {
-          // Check username uniqueness
+          // Username unique mi kontrolü
           const usernameRef = doc(db, collectionName, username);
           if ((await getDoc(usernameRef)).exists()) {
             errorMsg.textContent = 'Username already in use.';
             return;
           }
 
-          // Check email uniqueness
+          // Email unique mi kontrolü
           const emailSnap = await getDocs(query(collection(db, collectionName), where('email','==',email)));
           if (!emailSnap.empty) {
             errorMsg.textContent = 'Email already registered.';
             return;
           }
 
-          // Create user
+          // Auth kaydı oluştur
           const cred = await createUserWithEmailAndPassword(auth, email, password);
           const uid = cred.user.uid;
           await setDoc(usernameRef, { uid, email, username, userType, createdAt: new Date().toISOString() });
 
-          // Save to localStorage and redirect to common dashboard
+          // localStorage ve yönlendirme
           localStorage.setItem('username', username);
           localStorage.setItem('role', userType);
           window.location.href = 'home.html';
