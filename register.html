@@ -59,12 +59,12 @@
       e.preventDefault();
       errorMsg.textContent = "";
 
-      const userType = document.querySelector('input[name="userType"]:checked').value;
+      const userType = document.querySelector('input[name="userType"]:checked')?.value;
       const username = document.getElementById("usernameInput").value.trim();
       const email = document.getElementById("emailInput").value.trim();
       const password = document.getElementById("passwordInput").value;
 
-      if (!username || !email || !password) {
+      if (!userType || !username || !email || !password) {
         errorMsg.textContent = "All fields are required.";
         return;
       }
@@ -77,10 +77,17 @@
       const redirectURL =
         userType === "seafarer" ? "Seafarer/seafarer-dashboard.html" :
         userType === "company" ? "Company/company-dashboard.html" :
-        "Agency/agency-dashboard.html";
+        userType === "agency" ? "Agency/agency-dashboard.html" :
+        null;
+
+      console.log("Redirecting to:", redirectURL);
+
+      if (!redirectURL) {
+        errorMsg.textContent = "Invalid user type selected.";
+        return;
+      }
 
       try {
-        // Check if username already exists
         const usernameRef = doc(db, collectionName, username);
         const usernameSnap = await getDoc(usernameRef);
         if (usernameSnap.exists()) {
@@ -88,7 +95,6 @@
           return;
         }
 
-        // Check if email already exists
         const q = query(collection(db, collectionName), where("email", "==", email));
         const existingEmail = await getDocs(q);
         if (!existingEmail.empty) {
@@ -96,21 +102,16 @@
           return;
         }
 
-        // Create user
         await createUserWithEmailAndPassword(auth, email, password);
-
-        // Save user data
         const data = {
           email: email,
           createdAt: new Date().toISOString()
         };
         await setDoc(usernameRef, data);
 
-        // Store info locally
         localStorage.setItem("username", username);
         localStorage.setItem("role", userType);
 
-        // Redirect
         window.location.href = redirectURL;
 
       } catch (err) {
