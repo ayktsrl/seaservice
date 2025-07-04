@@ -1,12 +1,9 @@
 // firebase-config.js
 
-// Firebase App (Core) SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-// Firebase Realtime Database SDK
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// Firebase yapılandırma bilgilerin
 const firebaseConfig = {
   apiKey: "AIzaSyA8sf...seninkisi",
   authDomain: "seaservice-web.firebaseapp.com",
@@ -17,11 +14,12 @@ const firebaseConfig = {
   appId: "1:2911...447:web:abcde"
 };
 
-// Firebase'i başlat
+// Firebase başlatılıyor
 const app = initializeApp(firebaseConfig);
 
-// Realtime Database'i başlat
+// Veritabanı ve kimlik doğrulama servisleri başlatılıyor
 const db = getDatabase(app);
+const auth = getAuth(app);
 
-// Dışa aktar: Diğer dosyalarda kullanılacak
-export { app, db };
+// 👇 Dışa aktarılan her şey
+export { app, db, auth };
