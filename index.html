@@ -32,8 +32,9 @@
     </div>
   </div>
 
+  <!-- Firebase login logic -->
   <script type="module">
-    import { auth, db } from './firebase-config.js';
+    import { auth, firestore } from './firebase-config.js';
     import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import {
       doc, getDoc, collection, query, where, getDocs
@@ -58,7 +59,7 @@
         if (!isEmail) {
           const collections = ["seafarers", "companies", "agencies"];
           for (const col of collections) {
-            const userRef = doc(db, col, loginInput);
+            const userRef = doc(firestore, col, loginInput);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
               const data = userSnap.data();
@@ -80,7 +81,7 @@
         if (!role) {
           const collections = ["seafarers", "companies", "agencies"];
           for (const col of collections) {
-            const q = query(collection(db, col), where("email", "==", email));
+            const q = query(collection(firestore, col), where("email", "==", email));
             const snap = await getDocs(q);
             if (!snap.empty) {
               const docData = snap.docs[0].data();
@@ -106,8 +107,6 @@
         };
 
         const redirectURL = redirectMap[role.toLowerCase()];
-        console.log("Redirecting to:", redirectURL);
-
         if (!redirectURL) {
           errorMsg.textContent = "Invalid role for redirect.";
           return;
