@@ -1,4 +1,4 @@
-<!-- firebase-config.js -->
+// firebase-config.js
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -11,8 +11,10 @@ const firebaseConfig = {
   storageBucket: "crewapplication-c37a8.appspot.com",
   messagingSenderId: "23423243284",
   appId: "1:23423243284:web:67e22f6ed057c74f4b4301"
+  // measurementId: "G-DSSJMESQ7Z" // Özellikle Analytics kullanıyorsanız uncomment edin
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);

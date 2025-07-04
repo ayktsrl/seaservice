@@ -48,76 +48,73 @@
   </div>
 
   <script type="module">
+    // Firebase configuration exports app, auth, db
     import { auth, db } from './firebase-config.js';
-    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      doc, setDoc, getDoc, query, collection, where, getDocs
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    // Firebase Auth and Firestore modules (ensure same version as firebase-config)
+    import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { doc, setDoc, getDoc, query, collection, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById("registerForm");
-      const errorMsg = document.getElementById("errorMsg");
+    window.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('registerForm');
+      const errorMsg = document.getElementById('errorMsg');
 
-      form.addEventListener("submit", async (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        errorMsg.textContent = "";
+        errorMsg.textContent = '';
 
         const userType = document.querySelector('input[name="userType"]:checked')?.value;
-        const username = document.getElementById("usernameInput").value.trim();
-        const email = document.getElementById("emailInput").value.trim();
-        const password = document.getElementById("passwordInput").value;
+        const username = document.getElementById('usernameInput').value.trim();
+        const email = document.getElementById('emailInput').value.trim();
+        const password = document.getElementById('passwordInput').value;
 
         if (!userType || !username || !email || !password) {
-          errorMsg.textContent = "All fields are required.";
+          errorMsg.textContent = 'All fields are required.';
           return;
         }
 
         const collectionName =
-          userType === "seafarer" ? "seafarers" :
-          userType === "company" ? "companies" :
-          "agencies";
+          userType === 'seafarer' ? 'seafarers' :
+          userType === 'company'  ? 'companies'  :
+                                    'agencies';
 
         const redirectURL =
-          userType === "seafarer" ? "Seafarer/seafarer-dashboard.html" :
-          userType === "company" ? "Company/company-dashboard.html" :
-          "Agency/agency-dashboard.html";
+          userType === 'seafarer' ? 'Seafarer/seafarer-dashboard.html' :
+          userType === 'company'  ? 'Company/company-dashboard.html'  :
+                                    'Agency/agency-dashboard.html';
 
         try {
+          // Kullanıcı adının benzersizliğini kontrol et
           const usernameRef = doc(db, collectionName, username);
           const usernameSnap = await getDoc(usernameRef);
           if (usernameSnap.exists()) {
-            errorMsg.textContent = "Username already in use.";
+            errorMsg.textContent = 'Username already in use.';
             return;
           }
 
-          const q = query(collection(db, collectionName), where("email", "==", email));
-          const existingEmail = await getDocs(q);
-          if (!existingEmail.empty) {
-            errorMsg.textContent = "Email already registered.";
+          // E-posta adresinin benzersizliğini kontrol et
+          const emailQuery = query(collection(db, collectionName), where('email', '==', email));
+          const emailSnap = await getDocs(emailQuery);
+          if (!emailSnap.empty) {
+            errorMsg.textContent = 'Email already registered.';
             return;
           }
 
+          // Firebase Auth ile kullanıcıyı oluştur
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const uid = userCredential.user.uid;
 
-          const data = {
-            uid,
-            email,
-            username,
-            userType,
-            createdAt: new Date().toISOString()
-          };
-
+          // Firestore'a kullanıcı verisini yaz
+          const data = { uid, email, username, userType, createdAt: new Date().toISOString() };
           await setDoc(usernameRef, data);
 
-          localStorage.setItem("username", username);
-          localStorage.setItem("role", userType);
-
+          // LocalStorage'a bilgileri kaydet ve yönlendir
+          localStorage.setItem('username', username);
+          localStorage.setItem('role', userType);
           window.location.href = redirectURL;
 
         } catch (err) {
+          console.error('Registration error:', err);
           errorMsg.textContent = err.message;
-          console.error("Registration error:", err);
         }
       });
     });
