@@ -15,31 +15,24 @@
     }
     .fade-text.hide { opacity: 0; transition: opacity 0.5s; }
     .fade-text { opacity: 1; transition: opacity 0.5s; }
+    .container.bg-white {
+      max-width: 600px;
+      margin-top: 28px;
+      border-radius: 18px;
+      box-shadow: 0 2px 12px #e8ebf3;
+      padding: 2rem 2.2rem 1.5rem 2.2rem;
+    }
+    .border.rounded.p-3 {
+      background: #f7fafd;
+      border-radius: 12px !important;
+      margin-bottom: 18px;
+      border: 1.5px solid #e3e6ec !important;
+    }
   </style>
 </head>
 <body class="bg-light p-4">
-  <!-- Ortak Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('../../common-navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("navbar-container").innerHTML = html;
-        const user = localStorage.getItem('username');
-        if (user) {
-          const el = document.getElementById('usernameDisplay');
-          if (el) el.textContent = user;
-        }
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) logoutBtn.addEventListener('click', () => {
-          localStorage.removeItem('role');
-          localStorage.removeItem('username');
-          window.location.href = '../../index.html';
-        });
-      });
-  </script>
   <div class="container bg-white p-4 rounded shadow">
-    <h4 class="mb-4">Documents</h4>
+    <h4 class="mb-4 text-center">Documents</h4>
     <form id="docForm">
       <!-- Passport Section -->
       <div class="border rounded p-3 mb-4">
