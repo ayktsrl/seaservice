@@ -31,12 +31,13 @@
       background: #fff;
       padding: 2.2rem 1.5rem 1.5rem 1.5rem;
       border-radius: 18px;
-      box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
       width: 100%;
       max-width: 340px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      transition: box-shadow 0.2s;
     }
     .logo-icon {
       display: flex;
@@ -49,9 +50,10 @@
       width: 64px;
       height: 64px;
       object-fit: contain;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(21,101,192,0.10);
+      border-radius: 15px;
       background: #f7f8fa;
+      box-shadow: 0 2px 12px rgba(21,101,192,0.13);
+      border: 2px solid #f4f4fa;
     }
     .login-title {
       font-size: 1.35rem;
@@ -69,6 +71,14 @@
       border-radius: 8px;
       min-height: 44px;
       font-size: 1rem;
+      background: #fff;
+      border: 1px solid #e3e8ef;
+      color: #222;
+      transition: border-color 0.18s;
+    }
+    .form-control:focus {
+      border-color: #29c5f6;
+      box-shadow: 0 0 0 2px #bbdefb88;
     }
     .btn-primary {
       border-radius: 8px;
@@ -96,7 +106,6 @@
       text-decoration: underline;
       color: #0d47a1;
     }
-    /* Mobile */
     @media (max-width: 480px) {
       .login-box {
         max-width: 98vw;
