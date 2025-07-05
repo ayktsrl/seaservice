@@ -15,17 +15,10 @@
       .then(res => res.text())
       .then(html => {
         document.getElementById("navbar-container").innerHTML = html;
-        const user = localStorage.getItem('username');
-        if (user) {
-          const el = document.getElementById('usernameDisplay');
-          if (el) el.textContent = user;
-        }
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) logoutBtn.addEventListener('click', () => {
-          localStorage.removeItem('role');
-          localStorage.removeItem('username');
-          window.location.href = '../index.html';
-        });
+        // Dinamik navbar menüsü için JS'i ekle
+        const script = document.createElement('script');
+        script.src = '../common-navbar.js';
+        document.body.appendChild(script);
       });
   </script>
 
