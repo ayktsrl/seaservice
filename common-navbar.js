@@ -1,5 +1,4 @@
 (function() {
-  // Get role from localStorage
   const role = localStorage.getItem('role');
   const navLinks = document.getElementById('navLinks');
   const dashboardBrand = document.getElementById('dashboardBrand');
@@ -31,7 +30,6 @@
     `;
     dashboardHref = 'Seafarer/my-applications.html';
   } else {
-    // Default menu if no role is found
     menuHtml += `
       <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
     `;
@@ -41,12 +39,10 @@
   if (navLinks) navLinks.innerHTML = menuHtml;
   if (dashboardBrand) dashboardBrand.setAttribute('href', dashboardHref);
 
-  // Optionally set username
   const usernameDisplay = document.getElementById('usernameDisplay');
   const username = localStorage.getItem('username');
   if (usernameDisplay && username) usernameDisplay.textContent = username;
 
-  // Logout logic (only clear 'role')
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function() {

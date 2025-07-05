@@ -15,25 +15,18 @@
 <body class="bg-light">
 
   <!-- Ortak Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('common-navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
-        const username = localStorage.getItem('username');
-        if (username) {
-          const el = document.getElementById('usernameDisplay');
-          if (el) el.textContent = username;
-        }
-        const logout = document.getElementById('logoutBtn');
-        if (logout) logout.addEventListener('click', () => {
-          localStorage.removeItem('role');
-          localStorage.removeItem('username');
-          window.location.href = 'index.html'; // login.html değil!
-        });
-      });
-  </script>
+ <div id="navbar-container"></div>
+<script>
+  fetch('common-navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-container').innerHTML = html;
+      // ŞİMDİ dinamik navbar JS'ini yükle!
+      const script = document.createElement('script');
+      script.src = 'common-navbar.js';
+      document.body.appendChild(script);
+    });
+</script>
 
   <!-- Agency Section -->
   <section id="agency-section" class="role-section" style="display:none;">
