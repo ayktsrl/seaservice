@@ -1,33 +1,81 @@
 <!-- common-navbar.html -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
-  <a class="navbar-brand" href="home.html">Dashboard</a>
+  <a class="navbar-brand" id="dashboardBrand" href="#">Dashboard</a>
   <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav me-auto">
-      <li class="nav-item">
-        <a class="nav-link" href="Agency/agency-post-job.html">Post Job</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="Agency/agency-job-list.html">My Jobs</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="Agency/agency-seafarers.html">Seafarers</a>
-      </li>
+    <ul class="navbar-nav me-auto" id="navLinks">
+      <!-- Menu items will be injected here by JS -->
     </ul>
     <ul class="navbar-nav">
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
           <span id="usernameDisplay">User</span>
         </a>
-<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-  <li><a class="dropdown-item" href="edit-profile.html">Edit Profile</a></li>
-  <li><a class="dropdown-item" href="change-password.html">Change Password</a></li>
-  <li><hr class="dropdown-divider"></li>
-  <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
-</ul>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+          <li><a class="dropdown-item" href="edit-profile.html">Edit Profile</a></li>
+          <li><a class="dropdown-item" href="change-password.html">Change Password</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
+        </ul>
       </li>
     </ul>
   </div>
 </nav>
+<script>
+  // Get role from localStorage
+  const role = localStorage.getItem('role');
+  const navLinks = document.getElementById('navLinks');
+  const dashboardBrand = document.getElementById('dashboardBrand');
+  let menuHtml = '';
+  let dashboardHref = 'home.html';
+
+  if (role === 'company') {
+    menuHtml += `
+      <li class="nav-item"><a class="nav-link" href="Company/company-applications.html">Job Applications</a></li>
+      <li class="nav-item"><a class="nav-link" href="Company/create-job.html">Create Job</a></li>
+      <li class="nav-item"><a class="nav-link" href="Company/company-ship-list.html">Ships</a></li>
+      <li class="nav-item"><a class="nav-link" href="Company/ship-crew-list.html">Crew List</a></li>
+      <li class="nav-item"><a class="nav-link" href="Company/public-cv-browser.html">CV Browser</a></li>
+      <li class="nav-item"><a class="nav-link" href="Company/evaluate-seafarers.html">Evaluate Seafarers</a></li>
+      <li class="nav-item"><a class="nav-link" href="Company/company-verify-seaservice.html">Verify Sea Service</a></li>
+    `;
+    dashboardHref = 'Company/company-applications.html';
+  } else if (role === 'agency') {
+    menuHtml += `
+      <li class="nav-item"><a class="nav-link" href="Agency/agency-post-job.html">Post Job</a></li>
+      <li class="nav-item"><a class="nav-link" href="Agency/agency-job-list.html">My Jobs</a></li>
+      <li class="nav-item"><a class="nav-link" href="Agency/agency-seafarers.html">Seafarers</a></li>
+    `;
+    dashboardHref = 'Agency/agency-job-list.html';
+  } else if (role === 'seafarer') {
+    menuHtml += `
+      <li class="nav-item"><a class="nav-link" href="Seafarer/my-applications.html">My Applications</a></li>
+      <li class="nav-item"><a class="nav-link" href="Seafarer/edit-cv-panel.html">Edit CV</a></li>
+    `;
+    dashboardHref = 'Seafarer/my-applications.html';
+  } else {
+    // Default menu if no role is found
+    menuHtml += `
+      <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+    `;
+    dashboardHref = 'home.html';
+  }
+
+  navLinks.innerHTML = menuHtml;
+  dashboardBrand.setAttribute('href', dashboardHref);
+
+  // Optionally set username
+  const usernameDisplay = document.getElementById('usernameDisplay');
+  const username = localStorage.getItem('username');
+  if (username) usernameDisplay.textContent = username;
+
+  // Logout logic (only clear 'role')
+  document.getElementById('logoutBtn').addEventListener('click', function() {
+    localStorage.removeItem('role');
+    // Optionally remove username
+    // localStorage.removeItem('username');
+    window.location.href = 'login.html';
+  });
+</script>
