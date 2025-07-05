@@ -50,7 +50,6 @@
   </script>
 
   <div class="container mt-4">
-    <h4 id="sectionTitle" class="text-center">🧾 Personal Details</h4>
     <div class="row mt-4">
       <div class="col-md-3 mb-3">
         <div class="nav flex-column nav-pills gap-2">
@@ -85,7 +84,6 @@
       document.getElementById("cvFrame").src = "cv/" + page;
       document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
       el.classList.add('active');
-      document.getElementById("sectionTitle").textContent = `🧾 ${el.textContent}`;
     }
 
     window.addEventListener('DOMContentLoaded', () => {
