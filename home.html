@@ -14,7 +14,7 @@
 </head>
 <body class="bg-light">
 
-    <!-- Ortak Navbar -->
+  <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
   <script>
     fetch('common-navbar.html')
@@ -24,165 +24,71 @@
       });
   </script>
 
-
-  <!-- Agency Section -->
-  <section id="agency-section" class="role-section" style="display:none;">
+  <!-- ORTAK DASHBOARD SECTION -->
+  <section id="dashboard-section" style="display:block;">
     <div class="container py-5">
-      <h2 class="mb-4 text-center">Welcome back, <span id="agencyUsername"></span></h2>
-      <div class="row g-4 text-center">
-        <div class="col-md-3">
-          <div class="card bg-info text-white shadow">
+      <h2 class="mb-3 text-center">Welcome, <span id="userFullName"></span>!</h2>
+      <div class="text-center mb-4" style="font-size:1.2rem;">
+        Account type: <span class="badge bg-info" id="userRole"></span>
+      </div>
+      <div class="alert alert-info text-center mb-4" role="alert" id="announcementBox">
+        Loading latest announcement...
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card text-center shadow">
             <div class="card-body">
-              <h5>Total Job Posts</h5>
-              <h2 id="totalJobs">--</h2>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card bg-success text-white shadow">
-            <div class="card-body">
-              <h5>Applications Received</h5>
-              <h2 id="totalApplicants">--</h2>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card bg-warning text-dark shadow">
-            <div class="card-body">
-              <h5>Active Job Posts</h5>
-              <h2 id="activeJobs">--</h2>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card bg-secondary text-white shadow">
-            <div class="card-body">
-              <h5>Seafarer Profiles</h5>
-              <h2 id="totalSeafarers">--</h2>
+              <h5 class="card-title">Your Profile</h5>
+              <div id="profileDetails"></div>
             </div>
           </div>
         </div>
       </div>
-      <div class="row mt-5 justify-content-center">
-        <div class="col-md-4"><a href="Agency/agency-post-job.html" class="btn btn-primary w-100">Post a New Job</a></div>
-        <div class="col-md-4"><a href="Agency/agency-job-list.html" class="btn btn-outline-secondary w-100">View My Job Posts</a></div>
+      <div class="text-center mt-4">
+        <small class="text-muted">
+          Need help? <a href="mailto:support@yourplatform.com">Contact support</a>
+        </small>
       </div>
     </div>
   </section>
 
-  <!-- Company Section -->
-  <section id="company-section" class="role-section" style="display:none;">
-    <div class="container py-5">
-      <h3 class="mb-4 text-center">Company Dashboard</h3>
-      <div class="row" id="statCards">
-        <div class="col-md-3 col-6">
-          <div class="stat-card">
-            <p>Total Jobs</p><h3 id="jobCount">-</h3>
-            <a href="create-job.html" class="btn btn-sm btn-outline-primary">Go</a>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="stat-card">
-            <p>Total Applications</p><h3 id="applicationCount">-</h3>
-            <a href="company-applications.html" class="btn btn-sm btn-outline-primary">Go</a>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="stat-card">
-            <p>Total Seafarers</p><h3 id="seafarerCount">-</h3>
-            <a href="public-cv-browser.html" class="btn btn-sm btn-outline-primary">Go</a>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="stat-card">
-            <p>Total Ships</p><h3 id="shipCount">-</h3>
-            <a href="company-ship-list.html" class="btn btn-sm btn-outline-primary">Go</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Seafarer Section -->
-  <section id="seafarer-section" class="role-section" style="display:none;">
-    <div class="container py-5">
-      <h2 class="mb-4 text-center">Welcome to Seafarer Dashboard</h2>
-      <div class="row g-4 justify-content-center">
-        <div class="col-md-4"><a href="edit-cv-panel.html" class="btn btn-primary w-100">My CV</a></div>
-        <div class="col-md-4"><a href="my-applications.html" class="btn btn-secondary w-100">My Applications</a></div>
-        <div class="col-md-4"><a href="shared/job-board.html" class="btn btn-success w-100">Find Jobs</a></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Firebase Auth & Role Logic -->
+  <!-- Firebase Auth & User Info -->
   <script type="module">
     import { auth, db } from './firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { doc, getDoc, collection, query, where, getDocs, onSnapshot, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     onAuthStateChanged(auth, async user => {
       if (!user) return window.location.href = 'index.html';
-
-      // Rolü localStorage'da yoksa Firestore'dan otomatik bul
-      let role = localStorage.getItem('role');
-      let username = localStorage.getItem('username') || "";
-
-      if (!role) {
-        // Sırayla koleksiyonlarda kontrol et
-        const collections = ['seafarers', 'companies', 'agencies'];
-        for (let col of collections) {
-          const docRef = doc(db, col, user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            role = docSnap.data().role.toLowerCase();
-            localStorage.setItem('role', role);
-            // Agency için username ata, diğer rollerde kullanılmaz
-            if (role === 'agency' && docSnap.data().firstName) {
-              username = docSnap.data().firstName;
-              localStorage.setItem('username', username);
-            }
-            break;
-          }
+      const collections = ['seafarers', 'companies', 'agencies'];
+      let userData = {};
+      let userRole = '';
+      for (let col of collections) {
+        const docRef = doc(db, col, user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          userData = docSnap.data();
+          userRole = (userData.role || '').toLowerCase();
+          break;
         }
-        if (!role) return window.location.href = 'index.html';
       }
+      document.getElementById('userFullName').textContent = (userData.firstName || '') + " " + (userData.lastName || '');
+      document.getElementById('userRole').textContent = userRole || 'Unknown';
 
-      // Tüm bölümleri gizle
-      document.querySelectorAll('.role-section').forEach(s => s.style.display = 'none');
-      // Sadece ilgili rol bölümünü göster
-      const activeSection = document.getElementById(`${role}-section`);
-      if (activeSection) activeSection.style.display = 'block';
+      // Profil detayları
+      document.getElementById('profileDetails').innerHTML = `
+        <div><b>Email:</b> ${userData.email || user.email}</div>
+        <div><b>Joined:</b> ${(userData.createdAt || '').substring(0,10)}</div>
+        <div><b>Last login:</b> ${user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString() : '-'}</div>
+      `;
 
-      // Role-specific data fetch
-      if (role === 'agency') {
-        document.getElementById('agencyUsername').textContent = username;
-        const jobsQ = query(collection(db,'jobPosts'), where('agency','==', username));
-        onSnapshot(jobsQ, snap => {
-          document.getElementById('totalJobs').textContent = snap.size;
-          document.getElementById('activeJobs').textContent = snap.docs.filter(d=>d.data().status==='active').length;
-        });
-        onSnapshot(query(collection(db,'applications'),where('agency','==',username)), snap=>{
-          document.getElementById('totalApplicants').textContent = snap.size;
-        });
-        onSnapshot(collection(db,'seafarers'), snap=>{
-          document.getElementById('totalSeafarers').textContent = snap.size;
-        });
-      } else if (role === 'company') {
-        const uid = user.uid;
-        const jobSnap = await getDocs(query(collection(db,'jobPosts'), where('creatorId','==',uid), where('creatorType','==','company'), orderBy('createdAt','desc')));
-        const appSnap = await getDocs(collection(db,`companies/${uid}/applications`));
-        const shipSnap = await getDocs(collection(db,`companies/${uid}/ships`));
-        const seaSnap = await getDocs(collection(db,'seafarers'));
-        document.getElementById('jobCount').textContent = jobSnap.size;
-        document.getElementById('applicationCount').textContent = appSnap.size;
-        document.getElementById('shipCount').textContent = shipSnap.size;
-        document.getElementById('seafarerCount').textContent = seaSnap.size;
-      }
-      // Seafarer için şu anlık ekstra fetch yok
+      // Dummy duyuru (istersen dinamik hale getirilebilir)
+      document.getElementById('announcementBox').innerHTML = `
+        <b>Platform News:</b> System maintenance on Saturday 21:00-23:00 UTC.<br>
+        Stay tuned for new features!
+      `;
     });
   </script>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
