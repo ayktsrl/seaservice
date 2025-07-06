@@ -138,11 +138,16 @@
       const role = document.querySelector('input[name="role"]:checked').value;
 
       try {
-        // Auth kayıt
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+        // ROL BAZLI COLLECTION
+        let collectionName = "";
+        if (role === "Seafarer") collectionName = "seafarers";
+        else if (role === "Company") collectionName = "companies";
+        else if (role === "Agency") collectionName = "agencies";
+        else collectionName = "users"; // fallback, istersen kaldır
         // Firestore kayıt
-        await setDoc(doc(db, "users", user.uid), {
+        await setDoc(doc(db, collectionName, user.uid), {
           email,
           firstName,
           lastName,
@@ -153,7 +158,7 @@
           uid: user.uid
         });
         alert("Registration successful!");
-        window.location.href = "home.html"; // Kayıt sonrası doğrudan home.html
+        window.location.href = "home.html";
       } catch (error) {
         alert(error.message.replace('Firebase:', '').replace('auth/', ''));
       }
