@@ -1,42 +1,36 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
-  <a class="navbar-brand" id="dashboardBrand" href="#">Dashboard</a>
-  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav me-auto" id="navLinks">
-      <!-- Menu items will be injected here by JS -->
-    </ul>
-    <ul class="navbar-nav">
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <span id="usernameDisplay">User</span>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" id="userMenuLinks">
-          <!-- User dropdown links will be injected by JS -->
-        </ul>
-      </li>
-    </ul>
-  </div>
-</nav>
-
 <script type="module">
   import { auth, db } from './firebase-config.js';
   import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
   import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-  function getBasePath() {
-    const path = window.location.pathname;
-    const match = path.match(/\/(Agency|Company|Seafarer)\//i);
-    if (match) return '../';
-    return '';
+  async function getUserRoleAndInfo(user) {
+    if (!user) return { role: null, firstName: '', lastName: '' };
+    const collections = ['seafarers', 'companies', 'agencies'];
+    for (let col of collections) {
+      const docRef = doc(db, col, user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        return {
+          role: (d.role || '').toLowerCase(),
+          firstName: d.firstName || '',
+          lastName: d.lastName || ''
+        };
+      }
+    }
+    return { role: null, firstName: '', lastName: '' };
   }
-  const base = getBasePath();
 
   function updateNavLinks(role) {
     const navLinks = document.getElementById('navLinks');
     const dashboardBrand = document.getElementById('dashboardBrand');
     let menuHtml = '';
+    const base = (() => {
+      const path = window.location.pathname;
+      const match = path.match(/\/(Agency|Company|Seafarer)\//i);
+      if (match) return '../';
+      return '';
+    })();
     const dashboardHref = base + 'home.html';
 
     if (role === 'company') {
@@ -68,7 +62,7 @@
     if (navLinks) navLinks.innerHTML = menuHtml;
     if (dashboardBrand) dashboardBrand.setAttribute('href', dashboardHref);
 
-    // User dropdown linkleri
+    // User dropdown
     const userMenuLinks = document.getElementById('userMenuLinks');
     if (userMenuLinks) {
       userMenuLinks.innerHTML = `
@@ -77,44 +71,25 @@
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
       `;
+      setTimeout(() => {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', function() {
+            window.location.href = base + 'index.html';
+          });
+        }
+      }, 100);
     }
-    // Logout
-    setTimeout(() => {
-      const logoutBtn = document.getElementById('logoutBtn');
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-          localStorage.removeItem('role');
-          localStorage.removeItem('username');
-          window.location.href = base + 'index.html';
-        });
-      }
-    }, 100);
-  }
-
-  async function updateUserNameDisplay(user, role) {
-    const usernameDisplay = document.getElementById('usernameDisplay');
-    let firstName = "";
-    let lastName = "";
-    if (user && role) {
-      let collection = role.endsWith('s') ? role : (role + 's');
-      const docRef = doc(db, collection, user.uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        firstName = docSnap.data().firstName || "";
-        lastName = docSnap.data().lastName || "";
-      }
-    }
-    const displayName = (firstName + " " + lastName).trim() || "User";
-    if (usernameDisplay) usernameDisplay.textContent = displayName;
   }
 
   onAuthStateChanged(auth, async user => {
-    let role = localStorage.getItem('role');
-    if (!user || !role) {
+    if (!user) {
       updateNavLinks();
+      document.getElementById('usernameDisplay').textContent = "User";
       return;
     }
+    const { role, firstName, lastName } = await getUserRoleAndInfo(user);
     updateNavLinks(role);
-    await updateUserNameDisplay(user, role);
+    document.getElementById('usernameDisplay').textContent = (firstName + " " + lastName).trim() || "User";
   });
 </script>
