@@ -4,29 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard</title>
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="manifest" href="/site.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="manifest" href="/site.webmanifest">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="bg-light">
 
   <!-- Ortak Navbar -->
- <div id="navbar-container"></div>
-<script>
-  fetch('common-navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-container').innerHTML = html;
-      // ŞİMDİ dinamik navbar JS'ini yükle!
-      const script = document.createElement('script');
-      script.src = 'common-navbar.js';
-      document.body.appendChild(script);
-    });
-</script>
+  <div id="navbar-container"></div>
+  <script>
+    fetch('common-navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-container').innerHTML = html;
+        // ŞİMDİ dinamik navbar JS'ini yükle!
+        const script = document.createElement('script');
+        script.src = 'common-navbar.js';
+        document.body.appendChild(script);
+      });
+  </script>
 
   <!-- Agency Section -->
   <section id="agency-section" class="role-section" style="display:none;">
@@ -122,21 +122,43 @@
   <script type="module">
     import { auth, db } from './firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { collection, query, where, getDocs, onSnapshot, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { doc, getDoc, collection, query, where, getDocs, onSnapshot, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     onAuthStateChanged(auth, async user => {
-      const role = localStorage.getItem('role');
-      if (!user || !role) return window.location.href = 'index.html';
+      if (!user) return window.location.href = 'index.html';
 
-      // Hide all sections
+      // Rolü localStorage'da yoksa Firestore'dan otomatik bul
+      let role = localStorage.getItem('role');
+      let username = localStorage.getItem('username') || "";
+
+      if (!role) {
+        // Sırayla koleksiyonlarda kontrol et
+        const collections = ['seafarers', 'companies', 'agencies'];
+        for (let col of collections) {
+          const docRef = doc(db, col, user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            role = docSnap.data().role.toLowerCase();
+            localStorage.setItem('role', role);
+            // Agency için username ata, diğer rollerde kullanılmaz
+            if (role === 'agency' && docSnap.data().firstName) {
+              username = docSnap.data().firstName;
+              localStorage.setItem('username', username);
+            }
+            break;
+          }
+        }
+        if (!role) return window.location.href = 'index.html';
+      }
+
+      // Tüm bölümleri gizle
       document.querySelectorAll('.role-section').forEach(s => s.style.display = 'none');
-      // Show current
+      // Sadece ilgili rol bölümünü göster
       const activeSection = document.getElementById(`${role}-section`);
       if (activeSection) activeSection.style.display = 'block';
 
       // Role-specific data fetch
       if (role === 'agency') {
-        const username = localStorage.getItem('username');
         document.getElementById('agencyUsername').textContent = username;
         const jobsQ = query(collection(db,'jobPosts'), where('agency','==', username));
         onSnapshot(jobsQ, snap => {
@@ -159,9 +181,8 @@
         document.getElementById('applicationCount').textContent = appSnap.size;
         document.getElementById('shipCount').textContent = shipSnap.size;
         document.getElementById('seafarerCount').textContent = seaSnap.size;
-      } else if (role === 'seafarer') {
-        // no dynamic data needed for seafarer dashboard
       }
+      // Seafarer için şu anlık ekstra fetch yok
     });
   </script>
 
