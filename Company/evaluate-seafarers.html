@@ -21,20 +21,16 @@
     }
   </style>
 </head>
-<body class="bg-light">
-  <!-- Ortak Navbar -->
+<body class="bg-light">  <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('../common-navbar.html')
+    fetch('common-navbar.html')
       .then(res => res.text())
       .then(html => {
-        document.getElementById("navbar-container").innerHTML = html;
-        // Dinamik navbar menüsü için JS'i ekle
-        const script = document.createElement('script');
-        script.src = '../common-navbar.js';
-        document.body.appendChild(script);
+        document.getElementById('navbar-container').innerHTML = html;
       });
   </script>
+
 
   <div class="container py-4">
     <h3 class="mb-3">Evaluate Verified Sea Services</h3>

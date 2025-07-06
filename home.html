@@ -14,19 +14,16 @@
 </head>
 <body class="bg-light">
 
-  <!-- Ortak Navbar -->
+    <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
   <script>
     fetch('common-navbar.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById('navbar-container').innerHTML = html;
-        // ŞİMDİ dinamik navbar JS'ini yükle!
-        const script = document.createElement('script');
-        script.src = 'common-navbar.js';
-        document.body.appendChild(script);
       });
   </script>
+
 
   <!-- Agency Section -->
   <section id="agency-section" class="role-section" style="display:none;">

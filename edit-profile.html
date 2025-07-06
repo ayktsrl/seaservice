@@ -42,18 +42,17 @@
   </style>
 </head>
 <body>
-  <!-- Ortak Navbar -->
+
+   <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
   <script>
     fetch('common-navbar.html')
       .then(res => res.text())
       .then(html => {
-        document.getElementById("navbar-container").innerHTML = html;
-        const script = document.createElement('script');
-        script.src = 'common-navbar.js';
-        document.body.appendChild(script);
+        document.getElementById('navbar-container').innerHTML = html;
       });
   </script>
+
 
   <div class="container">
     <div class="profile-card shadow-sm">
