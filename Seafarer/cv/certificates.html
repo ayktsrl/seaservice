@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Certificates</title>
-  <link rel="icon" href="/favicon.ico" />
+  <title>Certificates - Seafarer</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="manifest" href="/site.webmanifest">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="../../style.css" />
+  <link rel="stylesheet" href="/style.css" />
   <style>
     @media (max-width: 768px) {
       h4 { font-size: 1.3rem; text-align: center; }
@@ -21,10 +25,10 @@
       border-radius: 10px;
       box-shadow: 0 1px 10px #e3e7ee;
       margin-bottom: 18px;
+      display: none;
     }
-    .add-btn {
-      box-shadow: 0 2px 6px #6adbaf44;
-    }
+    .form-slide.active { display: block; }
+    .add-btn { box-shadow: 0 2px 6px #6adbaf44; }
   </style>
 </head>
 <body class="bg-light p-4">
@@ -61,7 +65,7 @@
       </table>
     </div>
 
-    <div id="certForm" class="form-slide">
+    <div id="certForm" class="form-slide p-3">
       <form id="form">
         <div class="row g-3">
           <div class="col-md-6"><label class="form-label">Category</label><input type="text" class="form-control" id="category" required></div>
@@ -88,15 +92,14 @@
     </div>
   </div>
 
+  <!-- Firebase -->
   <script type="module">
     if (localStorage.getItem("role") !== "seafarer") {
-      window.top.location.href = "../../index.html";
+      window.top.location.href = "/index.html";
     }
 
-    import { auth, db } from '../../firebase-config.js';
-    import {
-      collection, addDoc, updateDoc, deleteDoc, getDocs, doc
-    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { auth, db } from '/firebase-config.js';
+    import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
     let userId = null;
@@ -108,7 +111,7 @@
     const submitBtn = document.getElementById('submitBtn');
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return location.href = "../../index.html";
+      if (!user) return location.href = "/index.html";
       userId = user.uid;
       await render();
     });
@@ -192,6 +195,7 @@
       }
     }
   </script>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

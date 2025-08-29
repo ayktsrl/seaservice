@@ -15,11 +15,7 @@
     @media (max-width: 768px) {
       .form-label { font-size: 0.95rem; }
       .form-select, .form-control, .btn { font-size: 0.95rem; }
-      .section-title {
-        font-size: 1.3rem;
-        margin-bottom: 20px;
-        text-align: center;
-      }
+      .section-title { font-size: 1.3rem; margin-bottom: 20px; text-align: center; }
       .form-box { padding: 20px; }
     }
     .form-box {
@@ -70,6 +66,16 @@
     </form>
   </div>
 
+  <!-- Toast -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="toastMsg" class="toast align-items-center border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastBody">Message</div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     if (localStorage.getItem("role") !== "seafarer") {
       window.top.location.href = "../../index.html";
@@ -88,6 +94,10 @@
     loadOptions("rankApplied", "../../options/options-ranks.html");
     loadOptions("lowestRank", "../../options/options-ranks.html");
     loadOptions("vesselType", "../../options/options-vessels.html");
+
+    const toastMsg = document.getElementById("toastMsg");
+    const toastBody = document.getElementById("toastBody");
+    const toast = new bootstrap.Toast(toastMsg);
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return;
@@ -113,8 +123,18 @@
         vesselType: document.getElementById("vesselType").value,
         readiness: document.getElementById("readiness").value
       };
-      await setDoc(ref, data);
-      alert("Qualifications saved.");
+      try {
+        await setDoc(ref, data);
+        toastBody.textContent = "Qualifications saved successfully ✅";
+        toastMsg.classList.remove("text-bg-danger");
+        toastMsg.classList.add("text-bg-success");
+        toast.show();
+      } catch (err) {
+        toastBody.textContent = "Error saving: " + err.message;
+        toastMsg.classList.remove("text-bg-success");
+        toastMsg.classList.add("text-bg-danger");
+        toast.show();
+      }
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

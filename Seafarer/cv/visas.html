@@ -13,29 +13,11 @@
   <link rel="stylesheet" href="../../style.css" />
   <style>
     @media (max-width: 768px) {
-      h3 {
-        font-size: 1.4rem;
-        text-align: center;
-      }
-      .visa-table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-      }
-      .visa-table th,
-      .visa-table td {
-        font-size: 0.85rem;
-        vertical-align: middle;
-      }
-      .btn {
-        font-size: 0.9rem;
-      }
-      .float-end {
-        float: none !important;
-        display: block;
-        width: 100%;
-        margin-top: 10px;
-      }
+      h3 { font-size: 1.4rem; text-align: center; }
+      .visa-table { display: block; overflow-x: auto; white-space: nowrap; }
+      .visa-table th, .visa-table td { font-size: 0.85rem; vertical-align: middle; }
+      .btn { font-size: 0.9rem; }
+      .float-end { float: none !important; display: block; width: 100%; margin-top: 10px; }
     }
   </style>
 </head>
@@ -45,7 +27,7 @@
     <h3 class="mb-4">Visas</h3>
     <div class="table-responsive">
       <table class="table table-bordered visa-table" id="visaTable">
-        <thead class="table-primary">
+        <thead class="table-primary text-center">
           <tr>
             <th>Visa For</th>
             <th>Type of Visa</th>
@@ -63,18 +45,30 @@
     <button class="btn btn-success mb-3" onclick="addEmptyRow()">➕ Add Visa</button>
   </div>
 
+  <!-- Toast -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="toastMsg" class="toast align-items-center border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastBody">Message</div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     if (localStorage.getItem("role") !== "seafarer") {
       window.top.location.href = "../../index.html";
     }
 
     import { auth, db } from '../../firebase-config.js';
-    import {
-      doc, collection, getDocs, addDoc, deleteDoc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { doc, collection, getDocs, addDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     let userId = null;
+
+    const toastMsg = document.getElementById("toastMsg");
+    const toastBody = document.getElementById("toastBody");
+    const toast = new bootstrap.Toast(toastMsg);
 
     function createInput(value = "", type = "text") {
       return `<input class="form-control" type="${type}" value="${value}">`;
@@ -89,7 +83,13 @@
         <td>${createInput(data.type)}</td>
         <td>${createInput(data.number)}</td>
         <td>${createInput(data.issued, "date")}</td>
-        <td>${createInput(data.expiry, "date")}</td>
+        <td>
+          ${createInput(data.expiry, "date")}
+          <div class="form-check mt-1">
+            <input type="checkbox" class="form-check-input no-expiry" ${!data.expiry ? "checked" : ""}>
+            <label class="form-check-label">No expiry</label>
+          </div>
+        </td>
         <td>${createInput(data.place)}</td>
         <td>${createInput(data.remarks)}</td>
         <td>
@@ -110,7 +110,7 @@
         type: inputs[1].value,
         number: inputs[2].value,
         issued: inputs[3].value,
-        expiry: inputs[4].value,
+        expiry: row.querySelector(".no-expiry").checked ? "" : inputs[4].value,
         place: inputs[5].value,
         remarks: inputs[6].value
       };
@@ -122,17 +122,21 @@
         const newDoc = await addDoc(visaRef, data);
         row.dataset.id = newDoc.id;
       }
-      alert("Saved successfully!");
+      toastBody.textContent = "Visa saved ✅";
+      toastMsg.classList.add("text-bg-success");
+      toast.show();
     };
 
     window.deleteVisa = async function (btn) {
       const row = btn.closest("tr");
       const id = row.dataset.id;
       if (id) {
-        const visaRef = doc(db, `seafarers/${userId}/cv/visas/items/${id}`);
-        await deleteDoc(visaRef);
+        await deleteDoc(doc(db, `seafarers/${userId}/cv/visas/items/${id}`));
       }
       row.remove();
+      toastBody.textContent = "Visa deleted ❌";
+      toastMsg.classList.add("text-bg-danger");
+      toast.show();
     };
 
     onAuthStateChanged(auth, async (user) => {

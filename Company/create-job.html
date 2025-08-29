@@ -3,28 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Create Job</title>
+  <title>Create Job - Company</title>
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="manifest" href="/site.webmanifest">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="/style.css" />
   <style>
     @media (max-width: 768px) {
-      .form-box {
-        padding: 20px;
-        background: #fff;
-        border-radius: 10px;
-      }
-      h4 {
-        font-size: 1.4rem;
-        text-align: center;
-      }
-      .form-label, .form-control, .form-select, .btn {
-        font-size: 0.95rem;
-      }
+      .form-box { padding: 20px; background: #fff; border-radius: 10px; }
+      h4 { font-size: 1.4rem; text-align: center; }
+      .form-label, .form-control, .form-select, .btn { font-size: 0.95rem; }
     }
     .form-box {
       background: #f9f9f9;
@@ -36,26 +27,32 @@
   </style>
 </head>
 <body class="bg-light p-3">
+
   <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('common-navbar.html')
+    fetch('/common-navbar.html')
       .then(res => res.text())
       .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
+        const container = document.getElementById('navbar-container');
+        container.innerHTML = html;
+        // scriptleri yeniden çalıştır
+        container.querySelectorAll("script").forEach(oldScript => {
+          const newScript = document.createElement("script");
+          if (oldScript.src) newScript.src = oldScript.src;
+          else newScript.textContent = oldScript.textContent;
+          document.body.appendChild(newScript);
+        });
       });
 
-    fetch('../options/options-ranks.html')
+    // Dropdown seçeneklerini yükle
+    fetch('/options/options-ranks.html')
       .then(res => res.text())
-      .then(html => {
-        document.getElementById('position').innerHTML = html;
-      });
+      .then(html => { document.getElementById('position').innerHTML = html; });
 
-    fetch('../options/options-countries.html')
+    fetch('/options/options-countries.html')
       .then(res => res.text())
-      .then(html => {
-        document.getElementById('location').innerHTML = html;
-      });
+      .then(html => { document.getElementById('location').innerHTML = html; });
   </script>
 
   <div class="form-box shadow-sm">
@@ -85,30 +82,41 @@
         <label class="form-label">Notes</label>
         <textarea class="form-control" id="notes" rows="3"></textarea>
       </div>
-      <div id="message" class="text-success mb-3"></div>
       <button type="submit" class="btn btn-primary w-100">Post Job</button>
     </form>
+  </div>
+
+  <!-- Toast messages -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:11">
+    <div id="toastMsg" class="toast align-items-center border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastBody">Message</div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
   </div>
 
   <!-- Firebase -->
   <script type="module">
     if (localStorage.getItem("role") !== "company") {
-      window.location.href = "../index.html";
+      window.location.href = "/index.html";
     }
 
-    import { auth, db } from '../firebase-config.js';
+    import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import { doc, collection, setDoc, getDocs, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const jobForm = document.getElementById('jobForm');
     const vesselSelect = document.getElementById('vesselName');
-    const messageBox = document.getElementById('message');
+    const toastMsg = document.getElementById("toastMsg");
+    const toastBody = document.getElementById("toastBody");
+    const toast = new bootstrap.Toast(toastMsg);
 
     let userId = null;
     let shipMap = {};
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return location.href = "../index.html";
+      if (!user) return location.href = "/index.html";
       userId = user.uid;
 
       const shipsRef = collection(db, `companies/${userId}/ships`);
@@ -149,10 +157,16 @@
         // Save to shared jobPosts
         await addDoc(collection(db, "jobPosts"), jobData);
 
-        messageBox.textContent = "Job posted successfully!";
+        toastBody.textContent = "Job posted successfully ✅";
+        toastMsg.classList.remove("text-bg-danger");
+        toastMsg.classList.add("text-bg-success");
+        toast.show();
         jobForm.reset();
       } catch (err) {
-        messageBox.textContent = "Error: " + err.message;
+        toastBody.textContent = "Error: " + err.message;
+        toastMsg.classList.remove("text-bg-success");
+        toastMsg.classList.add("text-bg-danger");
+        toast.show();
       }
     });
   </script>

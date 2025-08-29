@@ -6,33 +6,64 @@
   <title>Seafarer CV</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="../style.css" />
+  <style>
+    @media (max-width: 768px) {
+      h2 { font-size: 1.5rem; text-align: center; }
+      h4 { font-size: 1.2rem; }
+      .card { margin-bottom: 1rem; }
+    }
+  </style>
 </head>
 <body class="bg-light">
 
   <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('common-navbar.html')
+    fetch('../common-navbar.html')
       .then(res => res.text())
       .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
+        const container = document.getElementById('navbar-container');
+        container.innerHTML = html;
+        container.querySelectorAll("script").forEach(oldScript => {
+          const newScript = document.createElement("script");
+          if (oldScript.src) newScript.src = oldScript.src;
+          else newScript.textContent = oldScript.textContent;
+          document.body.appendChild(newScript);
+        });
       });
   </script>
-
 
   <!-- CV Content -->
   <div class="container py-5">
     <h2 class="mb-4 text-center">Seafarer CV</h2>
 
-    <div id="cvContainer" class="border p-4 bg-white shadow-sm rounded">
-      <p><strong>Full Name:</strong> <span id="fullName">Loading...</span></p>
-      <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-      <p><strong>Rank:</strong> <span id="rank">Loading...</span></p>
-      <p><strong>Experience:</strong> <span id="experience">Loading...</span></p>
-      <p><strong>Certificates:</strong></p>
-      <ul id="certificatesList">
-        <li>Loading...</li>
-      </ul>
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h4 class="card-title">Personal Details</h4>
+        <p><strong>Full Name:</strong> <span id="fullName">Loading...</span></p>
+        <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h4 class="card-title">Qualifications</h4>
+        <p><strong>Applied Rank:</strong> <span id="rank">Loading...</span></p>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h4 class="card-title">Experience</h4>
+        <p><span id="experience">Loading...</span></p>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="card-title">Certificates</h4>
+        <ul id="certificatesList"><li>Loading...</li></ul>
+      </div>
     </div>
 
     <div id="errorMsg" class="text-danger text-center mt-4"></div>
@@ -44,7 +75,7 @@
     import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get("userId") || urlParams.get("uid"); // Hem eski hem yeni query desteği
+    const userId = urlParams.get("userId") || urlParams.get("uid");
 
     const fullName = document.getElementById("fullName");
     const email = document.getElementById("email");
@@ -59,13 +90,12 @@
         return;
       }
       try {
-        // Personal details
         const personalRef = doc(db, "seafarers", userId, "cv", "personalDetails");
         const qualRef = doc(db, "seafarers", userId, "cv", "qualifications");
         const certCol = collection(db, "seafarers", userId, "cv", "certificates/items");
         const seaServiceCol = collection(db, "seafarers", userId, "seaService");
 
-        // Full Name, Email
+        // Personal Details
         const personalSnap = await getDoc(personalRef);
         let fName = "-", mail = "-";
         if (personalSnap.exists()) {
@@ -80,7 +110,7 @@
         const qualSnap = await getDoc(qualRef);
         rank.textContent = (qualSnap.exists() && qualSnap.data().rankApplied) ? qualSnap.data().rankApplied : "-";
 
-        // Experience (toplam onaylı gün sayısı)
+        // Experience
         let totalDays = 0;
         const seaSnaps = await getDocs(seaServiceCol);
         seaSnaps.forEach(doc => {
@@ -92,11 +122,9 @@
           }
         });
         const years = Math.floor(totalDays / 365), months = Math.floor((totalDays % 365) / 30), days = totalDays % 30;
-        experience.textContent = (totalDays > 0)
-          ? `${years}y ${months}m ${days}d (${totalDays} days)`
-          : "-";
+        experience.textContent = (totalDays > 0) ? `${years}y ${months}m ${days}d (${totalDays} days)` : "-";
 
-        // Certificates (liste)
+        // Certificates
         certificatesList.innerHTML = "";
         const certSnaps = await getDocs(certCol);
         if (certSnaps.size === 0) {

@@ -99,7 +99,17 @@
     </form>
   </div>
 
-  <!-- Tüm Scriptler tek dosyada -->
+  <!-- Toast -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="toastMsg" class="toast align-items-center border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastBody">Message</div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script -->
   <script type="module">
     // Role kontrolü
     if (localStorage.getItem("role") !== "seafarer") {
@@ -109,23 +119,23 @@
     // Options yükleme
     fetch('../../options/options-nationality.html')
       .then(res => res.text())
-      .then(html => {
-        document.getElementById("nationality").innerHTML = html;
-      });
+      .then(html => { document.getElementById("nationality").innerHTML = html; });
 
     fetch('../../options/options-countries.html')
       .then(res => res.text())
-      .then(html => {
-        document.getElementById("residence").innerHTML = html;
-      });
+      .then(html => { document.getElementById("residence").innerHTML = html; });
 
-    // Firestore bağlantısı ve form işlemleri
+    // Firestore bağlantısı
     import { app } from '../../firebase-config.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    const toastMsg = document.getElementById("toastMsg");
+    const toastBody = document.getElementById("toastBody");
+    const toast = new bootstrap.Toast(toastMsg);
 
     // Formu doldur
     onAuthStateChanged(auth, async user => {
@@ -175,9 +185,15 @@
       };
       try {
         await setDoc(doc(db, "seafarers", user.uid), formData, { merge: true });
-        alert("Personal details saved successfully!");
+        toastBody.textContent = "Personal details saved successfully ✅";
+        toastMsg.classList.remove("text-bg-danger");
+        toastMsg.classList.add("text-bg-success");
+        toast.show();
       } catch (error) {
-        alert("Error saving details: " + error.message);
+        toastBody.textContent = "Error saving details: " + error.message;
+        toastMsg.classList.remove("text-bg-success");
+        toastMsg.classList.add("text-bg-danger");
+        toast.show();
       }
     });
   </script>
