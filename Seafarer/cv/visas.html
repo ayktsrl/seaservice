@@ -1,154 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Visas</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="../../style.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../style.css"/>
   <style>
-    @media (max-width: 768px) {
-      h3 { font-size: 1.4rem; text-align: center; }
-      .visa-table { display: block; overflow-x: auto; white-space: nowrap; }
-      .visa-table th, .visa-table td { font-size: 0.85rem; vertical-align: middle; }
-      .btn { font-size: 0.9rem; }
-      .float-end { float: none !important; display: block; width: 100%; margin-top: 10px; }
+    @media (max-width:768px){
+      h3{font-size:1.3rem;text-align:center}
+      .table{font-size:.9rem}
+      .float-end{float:none!important;display:block;width:100%;margin-top:10px}
     }
+    .table th,.table td{vertical-align:middle;text-align:center}
   </style>
 </head>
 <body class="p-4 bg-light">
-
-  <div class="container bg-white p-4 rounded shadow">
-    <h3 class="mb-4">Visas</h3>
+  <div class="container bg-white p-3 p-md-4 rounded shadow-sm">
+    <h3 class="mb-3">Visas</h3>
     <div class="table-responsive">
-      <table class="table table-bordered visa-table" id="visaTable">
+      <table class="table table-bordered align-middle" id="visaTable">
         <thead class="table-primary text-center">
           <tr>
-            <th>Visa For</th>
-            <th>Type of Visa</th>
-            <th>Number</th>
-            <th>Issued</th>
-            <th>Expiry</th>
-            <th>Place of Issue</th>
-            <th>Remarks</th>
-            <th>Actions</th>
+            <th>Visa For</th><th>Type</th><th>Number</th><th>Issued</th><th>Expiry</th><th>Place</th><th>Remarks</th><th style="width:110px">Actions</th>
           </tr>
         </thead>
         <tbody id="visaBody"></tbody>
       </table>
     </div>
-    <button class="btn btn-success mb-3" onclick="addEmptyRow()">➕ Add Visa</button>
+    <button class="btn btn-success mt-2" onclick="addEmptyRow()">➕ Add Visa</button>
   </div>
 
   <!-- Toast -->
-  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-    <div id="toastMsg" class="toast align-items-center border-0" role="alert">
-      <div class="d-flex">
-        <div class="toast-body" id="toastBody">Message</div>
-        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
-      </div>
-    </div>
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:11">
+    <div id="toastMsg" class="toast text-bg-primary border-0" role="alert"><div class="d-flex">
+      <div class="toast-body" id="toastBody">Message</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div></div>
   </div>
 
   <script type="module">
-    if (localStorage.getItem("role") !== "seafarer") {
-      window.top.location.href = "../../index.html";
-    }
+    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='../../index.html';
 
-    import { auth, db } from '../../firebase-config.js';
-    import { doc, collection, getDocs, addDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { auth, db } from '/firebase-config.js';
+    import { doc, collection, getDocs, addDoc, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-    let userId = null;
+    let userId=null;
+    const toast = new bootstrap.Toast(document.getElementById('toastMsg'));
+    const toastBody=document.getElementById('toastBody');
 
-    const toastMsg = document.getElementById("toastMsg");
-    const toastBody = document.getElementById("toastBody");
-    const toast = new bootstrap.Toast(toastMsg);
+    function input(v='',type='text'){ return `<input class="form-control" type="${type}" value="${v||''}">`; }
 
-    function createInput(value = "", type = "text") {
-      return `<input class="form-control" type="${type}" value="${value}">`;
-    }
-
-    function addEmptyRow(data = {}, docId = null) {
-      const tbody = document.getElementById("visaBody");
-      const row = document.createElement("tr");
-      row.dataset.id = docId || "";
-      row.innerHTML = `
-        <td>${createInput(data.visaFor)}</td>
-        <td>${createInput(data.type)}</td>
-        <td>${createInput(data.number)}</td>
-        <td>${createInput(data.issued, "date")}</td>
+    window.addEmptyRow = (data={}, id=null)=>{
+      const tbody=document.getElementById('visaBody');
+      const tr=document.createElement('tr'); tr.dataset.id=id||'';
+      tr.innerHTML = `
+        <td>${input(data.visaFor)}</td>
+        <td>${input(data.type)}</td>
+        <td>${input(data.number)}</td>
+        <td>${input(data.issued,'date')}</td>
         <td>
-          ${createInput(data.expiry, "date")}
+          ${input(data.expiry,'date')}
           <div class="form-check mt-1">
-            <input type="checkbox" class="form-check-input no-expiry" ${!data.expiry ? "checked" : ""}>
+            <input type="checkbox" class="form-check-input no-expiry" ${!data.expiry?'checked':''}>
             <label class="form-check-label">No expiry</label>
           </div>
         </td>
-        <td>${createInput(data.place)}</td>
-        <td>${createInput(data.remarks)}</td>
+        <td>${input(data.place)}</td>
+        <td>${input(data.remarks)}</td>
         <td>
           <button class="btn btn-sm btn-primary me-1" onclick="saveVisa(this)">💾</button>
           <button class="btn btn-sm btn-danger" onclick="deleteVisa(this)">❌</button>
-        </td>
-      `;
-      tbody.appendChild(row);
-    }
+        </td>`;
+      tbody.appendChild(tr);
+    };
 
-    window.addEmptyRow = addEmptyRow;
-
-    window.saveVisa = async function (btn) {
-      const row = btn.closest("tr");
-      const inputs = row.querySelectorAll("input");
-      const data = {
-        visaFor: inputs[0].value,
-        type: inputs[1].value,
-        number: inputs[2].value,
-        issued: inputs[3].value,
-        expiry: row.querySelector(".no-expiry").checked ? "" : inputs[4].value,
-        place: inputs[5].value,
-        remarks: inputs[6].value
+    window.saveVisa = async (btn)=>{
+      const row=btn.closest('tr'); const inputs=row.querySelectorAll('input');
+      const data={
+        visaFor:inputs[0].value, type:inputs[1].value, number:inputs[2].value,
+        issued:inputs[3].value, expiry: row.querySelector('.no-expiry').checked ? '' : inputs[4].value,
+        place:inputs[5].value, remarks:inputs[6].value
       };
-      const id = row.dataset.id;
-      const visaRef = collection(db, `seafarers/${userId}/cv/visas/items`);
-      if (id) {
-        await updateDoc(doc(visaRef, id), data);
-      } else {
-        const newDoc = await addDoc(visaRef, data);
-        row.dataset.id = newDoc.id;
-      }
-      toastBody.textContent = "Visa saved ✅";
-      toastMsg.classList.add("text-bg-success");
-      toast.show();
+      const id=row.dataset.id; const ref=collection(db,`seafarers/${userId}/cv/visas/items`);
+      if(id) await updateDoc(doc(ref,id),data); else { const nd=await addDoc(ref,data); row.dataset.id=nd.id; }
+      toastBody.textContent='Visa saved ✅'; toast.show();
     };
 
-    window.deleteVisa = async function (btn) {
-      const row = btn.closest("tr");
-      const id = row.dataset.id;
-      if (id) {
-        await deleteDoc(doc(db, `seafarers/${userId}/cv/visas/items/${id}`));
-      }
-      row.remove();
-      toastBody.textContent = "Visa deleted ❌";
-      toastMsg.classList.add("text-bg-danger");
-      toast.show();
+    window.deleteVisa = async (btn)=>{
+      const row=btn.closest('tr'); const id=row.dataset.id;
+      if(id) await deleteDoc(doc(db,`seafarers/${userId}/cv/visas/items/${id}`));
+      row.remove(); toastBody.textContent='Visa deleted ❌'; toast.show();
     };
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
-      userId = user.uid;
-      const visasRef = collection(db, `seafarers/${userId}/cv/visas/items`);
-      const snap = await getDocs(visasRef);
-      snap.forEach(docSnap => {
-        addEmptyRow(docSnap.data(), docSnap.id);
-      });
+    onAuthStateChanged(auth, async user=>{
+      if(!user) return; userId=user.uid;
+      const snap=await getDocs(collection(db,`seafarers/${userId}/cv/visas/items`));
+      snap.forEach(d=> addEmptyRow(d.data(), d.id));
     });
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

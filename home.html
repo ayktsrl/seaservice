@@ -17,7 +17,6 @@
   <!-- Common Navbar -->
   <div id="navbar-container"></div>
   <script>
-    // Load common navbar and EXECUTE any <script> tags inside it
     fetch('/common-navbar.html')
       .then(res => res.text())
       .then(html => {
@@ -25,14 +24,13 @@
         c.innerHTML = html;
         c.querySelectorAll('script').forEach(s => {
           const n = document.createElement('script');
-          if (s.type) n.type = s.type;                // support type="module"
+          if (s.type) n.type = s.type;
           if (s.src) n.src = s.src; else n.textContent = s.textContent;
           document.body.appendChild(n);
         });
       });
   </script>
 
-  <!-- Dashboard -->
   <section id="dashboard-section" style="display:block;">
     <div class="container py-5">
       <h2 class="mb-3 text-center">Welcome, <span id="userFullName"></span>!</h2>
@@ -63,14 +61,21 @@
     </div>
   </section>
 
-  <!-- Firebase Auth & User Info -->
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const fmtDate = (v) => {
+      try {
+        if (v && typeof v.toDate === 'function') return v.toDate().toLocaleDateString();
+        if (typeof v === 'string') return v.slice(0,10);
+      } catch(e) {}
+      return '-';
+    };
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return window.location.href = '/index.html';
+      if (!user) return location.href = '/index.html';
 
       const collections = ['seafarers', 'companies', 'agencies'];
       let userData = {};
@@ -92,7 +97,7 @@
 
       document.getElementById('profileDetails').innerHTML = `
         <div><b>Email:</b> ${userData.email || user.email}</div>
-        <div><b>Joined:</b> ${(userData.createdAt || '').substring(0,10)}</div>
+        <div><b>Joined:</b> ${fmtDate(userData.createdAt)}</div>
         <div><b>Last login:</b> ${user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString() : '-'}</div>
       `;
 

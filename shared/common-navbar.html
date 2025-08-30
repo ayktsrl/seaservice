@@ -1,0 +1,97 @@
+<!-- /shared/common-navbar.html -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
+  <a class="navbar-brand d-flex align-items-center gap-2" href="/home.html">
+    <img src="/logo.png" alt="Logo" style="height:28px;width:auto" />
+    <span>Orion</span>
+  </a>
+
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+          data-bs-target="#navbarNav" aria-controls="navbarNav"
+          aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav me-auto" id="navLinks"></ul>
+    <ul class="navbar-nav">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#"
+           id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="badge text-bg-light text-primary" id="roleBadge">Role</span>
+          <span id="usernameDisplay">User</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" id="userMenuLinks">
+          <li><a class="dropdown-item" href="/edit-profile.html">Edit Profile</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><button class="dropdown-item" id="logoutBtn" type="button">Logout</button></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<script type="module">
+  import { auth } from '/firebase-config.js';
+  import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+  const navLinksUl = document.getElementById('navLinks');
+  const usernameEl = document.getElementById('usernameDisplay');
+  const roleBadge  = document.getElementById('roleBadge');
+  const logoutBtn  = document.getElementById('logoutBtn');
+
+  const norm = (p) => (p || '/')
+    .replace(/index\.html$/,'/')
+    .replace(/\.html$/,'')
+    .replace(/\/+$/,'') || '/';
+
+  function markActive() {
+    const here = norm(location.pathname);
+    document.querySelectorAll('#navLinks a.nav-link').forEach(a => {
+      const clean = norm(a.getAttribute('href'));
+      if (clean === here) a.classList.add('active');
+    });
+  }
+
+  function buildMenu(role) {
+    const items = [];
+    if (role === 'agency') {
+      items.push(['Post Job', '/Agency/agency-post-job.html']);
+      items.push(['My Job Posts', '/Agency/agency-job-list.html']);
+      items.push(['Seafarers', '/Agency/agency-seafarers.html']);
+    } else if (role === 'company') {
+      items.push(['Dashboard', '/Company/company-dashboard.html']);
+      items.push(['Create Job', '/Company/create-job.html']);
+      items.push(['Applications', '/Company/company-applications.html']);
+      items.push(['Ships', '/Company/company-ship-list.html']);
+      items.push(['Crew Lists', '/Company/ship-crew-list.html']);
+      items.push(['Seafarers', '/Company/evaluate-seafarers.html']);
+    } else { // seafarer
+      items.push(['Job Board', '/shared/job-board.html']);
+      items.push(['My Applications', '/Seafarer/my-applications.html']);
+      items.push(['CV List', '/Seafarer/cv-list.html']);
+    }
+    navLinksUl.innerHTML = items.map(([label, href]) => `
+      <li class="nav-item"><a class="nav-link" href="${href}">${label}</a></li>
+    `).join('');
+    markActive();
+  }
+
+  function setUserUi(user, role) {
+    usernameEl.textContent = user?.displayName || user?.email || 'User';
+    roleBadge.textContent  = (role || 'seafarer').replace(/^\w/, c => c.toUpperCase());
+    roleBadge.classList.toggle('text-bg-warning', role === 'agency');
+    roleBadge.classList.toggle('text-bg-success', role === 'company');
+    roleBadge.classList.toggle('text-bg-info', role === 'seafarer' || !role);
+  }
+
+  logoutBtn?.addEventListener('click', async () => {
+    try { localStorage.removeItem('role'); await signOut(auth); }
+    finally { location.href = '/index.html'; }
+  });
+
+  (function init() {
+    const role = (localStorage.getItem('role') || 'seafarer').toLowerCase();
+    buildMenu(role);
+    onAuthStateChanged(auth, (user) => setUserUi(user || null, role));
+  })();
+</script>

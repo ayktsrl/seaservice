@@ -28,7 +28,6 @@
   <!-- Common Navbar -->
   <div id="navbar-container"></div>
   <script>
-    // Load common navbar and EXECUTE any <script> tags inside it (so role-based menu works)
     fetch('/common-navbar.html')
       .then(res => res.text())
       .then(html => {
@@ -36,7 +35,7 @@
         c.innerHTML = html;
         c.querySelectorAll('script').forEach(s => {
           const n = document.createElement('script');
-          if (s.type) n.type = s.type; // preserve type="module"
+          if (s.type) n.type = s.type;
           if (s.src) n.src = s.src; else n.textContent = s.textContent;
           document.body.appendChild(n);
         });
@@ -53,10 +52,9 @@
 
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-    import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // Fields by role (Nationality removed)
     const roleFields = {
       seafarer: [
         { label: "First Name", id: "firstName", type: "text" },
@@ -90,13 +88,18 @@
       return (v || "");
     }
 
+    const escapeHtml = (str="") => str.replace(/[&<>'"]/g,
+      c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+
     function renderForm(role, values={}){
       const form = document.getElementById("profileForm");
       const fields = roleFields[role] || [];
       form.innerHTML = fields.map(f => `
         <div class="mb-3">
           <label class="form-label" for="${f.id}">${f.label}</label>
-          <input type="${f.type}" id="${f.id}" class="form-control" value="${values[f.id] || ''}" placeholder="${f.label}" />
+          <input type="${f.type}" id="${f.id}" class="form-control"
+                 value="${escapeHtml(values[f.id] || '')}" placeholder="${f.label}" />
         </div>`).join('') + `
         <div class="d-grid">
           <button type="submit" class="btn btn-primary mt-1" id="saveBtn">Save</button>
@@ -117,7 +120,6 @@
     onAuthStateChanged(auth, async user=>{
       if (!user) return location.href="/index.html";
 
-      // Detect role/collection
       const collections = ['seafarers','companies','agencies'];
       let userRole = '', docRef;
       for (const col of collections){
@@ -128,12 +130,13 @@
           docRef = ref; break;
         }
       }
-      if (!userRole){ showMsg("User profile not found. Please re-login.", 'danger'); return setTimeout(()=>location.href="/index.html", 1000); }
+      if (!userRole){
+        showMsg("User profile not found. Please re-login.", 'danger');
+        return setTimeout(()=>location.href="/index.html", 1000);
+      }
 
-      // Values
       const snap = await getDoc(docRef);
       let values = snap.exists() ? snap.data() : {};
-      // backward compat: birthDate -> dob (Timestamp safe)
       values.dob = ymd(values.dob) || ymd(values.birthDate);
 
       renderForm(userRole, values);
@@ -145,7 +148,6 @@
         const data = {};
         (roleFields[userRole] || []).forEach(f => data[f.id] = document.getElementById(f.id).value);
 
-        // keep birthDate for legacy readers
         if (data.dob) data.birthDate = data.dob;
 
         try{

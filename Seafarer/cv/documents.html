@@ -1,168 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Documents - Seafarer</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="stylesheet" href="/style.css" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Documents</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="/style.css"/>
   <style>
-    @media (max-width: 768px) {
-      .form-label { font-size: 0.95rem; }
-      .form-control, .form-select { font-size: 0.95rem; }
-      h4, h5 { font-size: 1.2rem; }
-    }
-    .fade-text.hide { opacity: 0; transition: opacity 0.5s; }
-    .fade-text { opacity: 1; transition: opacity 0.5s; }
-    .container.bg-white {
-      max-width: 600px;
-      margin-top: 28px;
-      border-radius: 18px;
-      box-shadow: 0 2px 12px #e8ebf3;
-      padding: 2rem 2.2rem 1.5rem 2.2rem;
-    }
-    .border.rounded.p-3 {
-      background: #f7fafd;
-      border-radius: 12px !important;
-      margin-bottom: 18px;
-      border: 1.5px solid #e3e6ec !important;
-    }
+    .wrap{max-width:640px;margin:28px auto;background:#fff;border-radius:18px;box-shadow:0 2px 12px #e8ebf3;padding:24px}
+    .blk{background:#f7fafd;border:1.5px solid #e3e6ec;border-radius:12px;padding:16px;margin-bottom:18px}
+    @media(max-width:768px){ .form-label,.form-control,.form-select{font-size:.95rem} }
   </style>
 </head>
 <body class="bg-light p-4">
-  <div class="container bg-white p-4 rounded shadow">
-    <h4 class="mb-4 text-center">Documents</h4>
+  <div class="wrap">
+    <h4 class="mb-3 text-center">Documents</h4>
     <form id="docForm">
-      <!-- Passport Section -->
-      <div class="border rounded p-3 mb-4">
-        <h5 class="mb-3">Passport</h5>
+      <div class="blk">
+        <h6 class="mb-3">Passport</h6>
         <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Passport Issue Country</label>
-            <select id="passportCountry" class="form-select"></select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Passport Number</label>
-            <input type="text" id="passportNumber" class="form-control" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Passport Issue Date</label>
-            <input type="date" id="passportIssue" class="form-control" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Passport Expiry Date</label>
-            <input type="date" id="passportExpiry" class="form-control" />
-          </div>
+          <div class="col-md-6"><label class="form-label">Issue Country</label><select id="passportCountry" class="form-select"></select></div>
+          <div class="col-md-6"><label class="form-label">Number</label><input id="passportNumber" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label">Issue Date</label><input id="passportIssue" type="date" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label">Expiry Date</label><input id="passportExpiry" type="date" class="form-control"></div>
         </div>
       </div>
 
-      <!-- Seaman Book Section -->
-      <div class="border rounded p-3">
-        <h5 class="mb-3">Seaman Book</h5>
+      <div class="blk">
+        <h6 class="mb-3">Seaman Book</h6>
         <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Seaman Book Issue Country</label>
-            <select id="seamanBookCountry" class="form-select"></select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Seaman Book Number</label>
-            <input type="text" id="seamanBookNumber" class="form-control" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Seaman Book Issue Date</label>
-            <input type="date" id="seamanBookIssue" class="form-control" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Seaman Book Expiry Date</label>
-            <input type="date" id="seamanBookExpiry" class="form-control" />
-          </div>
+          <div class="col-md-6"><label class="form-label">Issue Country</label><select id="seamanBookCountry" class="form-select"></select></div>
+          <div class="col-md-6"><label class="form-label">Number</label><input id="seamanBookNumber" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label">Issue Date</label><input id="seamanBookIssue" type="date" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label">Expiry Date</label><input id="seamanBookExpiry" type="date" class="form-control"></div>
         </div>
       </div>
 
-      <!-- Save button -->
-      <div class="d-flex justify-content-end gap-2 mt-4">
-        <button type="submit" class="btn btn-primary" id="saveBtn">Save</button>
-        <span id="saveStatus" class="ms-3 text-success fade-text" style="display: none;">✓ Saved!</span>
-      </div>
+      <div class="text-end"><button class="btn btn-primary" id="saveBtn">Save</button><span id="saveStatus" class="ms-3 text-success" style="display:none">✓ Saved!</span></div>
     </form>
   </div>
 
-  <!-- Load Country Options -->
   <script>
-    if (localStorage.getItem("role") !== "seafarer") {
-      window.top.location.href = "/index.html";
-    }
-
-    fetch("/options/options-countries.html")
-      .then(res => res.text())
-      .then(data => {
-        document.getElementById("passportCountry").innerHTML = data;
-        document.getElementById("seamanBookCountry").innerHTML = data;
-      });
+    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
+    fetch('/options/options-countries.html').then(r=>r.text()).then(h=>{ passportCountry.innerHTML=h; seamanBookCountry.innerHTML=h; });
   </script>
 
-  <!-- Firebase Load/Save -->
   <script type="module">
     import { auth, db } from '/firebase-config.js';
     import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-    const form = document.getElementById("docForm");
-    const saveBtn = document.getElementById("saveBtn");
-    const saveStatus = document.getElementById("saveStatus");
+    const form=document.getElementById('docForm'); const saveBtn=document.getElementById('saveBtn'); const saveStatus=document.getElementById('saveStatus');
+    let userId=null;
 
-    let userId = null;
-
-    onAuthStateChanged(auth, async user => {
-      if (!user) return location.href = "/index.html";
-      userId = user.uid;
-
-      const ref = doc(db, "seafarers", userId, "cv", "documents");
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const d = snap.data();
-        form.passportCountry.value = d.passportCountry || '';
-        form.passportNumber.value = d.passportNumber || '';
-        form.passportIssue.value = d.passportIssue || '';
-        form.passportExpiry.value = d.passportExpiry || '';
-        form.seamanBookCountry.value = d.seamanBookCountry || '';
-        form.seamanBookNumber.value = d.seamanBookNumber || '';
-        form.seamanBookIssue.value = d.seamanBookIssue || '';
-        form.seamanBookExpiry.value = d.seamanBookExpiry || '';
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user) return location.href='/index.html';
+      userId=user.uid;
+      const ref=doc(db,'seafarers',userId,'cv','documents');
+      const snap=await getDoc(ref);
+      if(snap.exists()){
+        const d=snap.data();
+        form.passportCountry.value=d.passportCountry||''; form.passportNumber.value=d.passportNumber||'';
+        form.passportIssue.value=d.passportIssue||''; form.passportExpiry.value=d.passportExpiry||'';
+        form.seamanBookCountry.value=d.seamanBookCountry||''; form.seamanBookNumber.value=d.seamanBookNumber||'';
+        form.seamanBookIssue.value=d.seamanBookIssue||''; form.seamanBookExpiry.value=d.seamanBookExpiry||'';
       }
     });
 
-    form.addEventListener("submit", async e => {
-      e.preventDefault();
-      saveBtn.disabled = true;
-      saveStatus.style.display = 'none';
-
-      const data = {
-        passportCountry: form.passportCountry.value,
-        passportNumber: form.passportNumber.value,
-        passportIssue: form.passportIssue.value,
-        passportExpiry: form.passportExpiry.value,
-        seamanBookCountry: form.seamanBookCountry.value,
-        seamanBookNumber: form.seamanBookNumber.value,
-        seamanBookIssue: form.seamanBookIssue.value,
-        seamanBookExpiry: form.seamanBookExpiry.value
+    form.addEventListener('submit', async e=>{
+      e.preventDefault(); saveBtn.disabled=true; saveStatus.style.display='none';
+      const data={
+        passportCountry:form.passportCountry.value, passportNumber:form.passportNumber.value,
+        passportIssue:form.passportIssue.value, passportExpiry:form.passportExpiry.value,
+        seamanBookCountry:form.seamanBookCountry.value, seamanBookNumber:form.seamanBookNumber.value,
+        seamanBookIssue:form.seamanBookIssue.value, seamanBookExpiry:form.seamanBookExpiry.value
       };
-
-      await setDoc(doc(db, "seafarers", userId, "cv", "documents"), data);
-
-      saveStatus.style.display = 'inline';
-      saveStatus.classList.remove('hide');
-      setTimeout(() => {
-        saveStatus.classList.add('hide');
-        saveBtn.disabled = false;
-      }, 1500);
+      await setDoc(doc(db,'seafarers',userId,'cv','documents'), data);
+      saveBtn.disabled=false; saveStatus.style.display='inline';
+      setTimeout(()=>saveStatus.style.display='none', 1800);
     });
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

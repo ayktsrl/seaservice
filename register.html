@@ -104,13 +104,9 @@
   </script>
 
   <script type="module">
-    import { auth, db as importedDb } from '/firebase-config.js';
-    import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-    import { getFirestore, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
-
-    // Fallback: importedDb Firestore örneği değilse default app'ten al
-    const isFirestore = (x) => x && typeof x === 'object' && ('type' in x || 'app' in x || '_queue' in x);
-    const db = isFirestore(importedDb) ? importedDb : getFirestore();
+    import { auth, db } from '/firebase-config.js';
+    import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const form = document.getElementById('registerForm');
     const errorBox = document.getElementById('errorBox');

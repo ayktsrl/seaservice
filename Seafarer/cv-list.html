@@ -9,25 +9,17 @@
     body { background:#f6f8fb; }
     .card-shadow { box-shadow:0 6px 20px rgba(0,0,0,.08); border:0; }
     .table td, .table th { vertical-align: middle; }
-    .badge-role { text-transform: capitalize; }
     .hint { font-size:.9rem; color:#6c757d; }
   </style>
 </head>
 <body>
-  <!-- Common Navbar -->
+  <!-- Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('/common-navbar.html')
-      .then(r=>r.text())
-      .then(html=>{
-        const c=document.getElementById('navbar-container');
-        c.innerHTML=html;
-        c.querySelectorAll('script').forEach(s=>{
-          const n=document.createElement('script');
-          if(s.src) n.src=s.src; else n.textContent=s.textContent;
-          document.body.appendChild(n);
-        });
-      });
+    fetch('/common-navbar.html').then(r=>r.text()).then(html=>{
+      const c=document.getElementById('navbar-container'); c.innerHTML=html;
+      c.querySelectorAll('script').forEach(s=>{const n=document.createElement('script'); if(s.src)n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n);});
+    });
   </script>
 
   <main class="container py-4">
@@ -42,7 +34,6 @@
       </div>
     </div>
 
-    <!-- Filters -->
     <div class="card card-shadow mb-3">
       <div class="card-body">
         <div class="row g-2 align-items-end">
@@ -65,7 +56,6 @@
       </div>
     </div>
 
-    <!-- Table -->
     <div class="card card-shadow">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -100,43 +90,18 @@
     </div>
   </main>
 
-  <!-- Delete Modal -->
-  <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Delete CV</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Are you sure you want to delete <strong id="delCvName">this CV</strong>? This action cannot be undone.
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Firebase (modular v10) -->
   <script type="module">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { 
-      getFirestore, collection, query, where, orderBy, limit, startAfter, getDocs, deleteDoc, doc, updateDoc, addDoc, serverTimestamp, getDoc 
-    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    if ((localStorage.getItem('role')||'').toLowerCase() !== 'seafarer') location.href='/index.html';
 
-    const firebaseConfig = window.firebaseConfig ?? { /* your config if not global */ };
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
+    import { auth, db } from '/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { collection, query, where, orderBy, limit, startAfter, getDocs, deleteDoc, doc, updateDoc, addDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     let currentUser = null;
-    let role = (localStorage.getItem('role') || 'seafarer').toLowerCase();
-    let pageSize = 10;
+    const role = 'seafarer';
+    const pageSize = 10;
     let lastVisible = null;
     let prevStack = [];
     let activeFilters = { text:'', visibility:'all' };
@@ -153,23 +118,13 @@
     const addHint = document.getElementById('addHint');
 
     const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    const delCvNameEl = document.getElementById('delCvName');
-    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    let pendingDelete = { id:null, name:null };
+    // delete modal elements exist below (created by original file)
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        location.href = "/login.html";
-        return;
-      }
+      if (!user) { location.href = "/index.html"; return; }
       currentUser = user;
-
-      // Show Add button & hint for seafarer only
-      if (role === 'seafarer') {
-        addCvBtn.classList.remove('d-none');
-        addHint.classList.remove('d-none');
-      }
-
+      addCvBtn.classList.remove('d-none');
+      addHint.classList.remove('d-none');
       await loadPage(true);
     });
 
@@ -185,13 +140,9 @@
       await loadPage(false, true);
     });
 
-    nextBtn.addEventListener('click', async () => {
-      await loadPage(false);
-    });
+    nextBtn.addEventListener('click', async () => { await loadPage(false); });
 
-    // Add CV flow (creates a draft meta and redirects to editor)
     addCvBtn.addEventListener('click', async () => {
-      if (role !== 'seafarer') return;
       try {
         toggleLoading(true);
         const meta = await buildMetaFromSubdocs(currentUser.uid);
@@ -206,24 +157,17 @@
           updatedAt: serverTimestamp()
         });
         location.href = `/Seafarer/edit-cv-panel.html?cvId=${ref.id}`;
-      } catch (e) {
-        console.error(e);
-        alert('Create failed.');
-      } finally {
-        toggleLoading(false);
-      }
+      } catch (e) { console.error(e); alert('Create failed.'); }
+      finally { toggleLoading(false); }
     });
 
-    // Build meta summary from subdocs
     async function buildMetaFromSubdocs(ownerUid) {
       const personalRef = doc(db,"seafarers", ownerUid, "cv", "personalDetails");
       const qualRef     = doc(db,"seafarers", ownerUid, "cv", "qualifications");
       const skillsRef   = doc(db,"seafarers", ownerUid, "cv", "specialSkills");
 
       const [personalSnap, qualSnap, skillsSnap] = await Promise.all([
-        getDoc(personalRef),
-        getDoc(qualRef),
-        getDoc(skillsRef)
+        getDoc(personalRef), getDoc(qualRef), getDoc(skillsRef)
       ]);
 
       let fullName = "-";
@@ -241,27 +185,14 @@
     async function loadPage(reset=false, goingBack=false) {
       if (!currentUser) return;
       toggleLoading(true);
-      if (reset) {
-        lastVisible = null;
-        prevStack = [];
-        tbody.innerHTML = '';
-      }
+      if (reset) { lastVisible = null; prevStack = []; tbody.innerHTML=''; }
 
       try {
-        const baseRef = collection(db, 'cvs'); // meta collection
-        const cons = [];
-
-        // Seafarer sees own CVs (including drafts); others see only public
-        if (role === 'seafarer') {
-          cons.push(where('ownerUid', '==', currentUser.uid));
-          if (activeFilters.visibility === 'public') cons.push(where('public', '==', true));
-          if (activeFilters.visibility === 'private') cons.push(where('public', '==', false));
-        } else {
-          cons.push(where('public', '==', true));
-        }
-
-        cons.push(orderBy('updatedAt','desc'));
-        cons.push(limit(pageSize));
+        const baseRef = collection(db, 'cvs');
+        const cons = [ where('ownerUid', '==', currentUser.uid) ];
+        if (activeFilters.visibility === 'public')  cons.push(where('public', '==', true));
+        if (activeFilters.visibility === 'private') cons.push(where('public', '==', false));
+        cons.push(orderBy('updatedAt','desc'), limit(pageSize));
         if (lastVisible && !goingBack) cons.push(startAfter(lastVisible));
 
         const snap = await getDocs(query(baseRef, ...cons));
@@ -275,104 +206,77 @@
         tbody.innerHTML = '';
         let rendered = 0;
         for (const d of docsArr) {
-          const cv = d.data(); cv.id = d.id;
-
-          // Client-side search
-          const hay = [
-            cv.name, cv.position, (cv.skills||[]).join(', '), cv.ownerEmail
-          ].join(' ').toLowerCase();
+          const cv = { id:d.id, ...d.data() };
+          const hay = [cv.name, cv.position, (cv.skills||[]).join(', '), cv.ownerEmail].join(' ').toLowerCase();
           if (activeFilters.text && !hay.includes(activeFilters.text)) continue;
-
-          appendRow(cv);
-          rendered++;
+          appendRow(cv); rendered++;
         }
 
         countText.textContent = `${rendered} CV listed`;
         nextBtn.disabled = (docsArr.length < pageSize);
         prevBtn.disabled = (prevStack.length === 0);
       } catch (e) {
-        console.error(e);
-        countText.textContent = "Failed to load CVs.";
-      } finally {
-        toggleLoading(false);
-      }
+        console.error(e); countText.textContent = "Failed to load CVs.";
+      } finally { toggleLoading(false); }
     }
 
     function appendRow(cv){
       const tr = document.createElement('tr');
-
       const updated = cv.updatedAt?.toDate ? cv.updatedAt.toDate() : (cv.updatedAt? new Date(cv.updatedAt): null);
       const updatedStr = updated ? updated.toLocaleString() : '-';
-
-      const isOwner = (cv.ownerUid === (currentUser?.uid || ''));
-      const statusBadge = cv.public
-        ? '<span class="badge bg-success">Published</span>'
-        : '<span class="badge bg-secondary">Draft</span>';
+      const statusBadge = cv.public ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-secondary">Draft</span>';
 
       tr.innerHTML = `
-        <td>
-          <div class="fw-semibold">${escapeHtml(cv.name || '—')}</div>
-          <div class="text-muted small">${escapeHtml(cv.ownerEmail || '')}</div>
-        </td>
+        <td><div class="fw-semibold">${escapeHtml(cv.name || '—')}</div><div class="text-muted small">${escapeHtml(cv.ownerEmail || '')}</div></td>
         <td>${escapeHtml(cv.position || '—')}</td>
         <td>${updatedStr}</td>
         <td>${statusBadge}</td>
         <td>
           <div class="btn-group" role="group">
             <a class="btn btn-sm btn-outline-primary" href="/shared/view-cv.html?cvId=${cv.id}">View</a>
-            <button class="btn btn-sm btn-outline-dark" data-act="pdf" data-id="${cv.id}">
-              Download PDF
-            </button>
-            <a class="btn btn-sm btn-outline-secondary ${isOwner?'':'disabled'}" href="${isOwner?('/Seafarer/edit-cv-panel.html?cvId='+cv.id):'#'}">Edit</a>
-            <button class="btn btn-sm btn-outline-warning ${isOwner?'':'disabled'}" data-act="toggle" data-id="${cv.id}" ${isOwner?'':'disabled'}>
+            <button class="btn btn-sm btn-outline-dark" data-act="pdf" data-id="${cv.id}">Download PDF</button>
+            <a class="btn btn-sm btn-outline-secondary" href="/Seafarer/edit-cv-panel.html?cvId=${cv.id}">Edit</a>
+            <button class="btn btn-sm btn-outline-warning" data-act="toggle" data-id="${cv.id}">
               ${cv.public ? 'Unpublish' : 'Publish'}
             </button>
-            <button class="btn btn-sm btn-outline-danger ${isOwner?'':'disabled'}" data-act="delete" data-id="${cv.id}" data-name="${escapeAttr(cv.name||'CV')}" ${isOwner?'':'disabled'}>
-              Delete
-            </button>
+            <button class="btn btn-sm btn-outline-danger" data-act="delete" data-id="${cv.id}" data-name="${escapeAttr(cv.name||'CV')}">Delete</button>
           </div>
         </td>
       `;
 
-      // actions
       tr.querySelectorAll('button').forEach(btn=>{
-        const act = btn.dataset.act;
+        const act=btn.dataset.act;
 
-        if (act === 'pdf') {
+        if (act==='pdf'){
           btn.addEventListener('click', ()=>{
-            // Open view in a new tab and trigger print (Save as PDF)
             const url = `/shared/view-cv.html?cvId=${btn.dataset.id}`;
-            const w = window.open(url, '_blank');
-            const timer = setInterval(()=>{
-              try {
-                if (!w || w.closed) return clearInterval(timer);
-                if (w.document && w.document.readyState === 'complete') {
-                  w.focus();
-                  w.print();
-                  clearInterval(timer);
-                }
-              } catch(e){ /* wait until same-origin is ready */ }
-            }, 700);
+            const w = window.open(url,'_blank');
+            const t = setInterval(()=>{ try{ if(!w||w.closed) return clearInterval(t); if(w.document?.readyState==='complete'){ w.focus(); w.print(); clearInterval(t);} }catch{} },700);
           });
         }
 
-        if (act === 'toggle' && btn.disabled !== true) {
+        if (act==='toggle'){
           btn.addEventListener('click', async ()=>{
-            try {
+            try{
               toggleLoading(true);
               const ref = doc(db,'cvs', btn.dataset.id);
-              await updateDoc(ref, { public: btn.textContent.trim()==='Publish', updatedAt: new Date() });
+              const publish = btn.textContent.trim()==='Publish';
+              await updateDoc(ref, { public: publish, updatedAt: new Date() });
               await loadPage(true);
-            } catch(e){ alert('Action failed'); }
-            finally { toggleLoading(false); }
+            }catch(e){ alert('Action failed'); }
+            finally{ toggleLoading(false); }
           });
         }
 
-        if (act === 'delete' && btn.disabled !== true) {
-          btn.addEventListener('click', ()=>{
-            pendingDelete = { id: btn.dataset.id, name: btn.dataset.name };
-            delCvNameEl.textContent = pendingDelete.name;
-            deleteModal.show();
+        if (act==='delete'){
+          btn.addEventListener('click', async ()=>{
+            if(!confirm(`Delete "${btn.dataset.name}"?`)) return;
+            try{
+              toggleLoading(true);
+              await deleteDoc(doc(db,'cvs', btn.dataset.id));
+              await loadPage(true);
+            }catch(e){ alert('Delete failed'); }
+            finally{ toggleLoading(false); }
           });
         }
       });
@@ -380,25 +284,7 @@
       tbody.appendChild(tr);
     }
 
-    confirmDeleteBtn.addEventListener('click', async () => {
-      if (!pendingDelete.id) return;
-      try {
-        toggleLoading(true);
-        await deleteDoc(doc(db, 'cvs', pendingDelete.id));
-        deleteModal.hide();
-        pendingDelete = { id:null, name:null };
-        await loadPage(true);
-      } catch (e) {
-        console.error(e);
-        alert('Delete failed.');
-      } finally {
-        toggleLoading(false);
-      }
-    });
-
-    function toggleLoading(on){
-      loadingSpinner.style.display = on ? 'inline-block' : 'none';
-    }
+    function toggleLoading(on){ loadingSpinner.style.display = on ? 'inline-block' : 'none'; }
     function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
   </script>

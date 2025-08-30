@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="manifest" href="/site.webmanifest">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body class="bg-light">
@@ -22,7 +22,6 @@
       .then(html => {
         const container = document.getElementById('navbar-container');
         container.innerHTML = html;
-        // scriptleri yeniden çalıştır
         container.querySelectorAll("script").forEach(oldScript => {
           const newScript = document.createElement("script");
           if (oldScript.src) newScript.src = oldScript.src;
@@ -36,7 +35,7 @@
   <div class="container py-5">
     <h2 class="mb-4 text-center">Post a New Job</h2>
 
-    <form id="jobForm" class="mx-auto" style="max-width: 600px;">
+    <form id="jobForm" class="mx-auto" style="max-width: 600px;" novalidate>
       <div class="mb-3">
         <label for="rank" class="form-label">Position / Rank</label>
         <input type="text" class="form-control" id="rank" required />
@@ -55,19 +54,19 @@
       </div>
       <div class="mb-3">
         <label for="salary" class="form-label">Salary (USD)</label>
-        <input type="number" class="form-control" id="salary" min="0" required />
+        <input type="number" class="form-control" id="salary" min="0" step="1" required />
       </div>
       <div class="mb-3">
         <label for="description" class="form-label">Description / Requirements</label>
-        <textarea class="form-control" id="description" rows="4"></textarea>
+        <textarea class="form-control" id="description" rows="4" placeholder="Skills, certificates, trading area, etc."></textarea>
       </div>
-      <button type="submit" class="btn btn-primary w-100">Post Job</button>
+      <button type="submit" class="btn btn-primary w-100" id="submitBtn">Post Job</button>
     </form>
   </div>
 
-  <!-- Toast messages -->
+  <!-- Toast (lazy-init) -->
   <div class="position-fixed bottom-0 end-0 p-3" style="z-index:11">
-    <div id="toastMsg" class="toast align-items-center text-bg-primary border-0" role="alert">
+    <div id="toastMsg" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
       <div class="d-flex">
         <div class="toast-body" id="toastBody">Message</div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
@@ -75,58 +74,69 @@
     </div>
   </div>
 
-  <!-- Firebase Save Job Script -->
   <script type="module">
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const form = document.getElementById("jobForm");
-    const toastMsg = document.getElementById("toastMsg");
+    const toastMsg  = document.getElementById("toastMsg");
     const toastBody = document.getElementById("toastBody");
-    const toast = new bootstrap.Toast(toastMsg);
+    const submitBtn = document.getElementById("submitBtn");
 
     let agencyId = null;
+
+    const showToast = (text, ok=true) => {
+      toastBody.textContent = text;
+      toastMsg.classList.toggle("text-bg-success", ok);
+      toastMsg.classList.toggle("text-bg-danger", !ok);
+      const t = new window.bootstrap.Toast(toastMsg);
+      t.show();
+    };
 
     onAuthStateChanged(auth, user => {
       if (user) {
         agencyId = user.uid;
+        // (opsiyonel) role check: localStorage role 'agency' değilse yönlendir
+        const role = (localStorage.getItem('role') || '').toLowerCase();
+        if (role && role !== 'agency') location.href = '/home.html';
       } else {
-        window.location.href = "/index.html";
+        location.href = "/index.html";
       }
     });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+
+      submitBtn.disabled = true;
 
       const data = {
         creatorId: agencyId,
         creatorType: "agency",
         position: document.getElementById("rank").value.trim(),
         vesselType: document.getElementById("vesselType").value.trim(),
-        joiningDate: document.getElementById("joiningDate").value,
+        joiningDate: document.getElementById("joiningDate").value, // ISO yyyy-mm-dd
         duration: document.getElementById("duration").value.trim(),
-        salary: parseFloat(document.getElementById("salary").value),
+        salary: Number(document.getElementById("salary").value || 0),
         description: document.getElementById("description").value.trim(),
+        status: 'open',
         createdAt: serverTimestamp()
       };
 
       try {
         await addDoc(collection(db, "jobPosts"), data);
         form.reset();
-        toastBody.textContent = "Job post submitted successfully ✅";
-        toastMsg.classList.remove("text-bg-danger");
-        toastMsg.classList.add("text-bg-success");
-        toast.show();
+        showToast("Job post submitted successfully ✅", true);
       } catch (error) {
-        toastBody.textContent = "Error: " + error.message;
-        toastMsg.classList.remove("text-bg-success");
-        toastMsg.classList.add("text-bg-danger");
-        toast.show();
+        console.error(error);
+        showToast("Error: " + (error?.message || 'unknown error'), false);
+      } finally {
+        submitBtn.disabled = false;
       }
     });
   </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

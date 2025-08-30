@@ -18,15 +18,15 @@
   <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('/common-navbar.html')
+    fetch('/shared/common-navbar.html')
       .then(res => res.text())
       .then(html => {
         const container = document.getElementById('navbar-container');
         container.innerHTML = html;
-        container.querySelectorAll("script").forEach(oldScript => {
-          const s = document.createElement("script");
-          if (oldScript.src) s.src = oldScript.src; else s.textContent = oldScript.textContent;
-          document.body.appendChild(s);
+        container.querySelectorAll("script").forEach(s => {
+          const n = document.createElement("script");
+          if (s.src) n.src = s.src; else n.textContent = s.textContent;
+          document.body.appendChild(n);
         });
       });
   </script>
@@ -69,40 +69,32 @@
   </div>
 
   <script type="module">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-    const firebaseConfig = window.firebaseConfig ?? { /* your config if not global */ };
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
+    import { auth, db } from '/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const params = new URLSearchParams(location.search);
-    const cvIdParam = params.get('cvId');
+    const cvIdParam      = params.get('cvId');
     const legacyUidParam = params.get('userId') || params.get('uid'); // eski kullanım
 
     const fullName = document.getElementById("fullName");
-    const email = document.getElementById("email");
-    const rank = document.getElementById("rank");
+    const email    = document.getElementById("email");
+    const rank     = document.getElementById("rank");
     const experience = document.getElementById("experience");
     const certificatesList = document.getElementById("certificatesList");
-    const errorMsg = document.getElementById("errorMsg");
-    const infoBox = document.getElementById("infoBox");
+    const errorMsg  = document.getElementById("errorMsg");
+    const infoBox   = document.getElementById("infoBox");
 
     let viewer = null;
 
     onAuthStateChanged(auth, async (user) => {
       viewer = user;
-      try {
-        await loadCV();
-      } catch (e) {
-        errorMsg.textContent = "Error loading CV: " + e.message;
-      }
+      try { await loadCV(); }
+      catch (e) { errorMsg.textContent = "Error loading CV: " + e.message; }
     });
 
     async function loadCV() {
-      // Mode A: cvId üzerinden (önerilen)
+      // Mode A: cvId (önerilen)
       if (cvIdParam) {
         const metaRef = doc(db, 'cvs', cvIdParam);
         const metaSnap = await getDoc(metaRef);
@@ -116,11 +108,12 @@
         }
 
         await loadSeafarerCvByOwner(meta.ownerUid);
-        showInfo(meta.public ? 'This CV is published.' : 'This CV is in draft (only visible to you).', meta.public ? 'success' : 'secondary', isOwner);
+        showInfo(meta.public ? 'This CV is published.' : 'This CV is in draft (only visible to you).',
+                 meta.public ? 'success' : 'secondary', isOwner);
         return;
       }
 
-      // Mode B (legacy): userId/uid parametresi ile sadece owner görebilsin
+      // Mode B (legacy): userId/uid → sadece owner görebilsin
       if (legacyUidParam) {
         if (!viewer || viewer.uid !== legacyUidParam) {
           showInfo('This private draft CV can be viewed only by its owner.', 'warning');
@@ -135,10 +128,10 @@
     }
 
     async function loadSeafarerCvByOwner(ownerUid){
-      // Personal Details
+      // Personal
       const personalRef = doc(db, "seafarers", ownerUid, "cv", "personalDetails");
-      const qualRef = doc(db, "seafarers", ownerUid, "cv", "qualifications");
-      const certCol = collection(db, "seafarers", ownerUid, "cv", "certificates/items");
+      const qualRef     = doc(db, "seafarers", ownerUid, "cv", "qualifications");
+      const certCol     = collection(db, "seafarers", ownerUid, "cv", "certificates/items");
       const seaServiceCol = collection(db, "seafarers", ownerUid, "seaService");
 
       const personalSnap = await getDoc(personalRef);
@@ -146,14 +139,14 @@
       if (personalSnap.exists()) {
         const d = personalSnap.data();
         fName = ((d.firstName || "") + " " + (d.middleName || "") + " " + (d.lastName || "")).replace(/\s+/g, " ").trim();
-        mail = d.email || "-";
+        mail  = d.email || "-";
       }
-      fullName.textContent = fName;
-      email.textContent = mail;
+      fullName.textContent = fName; email.textContent = mail;
 
       const qualSnap = await getDoc(qualRef);
       rank.textContent = (qualSnap.exists() && qualSnap.data().rankApplied) ? qualSnap.data().rankApplied : "-";
 
+      // Verified sea-service toplam
       let totalDays = 0;
       const seaSnaps = await getDocs(seaServiceCol);
       seaSnaps.forEach(doc => {
@@ -167,6 +160,7 @@
       const years = Math.floor(totalDays / 365), months = Math.floor((totalDays % 365) / 30), days = totalDays % 30;
       experience.textContent = (totalDays > 0) ? `${years}y ${months}m ${days}d (${totalDays} days)` : "-";
 
+      // Certificates
       certificatesList.innerHTML = "";
       const certSnaps = await getDocs(certCol);
       if (certSnaps.size === 0) {
