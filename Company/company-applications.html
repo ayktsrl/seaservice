@@ -13,7 +13,7 @@
   <!-- Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('/common-navbar.html').then(r=>r.text()).then(h=>{
+    fetch('/shared/common-navbar.html').then(r=>r.text()).then(h=>{
       const c=document.getElementById('navbar-container'); c.innerHTML=h;
       c.querySelectorAll('script').forEach(s=>{const n=document.createElement('script'); if(s.src)n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n);});
     });

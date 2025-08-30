@@ -22,6 +22,7 @@
         </a>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown" id="userMenuLinks">
           <li><a class="dropdown-item" href="/edit-profile.html">Edit Profile</a></li>
+          <li><a class="dropdown-item" href="/change-password.html">Change Password</a></li>
           <li><hr class="dropdown-divider"></li>
           <li><button class="dropdown-item" id="logoutBtn" type="button">Logout</button></li>
         </ul>
@@ -39,16 +40,11 @@
   const roleBadge  = document.getElementById('roleBadge');
   const logoutBtn  = document.getElementById('logoutBtn');
 
-  const norm = (p) => (p || '/')
-    .replace(/index\.html$/,'/')
-    .replace(/\.html$/,'')
-    .replace(/\/+$/,'') || '/';
-
-  function markActive() {
+  const norm = (p) => (p || '/').replace(/index\.html$/,'/').replace(/\.html$/,'').replace(/\/+$/,'') || '/';
+  function markActive(){
     const here = norm(location.pathname);
-    document.querySelectorAll('#navLinks a.nav-link').forEach(a => {
-      const clean = norm(a.getAttribute('href'));
-      if (clean === here) a.classList.add('active');
+    document.querySelectorAll('#navLinks a.nav-link').forEach(a=>{
+      if (norm(a.getAttribute('href')) === here) a.classList.add('active');
     });
   }
 
@@ -65,23 +61,13 @@
       items.push(['Ships', '/Company/company-ship-list.html']);
       items.push(['Crew Lists', '/Company/ship-crew-list.html']);
       items.push(['Seafarers', '/Company/evaluate-seafarers.html']);
-    } else { // seafarer
+    } else { // seafarer (default)
       items.push(['Job Board', '/shared/job-board.html']);
       items.push(['My Applications', '/Seafarer/my-applications.html']);
       items.push(['CV List', '/Seafarer/cv-list.html']);
     }
-    navLinksUl.innerHTML = items.map(([label, href]) => `
-      <li class="nav-item"><a class="nav-link" href="${href}">${label}</a></li>
-    `).join('');
+    navLinksUl.innerHTML = items.map(([t,h])=>`<li class="nav-item"><a class="nav-link" href="${h}">${t}</a></li>`).join('');
     markActive();
-  }
-
-  function setUserUi(user, role) {
-    usernameEl.textContent = user?.displayName || user?.email || 'User';
-    roleBadge.textContent  = (role || 'seafarer').replace(/^\w/, c => c.toUpperCase());
-    roleBadge.classList.toggle('text-bg-warning', role === 'agency');
-    roleBadge.classList.toggle('text-bg-success', role === 'company');
-    roleBadge.classList.toggle('text-bg-info', role === 'seafarer' || !role);
   }
 
   logoutBtn?.addEventListener('click', async () => {
@@ -89,9 +75,15 @@
     finally { location.href = '/index.html'; }
   });
 
-  (function init() {
+  (function init(){
     const role = (localStorage.getItem('role') || 'seafarer').toLowerCase();
     buildMenu(role);
-    onAuthStateChanged(auth, (user) => setUserUi(user || null, role));
+    onAuthStateChanged(auth, (user)=>{
+      usernameEl.textContent = user?.displayName || user?.email || 'User';
+      roleBadge.textContent  = role.replace(/^\w/,c=>c.toUpperCase());
+      roleBadge.classList.toggle('text-bg-warning', role==='agency');
+      roleBadge.classList.toggle('text-bg-success', role==='company');
+      roleBadge.classList.toggle('text-bg-info',    role==='seafarer'||!role);
+    });
   })();
 </script>

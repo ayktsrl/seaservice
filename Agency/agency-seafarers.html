@@ -17,7 +17,7 @@
   <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('/common-navbar.html')
+    fetch('/shared/common-navbar.html')
       .then(res => res.text())
       .then(html => {
         const container = document.getElementById('navbar-container');
