@@ -78,8 +78,12 @@
     }
 
     import { auth, db } from '/firebase-config.js';
-    import { getDocs, deleteDoc, doc, collection } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-    import { onAuthStateChanged, deleteUser, signOut, EmailAuthProvider, reauthenticateWithCredential } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import {
+      getDocs, deleteDoc, doc, collection
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import {
+      onAuthStateChanged, deleteUser, signOut, EmailAuthProvider, reauthenticateWithCredential
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
     const agreeCheck = document.getElementById('agreeCheck');
     const finishBtn = document.getElementById('finishBtn');
@@ -117,37 +121,80 @@
       modal.show();
     });
 
+    // Helper: delete all docs in a collection path
+    async function deleteAllDocs(colPath) {
+      const snap = await getDocs(collection(db, colPath));
+      const tasks = [];
+      snap.forEach(d => tasks.push(deleteDoc(d.ref)));
+      await Promise.all(tasks);
+    }
+
+    // Full cleanup flow
+    async function deleteAllUserData(uid) {
+      // 1) CV: item koleksiyonları
+      const itemSections = [
+        "certificates", "licenses", "vaccinations", "visas",
+        "flagbooks", "specialSkills", "references", "education"
+      ];
+      for (const sec of itemSections) {
+        await deleteAllDocs(`seafarers/${uid}/cv/${sec}/items`);
+      }
+
+      // 2) CV: tekil dökümanlar
+      const singleDocs = ["personalDetails", "qualifications", "documents"];
+      for (const sd of singleDocs) {
+        await deleteDoc(doc(db, `seafarers/${uid}/cv/${sd}`));
+      }
+
+      // 3) Sea Service (AYRI koleksiyon)
+      await deleteAllDocs(`seafarers/${uid}/seaService`);
+
+      // 4) Seafarer Applications + Company mirror applications
+      const appsSnap = await getDocs(collection(db, `seafarers/${uid}/applications`));
+      for (const appDoc of appsSnap.docs) {
+        const app = appDoc.data(); // { companyId, position, jobId ... }
+        // Şirket tarafındaki mirror kaydı (bizim yazdığımız format)
+        if (app.companyId && app.jobId) {
+          const mirrorId = `${uid}_${app.jobId}`;
+          try {
+            await deleteDoc(doc(db, `companies/${app.companyId}/applications/${mirrorId}`));
+          } catch {}
+        }
+        // Seafarer tarafındaki başvuru dökümanını sil
+        await deleteDoc(appDoc.ref);
+      }
+
+      // 5) İleride ek alt koleksiyonlar oluşursa buraya eklenebilir
+
+      // 6) Root seafarer dökümanı
+      await deleteDoc(doc(db, `seafarers/${uid}`));
+    }
+
     reauthForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       reauthError.textContent = "";
       const password = reauthPassword.value;
 
       try {
+        // Re-auth (silme için şart)
         const credential = EmailAuthProvider.credential(userEmail, password);
         await reauthenticateWithCredential(currentUser, credential);
 
-        const sections = [
-          "personalDetails", "qualifications", "documents", "certificates", "licenses",
-          "vaccinations", "visas", "flagbooks", "seaService", "experience", "specialSkills",
-          "references", "education"
-        ];
+        // Firestore temizliği (önce veriler)
+        await deleteAllUserData(userId);
 
-        for (let sec of sections) {
-          const colRef = collection(db, `seafarers/${userId}/cv/${sec}/items`);
-          const snap = await getDocs(colRef);
-          for (let docSnap of snap.docs) {
-            await deleteDoc(docSnap.ref);
-          }
-        }
+        // Local storage temizliği
+        try {
+          localStorage.removeItem('role');
+        } catch {}
 
-        await deleteDoc(doc(db, `seafarers/${userId}/cv/personalDetails`));
-        await deleteDoc(doc(db, `seafarers/${userId}/cv/qualifications`));
-
+        // Auth kullanıcı sil
         await deleteUser(currentUser);
+
+        // Güvenli çıkış ve yönlendirme
         await signOut(auth);
         alert('Your account and all application content have been permanently deleted.');
         location.href = "/index.html";
-
       } catch (e) {
         reauthError.textContent = e.message;
       }
