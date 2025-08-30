@@ -41,7 +41,6 @@
   const roleBadge = document.getElementById('roleBadge');
   const logoutBtn = document.getElementById('logoutBtn');
 
-  // Aktif link işaretleme
   function markActive() {
     const path = location.pathname.replace(/\/+$/, '');
     document.querySelectorAll('#navLinks a.nav-link').forEach(a => {
@@ -52,7 +51,6 @@
     });
   }
 
-  // Rol bazlı linkler
   function buildMenu(role) {
     const items = [];
     if (role === 'agency') {
@@ -66,10 +64,10 @@
       items.push(['Ships', '/Company/company-ship-list.html']);
       items.push(['Crew Lists', '/Company/ship-crew-list.html']);
       items.push(['Seafarers', '/Company/evaluate-seafarers.html']);
-    } else { // seafarer (varsayılan)
+    } else { // seafarer
       items.push(['Job Board', '/shared/job-board.html']);
       items.push(['My Applications', '/Seafarer/my-applications.html']);
-      items.push(['My CV', '/Seafarer/edit-cv-panel.html']);
+      items.push(['CV List', '/Seafarer/cv-list.html']); <!-- Güncellendi -->
     }
 
     navLinksUl.innerHTML = items.map(([label, href]) => `
@@ -81,7 +79,6 @@
     markActive();
   }
 
-  // Kullanıcı adı + rol rozeti
   function setUserUi(user, role) {
     usernameEl.textContent = user?.displayName || user?.email || 'User';
     roleBadge.textContent = (role || 'seafarer').replace(/^\w/, c => c.toUpperCase());
@@ -90,10 +87,9 @@
     roleBadge.classList.toggle('text-bg-info', role === 'seafarer' || !role);
   }
 
-  // Logout davranışı
   logoutBtn?.addEventListener('click', async () => {
     try {
-      localStorage.removeItem('role'); // sadece role temizle
+      localStorage.removeItem('role');
       await signOut(auth);
     } catch (e) {
       console.error('Signout error:', e);
@@ -102,14 +98,12 @@
     }
   });
 
-  // Başlat
   (function init() {
     const role = (localStorage.getItem('role') || 'seafarer').toLowerCase();
     buildMenu(role);
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
-        // Auth yoksa da menüyü gösterelim ama kullanıcıyı indexe yönlendirecek sayfalar ayrıca kontrol edecek.
         setUserUi(null, role);
         return;
       }
