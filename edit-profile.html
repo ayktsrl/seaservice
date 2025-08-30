@@ -14,31 +14,14 @@
   <style>
     body { background: #f6f7fb; }
     .profile-card {
-      background: #fff;
-      max-width: 440px;
-      margin: 40px auto 0;
-      border-radius: 16px;
-      box-shadow: 0 2px 18px 0 #e3e6ec;
-      padding: 2.5rem 2.2rem 1.5rem 2.2rem;
-      border: 1px solid #e7e9ee;
+      background:#fff; max-width:440px; margin:40px auto 0;
+      border-radius:16px; box-shadow:0 2px 18px #e3e6ec;
+      padding:2.5rem 2.2rem 1.5rem; border:1px solid #e7e9ee;
     }
-    @media (max-width: 500px) {
-      .profile-card { padding: 1.3rem; }
-    }
-    .profile-card h2 {
-      font-size: 1.5rem;
-      letter-spacing: 1px;
-      margin-bottom: 1.5rem;
-      color: #22336b;
-      text-align: center;
-    }
-    .form-label { font-weight: 500; }
-    .alert-success {
-      margin-bottom: 16px;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
+    @media (max-width:500px){ .profile-card{ padding:1.3rem; } }
+    .profile-card h2{ font-size:1.5rem; letter-spacing:1px; margin-bottom:1.5rem; color:#22336b; text-align:center; }
+    .form-label{ font-weight:500; }
+    .alert-success{ margin-bottom:16px; padding:10px 18px; border-radius:8px; font-size:1rem; }
   </style>
 </head>
 <body>
@@ -46,11 +29,9 @@
   <!-- Ortak Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('common-navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
-      });
+    fetch('common-navbar.html').then(r=>r.text()).then(html=>{
+      document.getElementById('navbar-container').innerHTML = html;
+    });
   </script>
 
   <div class="container">
@@ -66,7 +47,6 @@
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // Kapsamlı alan tanımı (her rol için)
     const roleFields = {
       seafarer: [
         { label: "First Name", id: "firstName", type: "text" },
@@ -94,69 +74,67 @@
       ]
     };
 
-    function renderForm(role, values={}) {
+    function ymd(v){
+      if (v && typeof v === 'object' && typeof v.toDate === 'function') {
+        return v.toDate().toISOString().split('T')[0];
+      }
+      return (v || "");
+    }
+
+    function renderForm(role, values={}){
       const form = document.getElementById("profileForm");
-      let fields = roleFields[role] || [];
-      form.innerHTML = fields.map(f =>
-        `<div class="mb-3">
+      const fields = roleFields[role] || [];
+      form.innerHTML = fields.map(f => `
+        <div class="mb-3">
           <label class="form-label" for="${f.id}">${f.label}</label>
           <input type="${f.type}" id="${f.id}" class="form-control" value="${values[f.id] || ''}" placeholder="${f.label}" />
-        </div>`
-      ).join('') +
-      `<div class="d-grid">
-         <button type="submit" class="btn btn-primary mt-1">Save</button>
-       </div>`;
+        </div>`).join('') + `
+        <div class="d-grid"><button type="submit" class="btn btn-primary mt-1">Save</button></div>`;
     }
 
-    function showMsg(msg) {
+    function showMsg(msg){
       const box = document.getElementById("profileMsg");
       box.innerHTML = `<div class="alert alert-success">${msg}</div>`;
-      setTimeout(() => { box.innerHTML = ""; }, 2500);
+      setTimeout(()=> box.innerHTML="", 2500);
     }
 
-    // KULLANICI FIRESTORE'DAN ALINACAK, localStorage YOK!
-    onAuthStateChanged(auth, async user => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
-      // Firestore'dan kullanıcı rolünü ve koleksiyonu bul
-      const collections = ['seafarers', 'companies', 'agencies'];
-      let userRole = '';
-      let docRef;
-      for (let col of collections) {
+    onAuthStateChanged(auth, async user=>{
+      if (!user) return location.href="index.html";
+
+      // Rol ve koleksiyon tespiti
+      const collections = ['seafarers','companies','agencies'];
+      let userRole = '', docRef;
+      for (const col of collections){
         const ref = doc(db, col, user.uid);
         const snap = await getDoc(ref);
-        if (snap.exists()) {
+        if (snap.exists()){
           userRole = (snap.data().role || '').toLowerCase();
-          docRef = ref;
-          break;
+          docRef = ref; break;
         }
       }
-      if (!userRole) {
-        alert("User profile not found. Please re-login.");
-        window.location.href = "index.html";
-        return;
-      }
+      if (!userRole){ alert("User profile not found. Please re-login."); return location.href="index.html"; }
 
-      // Profil verilerini yükle ve formu oluştur
+      // Veriler
       const snap = await getDoc(docRef);
-      let values = {};
-      if (snap.exists()) values = snap.data();
+      let values = snap.exists() ? snap.data() : {};
+      // GERİYE DÖNÜK: birthDate -> dob (Timestamp ise formatla)
+      values.dob = ymd(values.dob) || ymd(values.birthDate);
+
       renderForm(userRole, values);
 
-      // Profil formunu dinle
-      document.getElementById("profileForm").onsubmit = async function(e) {
+      document.getElementById("profileForm").onsubmit = async (e)=>{
         e.preventDefault();
         const data = {};
-        (roleFields[userRole] || []).forEach(f => {
-          data[f.id] = document.getElementById(f.id).value;
-        });
+        (roleFields[userRole] || []).forEach(f => data[f.id] = document.getElementById(f.id).value);
+        // Doğum tarihini iki anahtarla yaz (uyumluluk)
+        if (data.dob) data.birthDate = data.dob;
+
         await setDoc(docRef, { ...values, ...data }, { merge: true });
         showMsg("Profile saved successfully!");
       };
     });
   </script>
+
   <script type="module" src="common-navbar.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

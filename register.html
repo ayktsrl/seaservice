@@ -13,28 +13,24 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
     body { background: #f5f8fa; }
-    .register-box { background: #fff; border-radius: 18px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); max-width: 400px; margin: 7vh auto; padding: 2.2rem 2rem; }
-    .logo-icon { display: flex; justify-content: center; align-items: center; margin-bottom: 1.2rem; }
-    .logo-icon img { width: 64px; height: 64px; object-fit: contain; border-radius: 13px; background: #f7f8fa; box-shadow: 0 2px 12px rgba(21,101,192,0.13); border: 2px solid #f4f4fa; }
-    .form-label { font-weight: 500; color: #444; }
-    .form-control { min-height: 42px; }
-    .btn-primary { border-radius: 8px; background: linear-gradient(90deg, #1875fa 0%, #29c5f6 100%); border: none; font-weight: 600; font-size: 1.07rem; letter-spacing: 0.5px; min-height: 42px; }
-    .btn-primary:hover, .btn-primary:focus { background: linear-gradient(90deg, #29c5f6 0%, #1875fa 100%); }
-    .login-link { display: block; text-align: center; margin-top: 1.2rem; font-size: 0.97rem; color: #1976d2; text-decoration: none; }
-    .login-link:hover { text-decoration: underline; color: #0d47a1; }
-    .eye-btn { background: none; border: none; outline: none; cursor: pointer; }
-    @media (max-width: 600px) {
-      .register-box { padding: 1.5rem 0.7rem; }
-      .logo-icon img { width: 46px; height: 46px; }
-    }
+    .register-box { background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(0,0,0,0.12); max-width:400px; margin:7vh auto; padding:2.2rem 2rem; }
+    .logo-icon { display:flex; justify-content:center; align-items:center; margin-bottom:1.2rem; }
+    .logo-icon img { width:64px; height:64px; object-fit:contain; border-radius:13px; background:#f7f8fa; box-shadow:0 2px 12px rgba(21,101,192,0.13); border:2px solid #f4f4fa; }
+    .form-label { font-weight:500; color:#444; }
+    .form-control { min-height:42px; }
+    .btn-primary { border-radius:8px; background:linear-gradient(90deg,#1875fa 0%,#29c5f6 100%); border:none; font-weight:600; font-size:1.07rem; letter-spacing:.5px; min-height:42px; }
+    .btn-primary:hover,.btn-primary:focus{ background:linear-gradient(90deg,#29c5f6 0%,#1875fa 100%); }
+    .login-link{ display:block; text-align:center; margin-top:1.2rem; font-size:.97rem; color:#1976d2; text-decoration:none; }
+    .login-link:hover{ text-decoration:underline; color:#0d47a1; }
+    .eye-btn{ background:none; border:none; outline:none; cursor:pointer; }
+    @media (max-width:600px){ .register-box{ padding:1.5rem .7rem; } .logo-icon img{ width:46px; height:46px; } }
   </style>
 </head>
 <body>
   <div class="register-box">
-    <div class="logo-icon">
-      <img src="logo.png" alt="App Logo" />
-    </div>
-    <h2 class="mb-4 text-center" style="font-weight: 600; color: #1565c0;">Register</h2>
+    <div class="logo-icon"><img src="logo.png" alt="App Logo"/></div>
+    <h2 class="mb-4 text-center" style="font-weight:600; color:#1565c0;">Register</h2>
+
     <form id="registerForm">
       <div class="mb-3">
         <label class="form-label">Role</label><br/>
@@ -51,6 +47,7 @@
           <label class="form-check-label" for="roleAgency">Agency</label>
         </div>
       </div>
+
       <div class="mb-3">
         <label class="form-label">First Name</label>
         <input type="text" class="form-control" id="firstName" required />
@@ -81,8 +78,10 @@
           <button type="button" class="eye-btn input-group-text" id="togglePassword"><span id="eyeIcon">&#128065;</span></button>
         </div>
       </div>
+
       <button type="submit" class="btn btn-primary w-100">Register</button>
     </form>
+
     <a href="index.html" class="login-link">Already have an account? Login</a>
   </div>
 
@@ -112,10 +111,10 @@
 
     document.getElementById('registerForm').addEventListener('submit', async function(e){
       e.preventDefault();
-      const role = document.querySelector('input[name="role"]:checked').value.toLowerCase(); // KÜÇÜK HARF
+      const role = document.querySelector('input[name="role"]:checked').value.toLowerCase();
       const firstName = document.getElementById('firstName').value.trim();
       const lastName = document.getElementById('lastName').value.trim();
-      const birthDate = document.getElementById('birthDate').value;
+      const birthDate = document.getElementById('birthDate').value; // yyyy-mm-dd (string)
       const email = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
       const countryCode = document.getElementById('countryCodeSpan').textContent.trim();
@@ -124,18 +123,20 @@
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        // Doğru koleksiyon
+
         let collectionName = "";
         if (role === "seafarer") collectionName = "seafarers";
         else if (role === "company") collectionName = "companies";
         else if (role === "agency") collectionName = "agencies";
-        else collectionName = "users"; // fallback, istersen kaldırabilirsin
+        else collectionName = "users";
 
+        // Doğum tarihini iki anahtarla yaz (uyumluluk: edit profile dob okuyor)
         await setDoc(doc(db, collectionName, user.uid), {
           email,
           firstName,
           lastName,
-          birthDate,
+          birthDate,          // mevcut alan
+          dob: birthDate,     // edit-profile için ek alan
           phone: countryCode + phone,
           role,
           createdAt: new Date().toISOString(),
@@ -143,7 +144,7 @@
         });
 
         alert("Registration successful!");
-        localStorage.setItem('role', role); // İstersen login akışında otomatik setle, bu da dursun
+        localStorage.setItem('role', role);
         window.location.href = "home.html";
       } catch (error) {
         alert(error.message.replace('Firebase:', '').replace('auth/', ''));
