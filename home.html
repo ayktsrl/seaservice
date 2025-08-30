@@ -3,37 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard</title>
+  <title>Orion • Home</title>
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="manifest" href="/site.webmanifest">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body class="bg-light">
 
-  <!-- Navbar yeri -->
+  <!-- Common Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('common-navbar.html')
+    // Load common navbar and EXECUTE any <script> tags inside it
+    fetch('/common-navbar.html')
       .then(res => res.text())
       .then(html => {
-        document.getElementById('navbar-container').innerHTML = html;
+        const c = document.getElementById('navbar-container');
+        c.innerHTML = html;
+        c.querySelectorAll('script').forEach(s => {
+          const n = document.createElement('script');
+          if (s.type) n.type = s.type;                // support type="module"
+          if (s.src) n.src = s.src; else n.textContent = s.textContent;
+          document.body.appendChild(n);
+        });
       });
   </script>
 
-  <!-- ORTAK DASHBOARD SECTION -->
+  <!-- Dashboard -->
   <section id="dashboard-section" style="display:block;">
     <div class="container py-5">
       <h2 class="mb-3 text-center">Welcome, <span id="userFullName"></span>!</h2>
       <div class="text-center mb-4" style="font-size:1.2rem;">
         Account type: <span class="badge bg-info" id="userRole"></span>
       </div>
+
       <div class="alert alert-info text-center mb-4" role="alert" id="announcementBox">
         Loading latest announcement...
       </div>
+
       <div class="row justify-content-center">
         <div class="col-md-6">
           <div class="card text-center shadow">
@@ -44,6 +54,7 @@
           </div>
         </div>
       </div>
+
       <div class="text-center mt-4">
         <small class="text-muted">
           Need help? <a href="mailto:support@yourplatform.com">Contact support</a>
@@ -55,11 +66,12 @@
   <!-- Firebase Auth & User Info -->
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
     onAuthStateChanged(auth, async user => {
-      if (!user) return window.location.href = 'index.html';
+      if (!user) return window.location.href = '/index.html';
+
       const collections = ['seafarers', 'companies', 'agencies'];
       let userData = {};
       let userRole = '';
@@ -72,17 +84,18 @@
           break;
         }
       }
-      document.getElementById('userFullName').textContent = (userData.firstName || '') + " " + (userData.lastName || '');
-      document.getElementById('userRole').textContent = userRole || 'Unknown';
 
-      // Profil detayları
+      document.getElementById('userFullName').textContent =
+        `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || (user.displayName || user.email);
+
+      document.getElementById('userRole').textContent = userRole || 'unknown';
+
       document.getElementById('profileDetails').innerHTML = `
         <div><b>Email:</b> ${userData.email || user.email}</div>
         <div><b>Joined:</b> ${(userData.createdAt || '').substring(0,10)}</div>
         <div><b>Last login:</b> ${user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString() : '-'}</div>
       `;
 
-      // Duyuru (istersen dinamik de yapılabilir)
       document.getElementById('announcementBox').innerHTML = `
         <b>Platform News:</b> System maintenance on Saturday 21:00-23:00 UTC.<br>
         Stay tuned for new features!
@@ -90,8 +103,6 @@
     });
   </script>
 
-  <!-- NAVBAR JS ve BOOTSTRAP EN ALTTA! -->
-  <script type="module" src="common-navbar.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 <!-- common-navbar.html -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
-  <a class="navbar-brand d-flex align-items-center gap-2" href="/home.html">
+  <a class="navbar-brand d-flex align-items-center gap-2" href="/home">
     <img src="/logo.png" alt="Logo" style="height:28px;width:auto" />
     <span>Orion</span>
   </a>
@@ -13,7 +13,6 @@
 
   <div class="collapse navbar-collapse" id="navbarNav">
     <ul class="navbar-nav me-auto" id="navLinks"></ul>
-
     <ul class="navbar-nav">
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#"
@@ -31,23 +30,26 @@
   </div>
 </nav>
 
-<!-- Dinamik navbar betiği -->
 <script type="module">
   import { auth } from '/firebase-config.js';
-  import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
 
   const navLinksUl = document.getElementById('navLinks');
   const usernameEl = document.getElementById('usernameDisplay');
-  const roleBadge = document.getElementById('roleBadge');
-  const logoutBtn = document.getElementById('logoutBtn');
+  const roleBadge  = document.getElementById('roleBadge');
+  const logoutBtn  = document.getElementById('logoutBtn');
+
+  // normalize /home vs /home.html, trailing slashes, etc.
+  const norm = (p) => (p || '/')
+    .replace(/index\.html$/,'/')
+    .replace(/\.html$/,'')
+    .replace(/\/+$/,'') || '/';
 
   function markActive() {
-    const path = location.pathname.replace(/\/+$/, '');
+    const here = norm(location.pathname);
     document.querySelectorAll('#navLinks a.nav-link').forEach(a => {
-      const href = a.getAttribute('href');
-      if (!href) return;
-      const clean = href.replace(/\/+$/, '');
-      if (clean === path) a.classList.add('active');
+      const clean = norm(a.getAttribute('href'));
+      if (clean === here) a.classList.add('active');
     });
   }
 
@@ -67,47 +69,31 @@
     } else { // seafarer
       items.push(['Job Board', '/shared/job-board.html']);
       items.push(['My Applications', '/Seafarer/my-applications.html']);
-      items.push(['CV List', '/Seafarer/cv-list.html']); <!-- Güncellendi -->
+      items.push(['CV List', '/Seafarer/cv-list.html']); // ✅
     }
 
     navLinksUl.innerHTML = items.map(([label, href]) => `
-      <li class="nav-item">
-        <a class="nav-link" href="${href}">${label}</a>
-      </li>
+      <li class="nav-item"><a class="nav-link" href="${href}">${label}</a></li>
     `).join('');
-
     markActive();
   }
 
   function setUserUi(user, role) {
     usernameEl.textContent = user?.displayName || user?.email || 'User';
-    roleBadge.textContent = (role || 'seafarer').replace(/^\w/, c => c.toUpperCase());
+    roleBadge.textContent  = (role || 'seafarer').replace(/^\w/, c => c.toUpperCase());
     roleBadge.classList.toggle('text-bg-warning', role === 'agency');
     roleBadge.classList.toggle('text-bg-success', role === 'company');
     roleBadge.classList.toggle('text-bg-info', role === 'seafarer' || !role);
   }
 
   logoutBtn?.addEventListener('click', async () => {
-    try {
-      localStorage.removeItem('role');
-      await signOut(auth);
-    } catch (e) {
-      console.error('Signout error:', e);
-    } finally {
-      location.href = '/index.html';
-    }
+    try { localStorage.removeItem('role'); await signOut(auth); }
+    finally { location.href = '/index.html'; }
   });
 
   (function init() {
     const role = (localStorage.getItem('role') || 'seafarer').toLowerCase();
     buildMenu(role);
-
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        setUserUi(null, role);
-        return;
-      }
-      setUserUi(user, role);
-    });
+    onAuthStateChanged(auth, (user) => setUserUi(user || null, role));
   })();
 </script>
