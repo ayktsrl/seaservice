@@ -14,22 +14,9 @@
 </head>
 <body class="bg-light">
 
-  <!-- Common Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-  (async()=>{
-    const paths=['/shared/common-navbar.html','../shared/common-navbar.html','../../shared/common-navbar.html','shared/common-navbar.html'];
-    for (const p of paths){
-      try{
-        const r=await fetch(p); if(!r.ok) continue;
-        const html=await r.text(), c=document.getElementById('navbar-container');
-        c.innerHTML=html;
-        c.querySelectorAll('script').forEach(s=>{ const n=document.createElement('script'); if(s.type) n.type=s.type; if(s.src) n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n); });
-        break;
-      }catch{}
-    }
-  })();
-  </script>
+  <!-- NAVBAR -->
+  <div id="navbar-host"></div>
+  <script type="module" src="/shared/navbar-inject.js"></script>
 
   <section id="dashboard-section" style="display:block;">
     <div class="container py-5">

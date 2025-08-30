@@ -9,14 +9,10 @@
   <style>.stat-card{background:#f9fafc;border-radius:14px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.05);text-align:center}.stat-card p{margin:0;color:#667}.stat-card h3{margin:.25rem 0 1rem;font-weight:700}.stat-card .btn{width:100%}</style>
 </head>
 <body class="bg-light p-3">
-  <!-- Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('/shared/common-navbar.html').then(r=>r.text()).then(h=>{
-      const c=document.getElementById('navbar-container'); c.innerHTML=h;
-      c.querySelectorAll('script').forEach(s=>{const n=document.createElement('script'); if(s.src)n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n);});
-    });
-  </script>
+
+  <!-- NAVBAR -->
+  <div id="navbar-host"></div>
+  <script type="module" src="/shared/navbar-inject.js"></script>
 
   <div class="container py-4">
     <h3 class="mb-4">Company Panel</h3>

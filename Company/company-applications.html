@@ -10,14 +10,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="bg-light">
-  <!-- Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('/shared/common-navbar.html').then(r=>r.text()).then(h=>{
-      const c=document.getElementById('navbar-container'); c.innerHTML=h;
-      c.querySelectorAll('script').forEach(s=>{const n=document.createElement('script'); if(s.src)n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n);});
-    });
-  </script>
+
+  <!-- NAVBAR -->
+  <div id="navbar-host"></div>
+  <script type="module" src="/shared/navbar-inject.js"></script>
 
   <div class="container py-4">
     <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
@@ -101,7 +97,8 @@
         const snap=await getDoc(doc(db, `companies/${me.uid}/applications`, selectedId));
         const data=snap.data();
         modalContent.innerText = `Seafarer ID: ${data.seafarerId}\nStatus: ${data.status || 'pending'}`;
-        document.getElementById('viewCvBtn').href = `/Seafarer/view-cv.html?seafarerId=${data.seafarerId}`;
+        // view-cv.html bizim tarafta ?uid=... destekliyor
+        document.getElementById('viewCvBtn').href = `/Seafarer/view-cv.html?uid=${data.seafarerId}`;
         hrNote.value = data.hrNote || '';
         new bootstrap.Modal(document.getElementById('detailsModal')).show();
       }

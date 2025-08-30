@@ -15,22 +15,9 @@
   </style>
 </head>
 <body class="bg-light">
-  <!-- Ortak Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('/shared/common-navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        const container = document.getElementById('navbar-container');
-        container.innerHTML = html;
-        container.querySelectorAll("script").forEach(oldScript => {
-          const newScript = document.createElement("script");
-          if (oldScript.src) newScript.src = oldScript.src;
-          else newScript.textContent = oldScript.textContent;
-          document.body.appendChild(newScript);
-        });
-      });
-  </script>
+  <!-- NAVBAR -->
+  <div id="navbar-host"></div>
+  <script type="module" src="/shared/navbar-inject.js"></script>
 
   <div class="container py-4">
     <h2 class="mb-4 text-center">Available Job Posts</h2>

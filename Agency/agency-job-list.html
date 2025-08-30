@@ -14,25 +14,9 @@
 </head>
 <body class="bg-light">
 
-  <!-- Ortak Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('/shared/common-navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        const container = document.getElementById('navbar-container');
-        container.innerHTML = html;
-        container.querySelectorAll("script").forEach(oldScript => {
-          const newScript = document.createElement("script");
-          if (oldScript.src) newScript.src = oldScript.src;
-          else {
-            newScript.type = oldScript.type || "text/javascript";
-            newScript.textContent = oldScript.textContent;
-          }
-          document.body.appendChild(newScript);
-        });
-      });
-  </script>
+  <!-- NAVBAR -->
+  <div id="navbar-host"></div>
+  <script type="module" src="/shared/navbar-inject.js"></script>
 
   <!-- Page Content -->
   <div class="container py-5">
@@ -82,11 +66,7 @@
         return dateStr;
       }
     }
-
-    function formatSalary(s) {
-      if (s === undefined || s === null || s === '') return '-';
-      return '$' + Number(s).toLocaleString();
-    }
+    function formatSalary(s) { return (s===undefined||s===null||s==='')?'-' : '$' + Number(s).toLocaleString(); }
 
     function renderJobs(jobs) {
       jobTableBody.innerHTML = '';
@@ -108,10 +88,11 @@
     let allJobs = [];
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        location.href = '/index.html';
-        return;
-      }
+      if (!user) { location.href = '/index.html'; return; }
+
+      // (opsiyonel) rol koruması
+      const role = (localStorage.getItem('role') || '').toLowerCase();
+      if (role && role !== 'agency') { location.href = '/home.html'; return; }
 
       try {
         const q = query(
@@ -120,7 +101,6 @@
           where('creatorType', '==', 'agency'),
           orderBy('createdAt', 'desc')
         );
-
         const snapshot = await getDocs(q);
         allJobs = snapshot.docs.map(doc => doc.data());
         renderJobs(allJobs);

@@ -13,14 +13,9 @@
   </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('/shared/common-navbar.html').then(r=>r.text()).then(html=>{
-      const c=document.getElementById('navbar-container'); c.innerHTML=html;
-      c.querySelectorAll('script').forEach(s=>{const n=document.createElement('script'); if(s.src)n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n);});
-    });
-  </script>
+  <!-- NAVBAR -->
+  <div id="navbar-host"></div>
+  <script type="module" src="/shared/navbar-inject.js"></script>
 
   <main class="container py-4">
     <div class="d-flex align-items-center justify-content-between mb-3">
@@ -100,7 +95,6 @@
     import { collection, query, where, orderBy, limit, startAfter, getDocs, deleteDoc, doc, updateDoc, addDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     let currentUser = null;
-    const role = 'seafarer';
     const pageSize = 10;
     let lastVisible = null;
     let prevStack = [];
@@ -116,9 +110,6 @@
     const nextBtn = document.getElementById('nextPageBtn');
     const addCvBtn = document.getElementById('addCvBtn');
     const addHint = document.getElementById('addHint');
-
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    // delete modal elements exist below (created by original file)
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "/index.html"; return; }

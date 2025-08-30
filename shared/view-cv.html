@@ -15,21 +15,9 @@
   </style>
 </head>
 <body class="bg-light">
-  <!-- Ortak Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('/shared/common-navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        const container = document.getElementById('navbar-container');
-        container.innerHTML = html;
-        container.querySelectorAll("script").forEach(s => {
-          const n = document.createElement("script");
-          if (s.src) n.src = s.src; else n.textContent = s.textContent;
-          document.body.appendChild(n);
-        });
-      });
-  </script>
+  <!-- NAVBAR (fetch yerine tek JS) -->
+  <div id="navbar-host"></div>
+  <script type="module" src="/shared/navbar-inject.js"></script>
 
   <div class="container py-5">
     <h2 class="mb-4 text-center">Seafarer CV</h2>

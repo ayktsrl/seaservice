@@ -13,14 +13,10 @@
   </style>
 </head>
 <body class="bg-light p-3">
-  <!-- Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('/shared/common-navbar.html').then(r=>r.text()).then(h=>{
-      const c=document.getElementById('navbar-container'); c.innerHTML=h;
-      c.querySelectorAll('script').forEach(s=>{const n=document.createElement('script'); if(s.src)n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n);});
-    });
-  </script>
+
+  <!-- NAVBAR -->
+  <div id="navbar-host"></div>
+  <script type="module" src="/shared/navbar-inject.js"></script>
 
   <div class="container py-3">
     <h4 class="mb-3">Seafarer CVs</h4>
@@ -64,7 +60,7 @@
             <div class="col-md-6">
               <p class="mb-1"><b>Phone:</b> ${s.phone||'-'}</p>
               <p class="mb-1"><b>Email:</b> ${s.email||'-'}</p>
-              <a class="btn btn-primary btn-sm mt-1" target="_blank" href="/Seafarer/view-cv.html?seafarerId=${s.id}">View Full CV</a>
+              <a class="btn btn-primary btn-sm mt-1" target="_blank" href="/Seafarer/view-cv.html?uid=${s.id}">View Full CV</a>
             </div>
           </div>
         </div>`;

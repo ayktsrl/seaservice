@@ -23,14 +23,9 @@
 </head>
 <body class="bg-light">
 
-  <!-- Navbar -->
-  <div id="navbar-container"></div>
-  <script>
-    fetch('/shared/common-navbar.html').then(res=>res.text()).then(html=>{
-      const c=document.getElementById('navbar-container'); c.innerHTML=html;
-      c.querySelectorAll("script").forEach(s=>{const n=document.createElement("script"); if(s.src)n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n);});
-    });
-  </script>
+  <!-- NAVBAR -->
+  <div id="navbar-host"></div>
+  <script type="module" src="/shared/navbar-inject.js"></script>
 
   <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
