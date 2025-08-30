@@ -12,30 +12,18 @@
   <link rel="manifest" href="/site.webmanifest">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css" />
   <style>
-    body { background: #f5f8fa; }
-    .register-box {
-      background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(0,0,0,.12);
-      max-width:400px; margin:7vh auto; padding:2.2rem 2rem;
-    }
-    .logo-icon { display:flex; justify-content:center; align-items:center; margin-bottom:1.2rem; }
-    .logo-icon img {
-      width:64px; height:64px; object-fit:contain; border-radius:13px;
-      background:#f7f8fa; box-shadow:0 2px 12px rgba(21,101,192,.13); border:2px solid #f4f4fa;
-    }
-    .form-label { font-weight:500; color:#444; }
-    .form-control { min-height:42px; }
-    .btn-primary { border-radius:8px; font-weight:600; font-size:1.07rem; letter-spacing:.3px; min-height:42px; }
-    .eye-btn { background:none; border:0; cursor:pointer; }
-    .login-link{ display:block; text-align:center; margin-top:1.1rem; font-size:.97rem; color:#1976d2; text-decoration:none; }
-    .login-link:hover{ text-decoration:underline; color:#0d47a1; }
-    @media (max-width:600px){ .register-box{ padding:1.5rem .7rem; } .logo-icon img{ width:46px; height:46px; } }
+    body { background:#f5f8fa; }
+    .register-box{ background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(0,0,0,.12);
+      max-width:400px; margin:7vh auto; padding:2.2rem 2rem; }
+    .logo-icon{ display:flex; justify-content:center; align-items:center; margin-bottom:1.2rem; }
+    .logo-icon img{ width:64px; height:64px; object-fit:contain; border-radius:13px; background:#f7f8fa; border:2px solid #f4f4fa; }
+    .eye-btn{ background:none; border:0; cursor:pointer; }
   </style>
 </head>
 <body>
   <div class="register-box">
-    <div class="logo-icon"><img src="/logo.png" alt="Orion Logo"/></div>
+    <div class="logo-icon"><img src="/logo.png" alt="Orion"/></div>
     <h2 class="mb-3 text-center fw-semibold" style="color:#1565c0;">Create your account</h2>
 
     <div id="errorBox" class="alert alert-danger d-none" role="alert"></div>
@@ -85,115 +73,100 @@
         <label class="form-label" for="password">Password</label>
         <div class="input-group">
           <input type="password" class="form-control" id="password" required autocomplete="new-password" minlength="6"/>
-          <button type="button" class="eye-btn input-group-text" id="togglePassword" aria-label="Show password" aria-pressed="false">
-            <span id="eyeIcon">👁️</span>
-          </button>
+          <button type="button" class="eye-btn input-group-text" id="togglePassword" aria-label="Show password" aria-pressed="false">👁️</button>
         </div>
       </div>
 
       <button type="submit" id="submitBtn" class="btn btn-primary w-100">Register</button>
     </form>
 
-    <a href="/index.html" class="login-link">Already have an account? Sign in</a>
+    <div class="text-center mt-3">
+      <a href="/index.html">Already have an account? Sign in</a>
+    </div>
   </div>
 
-  <!-- Show/Hide password -->
   <script>
+    // Show/Hide password
     const toggleBtn = document.getElementById('togglePassword');
     const passInput = document.getElementById('password');
-    const eyeIcon   = document.getElementById('eyeIcon');
     toggleBtn?.addEventListener('click', ()=>{
-      const isHidden = passInput.type === 'password';
-      passInput.type = isHidden ? 'text' : 'password';
-      toggleBtn.setAttribute('aria-pressed', String(isHidden));
-      eyeIcon.textContent = isHidden ? '🙈' : '👁️';
+      const hidden = passInput.type === 'password';
+      passInput.type = hidden ? 'text' : 'password';
+      toggleBtn.setAttribute('aria-pressed', String(hidden));
+      toggleBtn.textContent = hidden ? '🙈' : '👁️';
       passInput.focus({ preventScroll:true });
     });
-
-    // Only allow digits in phone
+    // Digits only for phone
     const phoneInput = document.getElementById('phone');
-    phoneInput.addEventListener('input', () => {
+    phoneInput.addEventListener('input', ()=> {
       phoneInput.value = phoneInput.value.replace(/\D+/g,'').slice(0,15);
     });
   </script>
 
-  <!-- Firebase Register -->
   <script type="module">
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-    import { app } from '/firebase-config.js';
+    import { auth, db } from '/firebase-config.js';                           // mevcut config'i kullan
+    import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+    import { doc, setDoc, serverTimestamp }   from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
-
-    const form     = document.getElementById('registerForm');
+    const form = document.getElementById('registerForm');
     const errorBox = document.getElementById('errorBox');
     const submitBtn = document.getElementById('submitBtn');
 
-    function showError(msg){
-      errorBox.textContent = msg;
-      errorBox.classList.remove('d-none');
-    }
-    function clearError(){
-      errorBox.classList.add('d-none');
-      errorBox.textContent = '';
-    }
+    const showError = (msg) => { errorBox.innerHTML = msg; errorBox.classList.remove('d-none'); };
+    const clearError = () => { errorBox.classList.add('d-none'); errorBox.innerHTML=''; };
 
-    form.addEventListener('submit', async (e)=>{
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearError();
       if (!form.checkValidity()) { form.reportValidity(); return; }
 
       const roleRadio = document.querySelector('input[name="role"]:checked');
-      if (!roleRadio) { showError('Please select a role.'); return; }
+      if (!roleRadio) return showError('Please select a role.');
 
       const role      = roleRadio.value.toLowerCase();
       const firstName = document.getElementById('firstName').value.trim();
       const lastName  = document.getElementById('lastName').value.trim();
-      const birthDate = document.getElementById('birthDate').value; // yyyy-mm-dd
+      const birthDate = document.getElementById('birthDate').value;
       const email     = document.getElementById('email').value.trim().toLowerCase();
       const password  = document.getElementById('password').value;
-      const countryCode = document.getElementById('countryCodeSpan').textContent.trim();
       const phone     = document.getElementById('phone').value.trim();
+      const cc        = document.getElementById('countryCodeSpan').textContent.trim();
 
-      // prevent double submit
       submitBtn.disabled = true;
       const original = submitBtn.innerHTML;
-      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Registering…';
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering…';
 
       try {
         const { user } = await createUserWithEmailAndPassword(auth, email, password);
 
-        let collectionName = role === 'seafarer' ? 'seafarers'
-                           : role === 'company'  ? 'companies'
-                           : role === 'agency'   ? 'agencies'
-                           : 'users';
+        const collectionName =
+          role === 'seafarer' ? 'seafarers' :
+          role === 'company'  ? 'companies'  :
+          role === 'agency'   ? 'agencies'   : 'users';
 
-        // Write profile (keep both birthDate and dob for compatibility)
         await setDoc(doc(db, collectionName, user.uid), {
           uid: user.uid,
           role,
           email,
           firstName,
           lastName,
-          birthDate,      // legacy
-          dob: birthDate, // used by edit-profile
-          phone: countryCode + phone,
+          birthDate,       // legacy
+          dob: birthDate,  // new
+          phone: cc + phone,
           createdAt: serverTimestamp()
         });
 
         localStorage.setItem('role', role);
-        window.location.href = '/home.html';
+        location.href = '/home.html';
       } catch (err) {
         console.error(err);
         const code = err?.code || '';
         let msg = 'Registration failed. Please try again.';
         if (code.includes('email-already-in-use')) msg = 'Email is already in use.';
-        if (code.includes('weak-password')) msg = 'Password should be at least 6 characters.';
-        if (code.includes('network-request-failed')) msg = 'Network error. Check your connection.';
-        showError(msg);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = original;
+        if (code.includes('weak-password'))        msg = 'Password should be at least 6 characters.';
+        if (code.includes('network-request-failed')) msg = 'Network error. Please check your connection.';
+        showError(`${msg}<div class="small text-muted mt-1">(${code || 'unknown error'})</div>`);
+        submitBtn.disabled = false; submitBtn.innerHTML = original;
       }
     });
   </script>
