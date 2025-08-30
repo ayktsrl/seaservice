@@ -15,26 +15,19 @@
   <link rel="stylesheet" href="/style.css" />
   <style>
     body { background:#f5f8fa; }
-    .login-box {
-      background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(0,0,0,.12);
-      max-width:380px; margin:7vh auto; padding:2.2rem 2rem;
-    }
+    .login-box { background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(0,0,0,.12); max-width:380px; margin:7vh auto; padding:2.2rem 2rem; }
     .logo-icon { display:flex; justify-content:center; align-items:center; margin-bottom:1.2rem; }
     .logo-icon img { width:64px; height:64px; object-fit:contain; border-radius:13px; background:#f7f8fa; box-shadow:0 2px 12px rgba(21,101,192,.13); border:2px solid #f4f4fa; }
-    .form-label { font-weight:500; color:#444; }
-    .form-control { min-height:42px; }
+    .form-label { font-weight:500; color:#444; } .form-control { min-height:42px; }
     .btn-primary { border-radius:8px; font-weight:600; letter-spacing:.3px; min-height:42px; }
     .eye-btn { background:none; border:none; outline:none; cursor:pointer; }
-    .muted-links a { color:#1976d2; text-decoration:none; }
-    .muted-links a:hover { text-decoration:underline; }
+    .muted-links a { color:#1976d2; text-decoration:none; } .muted-links a:hover { text-decoration:underline; }
     @media (max-width:600px){ .login-box{ padding:1.5rem .9rem; } .logo-icon img{ width:46px; height:46px; } }
   </style>
 </head>
 <body>
   <div class="login-box">
-    <div class="logo-icon">
-      <img src="/logo.png" alt="Orion Logo" />
-    </div>
+    <div class="logo-icon"><img src="/logo.png" alt="Orion Logo" /></div>
     <h2 class="mb-3 text-center fw-semibold" style="color:#1565c0;">Sign in</h2>
 
     <div id="errorBox" class="alert alert-danger d-none" role="alert"></div>
@@ -42,23 +35,18 @@
     <form id="loginForm" novalidate>
       <div class="mb-3">
         <label for="email" class="form-label">Email address</label>
-        <input type="email" class="form-control" id="email" required
-               autocomplete="username email" inputmode="email" autocapitalize="none" spellcheck="false" autofocus />
+        <input type="email" class="form-control" id="email" required autocomplete="username email" inputmode="email" autocapitalize="none" spellcheck="false" autofocus />
       </div>
 
       <div class="mb-3">
         <label for="password" class="form-label">Password</label>
         <div class="input-group">
           <input type="password" class="form-control" id="password" required autocomplete="current-password" />
-          <button type="button" class="eye-btn input-group-text" id="togglePassword" aria-label="Show password" aria-pressed="false">
-            <span id="eyeIcon">👁️</span>
-          </button>
+          <button type="button" class="eye-btn input-group-text" id="togglePassword" aria-label="Show password" aria-pressed="false"><span id="eyeIcon">👁️</span></button>
         </div>
       </div>
 
-      <button id="submitBtn" type="submit" class="btn btn-primary w-100">
-        Sign in
-      </button>
+      <button id="submitBtn" type="submit" class="btn btn-primary w-100">Sign in</button>
 
       <div class="d-flex justify-content-between mt-3 muted-links">
         <a href="/register.html">Create an account</a>
@@ -81,63 +69,48 @@
     });
   </script>
 
-  <!-- Firebase Login + Role detection -->
+  <!-- Firebase Login + Role detection (10.12.2 + config'dan auth/db) -->
   <script type="module">
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-    import { app } from "/firebase-config.js";
+    import { auth, db } from "/firebase-config.js";
+    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const auth = getAuth(app);
-    const db   = getFirestore(app);
+    const form = document.getElementById('loginForm');
+    const btn  = document.getElementById('submitBtn');
+    const errorBox = document.getElementById('errorBox');
 
-    const form      = document.getElementById('loginForm');
-    const btn       = document.getElementById('submitBtn');
-    const errorBox  = document.getElementById('errorBox');
-
-    function showError(msg){
-      errorBox.textContent = msg;
-      errorBox.classList.remove('d-none');
-    }
-    function clearError(){ errorBox.classList.add('d-none'); errorBox.textContent=''; }
+    const showError=(m)=>{ errorBox.textContent=m; errorBox.classList.remove('d-none'); };
+    const clearErr =()=>{ errorBox.classList.add('d-none'); errorBox.textContent=''; };
 
     form.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      clearError();
+      e.preventDefault(); clearErr();
       if (!form.checkValidity()) { form.reportValidity(); return; }
 
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
 
-      // prevent double submit
-      btn.disabled = true;
-      const original = btn.innerHTML;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Signing in…';
+      // kullanıcı adı değil → e-posta formatı
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showError('Please sign in with your email address.'); return; }
 
-      try {
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        const user = cred.user;
+      btn.disabled=true; const original=btn.innerHTML;
+      btn.innerHTML='<span class="spinner-border spinner-border-sm me-2"></span>Signing in…';
 
-        // role lookup
-        const collections = ['seafarers','companies','agencies'];
-        let foundRole = null;
-        for (const col of collections) {
-          const snap = await getDoc(doc(db, col, user.uid));
-          if (snap.exists()) { foundRole = (snap.data().role || col).toLowerCase(); break; }
-        }
-        if (!foundRole) { showError('User role not found. Please contact support.'); btn.disabled=false; btn.innerHTML=original; return; }
+      try{
+        const { user } = await signInWithEmailAndPassword(auth, email, password);
 
-        localStorage.setItem('role', foundRole);
-        window.location.href = "/home.html";
-      } catch (err) {
-        // friendly errors
-        const code = err?.code || '';
-        let msg = 'Incorrect email or password.';
-        if (code.includes('too-many-requests')) msg = 'Too many attempts. Please wait a moment and try again.';
-        if (code.includes('network-request-failed')) msg = 'Network error. Please check your connection.';
-        if (code.includes('user-disabled')) msg = 'This account has been disabled. Contact support.';
+        // rol belirleme
+        const cols=['seafarers','companies','agencies']; let role='seafarer';
+        for (const col of cols){ const snap=await getDoc(doc(db,col,user.uid)); if (snap.exists()){ role = (col==='companies'?'company':col.slice(0,-1)); break; } }
+        localStorage.setItem('role', role);
+        location.href="/home.html";
+      }catch(err){
+        const code=err?.code||''; let msg='Incorrect email or password.';
+        if (code.includes('too-many-requests')) msg='Too many attempts. Please wait and try again.';
+        if (code.includes('network-request-failed')) msg='Network error. Please check your connection.';
+        if (code.includes('user-disabled')) msg='This account has been disabled. Contact support.';
         showError(msg);
-        btn.disabled = false;
-        btn.innerHTML = original;
+      }finally{
+        btn.disabled=false; btn.innerHTML=original;
       }
     });
   </script>

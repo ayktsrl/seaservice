@@ -13,33 +13,28 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     body { background: #f6f7fb; }
-    .profile-card {
-      background:#fff; max-width:480px; margin:40px auto 0;
-      border-radius:16px; box-shadow:0 2px 18px #e3e6ec;
-      padding:2.5rem 2.2rem 1.5rem; border:1px solid #e7e9ee;
-    }
+    .profile-card { background:#fff; max-width:480px; margin:40px auto 0; border-radius:16px; box-shadow:0 2px 18px #e3e6ec; padding:2.5rem 2.2rem 1.5rem; border:1px solid #e7e9ee; }
     @media (max-width:500px){ .profile-card{ padding:1.3rem; } }
     .profile-card h2{ font-size:1.5rem; letter-spacing:1px; margin-bottom:1.2rem; color:#22336b; text-align:center; }
     .form-label{ font-weight:500; }
   </style>
 </head>
 <body>
-
   <!-- Common Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('/common-navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        const c = document.getElementById('navbar-container');
-        c.innerHTML = html;
-        c.querySelectorAll('script').forEach(s => {
-          const n = document.createElement('script');
-          if (s.type) n.type = s.type;
-          if (s.src) n.src = s.src; else n.textContent = s.textContent;
-          document.body.appendChild(n);
-        });
-      });
+  (async()=>{
+    const paths=['/shared/common-navbar.html','../shared/common-navbar.html','../../shared/common-navbar.html','shared/common-navbar.html'];
+    for (const p of paths){
+      try{
+        const r=await fetch(p); if(!r.ok) continue;
+        const html=await r.text(), c=document.getElementById('navbar-container');
+        c.innerHTML=html;
+        c.querySelectorAll('script').forEach(s=>{ const n=document.createElement('script'); if(s.type) n.type=s.type; if(s.src) n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n); });
+        break;
+      }catch{}
+    }
+  })();
   </script>
 
   <div class="container">
@@ -51,7 +46,7 @@
   </div>
 
   <script type="module">
-    import { auth, db } from './firebase-config.js';
+    import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -81,16 +76,8 @@
       ]
     };
 
-    function ymd(v){
-      if (v && typeof v === 'object' && typeof v.toDate === 'function') {
-        return v.toDate().toISOString().split('T')[0];
-      }
-      return (v || "");
-    }
-
-    const escapeHtml = (str="") => str.replace(/[&<>'"]/g,
-      c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
-    );
+    const escapeHtml = (s="") => s.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const ymd = (v)=> (v && typeof v==='object' && typeof v.toDate==='function') ? v.toDate().toISOString().split('T')[0] : (v||"");
 
     function renderForm(role, values={}){
       const form = document.getElementById("profileForm");
@@ -98,23 +85,15 @@
       form.innerHTML = fields.map(f => `
         <div class="mb-3">
           <label class="form-label" for="${f.id}">${f.label}</label>
-          <input type="${f.type}" id="${f.id}" class="form-control"
-                 value="${escapeHtml(values[f.id] || '')}" placeholder="${f.label}" />
+          <input type="${f.type}" id="${f.id}" class="form-control" value="${escapeHtml(values[f.id] || '')}" placeholder="${f.label}" />
         </div>`).join('') + `
-        <div class="d-grid">
-          <button type="submit" class="btn btn-primary mt-1" id="saveBtn">Save</button>
-        </div>`;
+        <div class="d-grid"><button type="submit" class="btn btn-primary mt-1" id="saveBtn">Save</button></div>`;
     }
 
     function showMsg(msg, type='success'){
       const box = document.getElementById("profileMsg");
-      box.className = `alert alert-${type}`;
-      box.textContent = msg;
-      box.classList.remove('d-none');
-      setTimeout(()=> {
-        box.classList.add('d-none');
-        box.textContent = '';
-      }, 2200);
+      box.className = `alert alert-${type}`; box.textContent = msg; box.classList.remove('d-none');
+      setTimeout(()=>{ box.classList.add('d-none'); box.textContent=''; }, 2200);
     }
 
     onAuthStateChanged(auth, async user=>{
@@ -125,15 +104,9 @@
       for (const col of collections){
         const ref = doc(db, col, user.uid);
         const snap = await getDoc(ref);
-        if (snap.exists()){
-          userRole = (snap.data().role || '').toLowerCase();
-          docRef = ref; break;
-        }
+        if (snap.exists()){ userRole = (snap.data().role || '').toLowerCase(); docRef = ref; break; }
       }
-      if (!userRole){
-        showMsg("User profile not found. Please re-login.", 'danger');
-        return setTimeout(()=>location.href="/index.html", 1000);
-      }
+      if (!userRole){ showMsg("User profile not found. Please re-login.", 'danger'); return setTimeout(()=>location.href="/index.html", 1000); }
 
       const snap = await getDoc(docRef);
       let values = snap.exists() ? snap.data() : {};
@@ -143,22 +116,13 @@
 
       document.getElementById("profileForm").onsubmit = async (e)=>{
         e.preventDefault();
-        const btn = document.getElementById('saveBtn');
-        btn.disabled = true;
-        const data = {};
-        (roleFields[userRole] || []).forEach(f => data[f.id] = document.getElementById(f.id).value);
-
+        const btn = document.getElementById('saveBtn'); btn.disabled = true;
+        const data = {}; (roleFields[userRole]||[]).forEach(f => data[f.id] = document.getElementById(f.id).value);
         if (data.dob) data.birthDate = data.dob;
 
-        try{
-          await setDoc(docRef, { ...values, ...data }, { merge: true });
-          showMsg("Profile saved successfully!");
-        } catch(err){
-          console.error(err);
-          showMsg("Save failed. Please try again.", 'danger');
-        } finally {
-          btn.disabled = false;
-        }
+        try{ await setDoc(docRef, { ...values, ...data }, { merge: true }); showMsg("Profile saved successfully!"); }
+        catch(err){ console.error(err); showMsg("Save failed. Please try again.", 'danger'); }
+        finally{ btn.disabled = false; }
       };
     });
   </script>

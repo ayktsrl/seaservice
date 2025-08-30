@@ -17,18 +17,18 @@
   <!-- Common Navbar -->
   <div id="navbar-container"></div>
   <script>
-    fetch('/common-navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        const c = document.getElementById('navbar-container');
-        c.innerHTML = html;
-        c.querySelectorAll('script').forEach(s => {
-          const n = document.createElement('script');
-          if (s.type) n.type = s.type;
-          if (s.src) n.src = s.src; else n.textContent = s.textContent;
-          document.body.appendChild(n);
-        });
-      });
+  (async()=>{
+    const paths=['/shared/common-navbar.html','../shared/common-navbar.html','../../shared/common-navbar.html','shared/common-navbar.html'];
+    for (const p of paths){
+      try{
+        const r=await fetch(p); if(!r.ok) continue;
+        const html=await r.text(), c=document.getElementById('navbar-container');
+        c.innerHTML=html;
+        c.querySelectorAll('script').forEach(s=>{ const n=document.createElement('script'); if(s.type) n.type=s.type; if(s.src) n.src=s.src; else n.textContent=s.textContent; document.body.appendChild(n); });
+        break;
+      }catch{}
+    }
+  })();
   </script>
 
   <section id="dashboard-section" style="display:block;">
@@ -62,7 +62,7 @@
   </section>
 
   <script type="module">
-    import { auth, db } from './firebase-config.js';
+    import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
@@ -78,8 +78,7 @@
       if (!user) return location.href = '/index.html';
 
       const collections = ['seafarers', 'companies', 'agencies'];
-      let userData = {};
-      let userRole = '';
+      let userData = {}, userRole = '';
       for (let col of collections) {
         const docRef = doc(db, col, user.uid);
         const docSnap = await getDoc(docRef);
