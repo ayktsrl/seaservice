@@ -5,21 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Special Skills - Seafarer</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="../../style.css"/>
+  <link rel="stylesheet" href="/style.css"/>
   <style>
-    @media (max-width:768px){
-      h4{font-size:1.3rem;text-align:center}
+    .form-slide{background:#fff;border-radius:12px;box-shadow:0 1px 12px rgba(0,0,0,.06);display:none;margin-top:12px}
+    .form-slide.active{display:block}
+    .add-btn{width:40px;height:40px}
+    @media(max-width:768px){
       .table{font-size:.9rem}
       .btn,.form-control,.form-check-label{font-size:.9rem}
-      .add-btn{width:40px;height:40px;font-size:1.2rem;padding:0}
-      .form-slide{padding:15px}
+      .add-btn{width:40px;height:40px}
     }
-    .form-slide{background:#fff;border-radius:10px;box-shadow:0 1px 10px #e3e7ee;margin-top:12px;display:none}
-    .form-slide.active{display:block}
   </style>
 </head>
-<body class="p-4 bg-light">
-  <div class="container bg-white p-3 p-md-4 rounded shadow-sm">
+<body class="bg-light p-4">
+  <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <h4 class="fw-bold m-0">Special Skills</h4>
       <button class="btn btn-success rounded-circle add-btn" onclick="openForm()">+</button>
@@ -29,34 +28,72 @@
       <table class="table table-bordered table-striped align-middle">
         <thead class="table-primary text-center">
           <tr>
-            <th style="width:90px">Actions</th>
+            <th style="width:110px">Actions</th>
             <th>Skill Type</th>
             <th>Vessel</th>
             <th>Rank</th>
-            <th>Period</th>
+            <th>From</th>
+            <th>To</th>
             <th>Charterer / Voyage Info</th>
             <th>Cargo</th>
             <th>Equipment</th>
             <th>Remarks</th>
           </tr>
         </thead>
-        <tbody id="skillsList"></tbody>
+        <tbody id="rows"></tbody>
+        <tfoot><tr><td colspan="10" class="text-center text-muted small">Add your special skills.</td></tr></tfoot>
       </table>
     </div>
 
-    <div id="skillsForm" class="form-slide">
-      <form id="form">
+    <!-- Add / Edit panel -->
+    <div id="panel" class="form-slide">
+      <form id="form" class="p-3" novalidate>
         <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Skill Type</label><input id="skillType" class="form-control" required></div>
-          <div class="col-md-6"><label class="form-label">Vessel</label><input id="vessel" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Rank</label><input id="rank" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Period</label><input id="period" class="form-control" placeholder="e.g. 2023-01 → 2023-07"></div>
-          <div class="col-md-6"><label class="form-label">Charterer / Voyage Info</label><input id="charterer" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Cargo</label><input id="cargo" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Equipment</label><input id="equipment" class="form-control"></div>
-          <div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control"></textarea></div>
+          <div class="col-md-6">
+            <label class="form-label">Skill Type <span class="text-danger">*</span></label>
+            <select id="skillType" class="form-select" required>
+              <option value="" disabled selected>- Select value -</option>
+              <!-- /options/options-skill-types.html yüklenecek -->
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Vessel</label>
+            <input id="vessel" class="form-control" placeholder="e.g., M/T Example">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Rank</label>
+            <select id="rank" class="form-select">
+              <option value="" selected>- Select value -</option>
+              <!-- /options/options-ranks.html yüklenecek -->
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">From</label>
+            <input id="fromDate" type="date" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">To</label>
+            <input id="toDate" type="date" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Charterer / Voyage Info</label>
+            <input id="charterer" class="form-control" placeholder="e.g., STS, New Building, Dry Docking…">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Cargo</label>
+            <input id="cargo" class="form-control" placeholder="e.g., Ammonia, Acids, Vegoils…">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Equipment</label>
+            <input id="equipment" class="form-control" placeholder="e.g., Manifold / Hose, Compressor…">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Remarks</label>
+            <textarea id="remarks" rows="2" class="form-control" placeholder="Notes (optional)"></textarea>
+          </div>
         </div>
-        <div class="d-flex justify-content-end gap-2 mt-3">
+
+        <div class="text-end mt-3">
           <button class="btn btn-primary" id="submitBtn">Add</button>
           <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancel</button>
         </div>
@@ -64,69 +101,145 @@
     </div>
   </div>
 
-  <!-- Toast -->
-  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:11">
-    <div id="toastMsg" class="toast text-bg-primary border-0" role="alert"><div class="d-flex">
-      <div class="toast-body" id="toastBody">Saved</div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-    </div></div>
-  </div>
-
   <script type="module">
-    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='../../index.html';
+    // sadece seafarer
+    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
 
     import { auth, db } from '/firebase-config.js';
-    import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
+    // DOM
+    const rows = document.getElementById('rows');
+    const panel = document.getElementById('panel');
+    const form  = document.getElementById('form');
+    const submitBtn = document.getElementById('submitBtn');
+
+    const skillType = document.getElementById('skillType');
+    const vessel    = document.getElementById('vessel');
+    const rank      = document.getElementById('rank');
+    const fromDate  = document.getElementById('fromDate');
+    const toDate    = document.getElementById('toDate');
+    const charterer = document.getElementById('charterer');
+    const cargo     = document.getElementById('cargo');
+    const equipment = document.getElementById('equipment');
+    const remarks   = document.getElementById('remarks');
+
+    function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     let userId=null, editId=null;
-    const list=document.getElementById('skillsList');
-    const formBox=document.getElementById('skillsForm');
-    const form=document.getElementById('form');
-    const submitBtn=document.getElementById('submitBtn');
-    const toast = new bootstrap.Toast(document.getElementById('toastMsg'));
-    const toastBody=document.getElementById('toastBody');
 
-    onAuthStateChanged(auth, async user=>{
-      if(!user) return window.location.href='../../index.html';
-      userId=user.uid; await render();
-    });
-
-    window.openForm=(id=null,data=null)=>{
-      formBox.classList.add('active'); submitBtn.textContent=id?'Save':'Add'; editId=id; form.reset();
-      if(data){ for(const k in data){ if(form[k]) form[k].value=data[k]||''; } }
-    };
-    window.closeForm=()=>{ formBox.classList.remove('active'); editId=null; };
-
-    form.addEventListener('submit', async e=>{
-      e.preventDefault();
-      const data={ skillType:form.skillType.value, vessel:form.vessel.value, rank:form.rank.value, period:form.period.value,
-                   charterer:form.charterer.value, cargo:form.cargo.value, equipment:form.equipment.value, remarks:form.remarks.value };
-      const base=collection(db,`seafarers/${userId}/cv/specialSkills/items`);
-      if(editId) await updateDoc(doc(base,editId),data); else await addDoc(base,data);
-      await render(); closeForm(); toastBody.textContent= editId?'Skill updated ✅':'Skill added ✅'; toast.show();
-    });
-
-    async function render(){
-      list.innerHTML=''; const base=collection(db,`seafarers/${userId}/cv/specialSkills/items`);
-      const snap=await getDocs(base);
-      snap.forEach(s=>{
-        const d=s.data();
-        const safe = JSON.stringify(d).replace(/"/g,'&quot;');
-        const tr=document.createElement('tr');
-        tr.innerHTML=`
-          <td class="text-center">
-            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${s.id}", JSON.parse("${safe}"))'>✏️</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='del("${s.id}")'>❌</button>
-          </td>
-          <td>${d.skillType||''}</td><td>${d.vessel||''}</td><td>${d.rank||''}</td><td>${d.period||''}</td>
-          <td>${d.charterer||''}</td><td>${d.cargo||''}</td><td>${d.equipment||''}</td><td>${d.remarks||''}</td>`;
-        list.appendChild(tr);
-      });
+    // Options loaders (önce /options yolu denenir)
+    async function loadSkillTypes(){
+      const paths=['/options/options-skill-types.html','/options-skill-types.html','/assets/options-skill-types.html'];
+      for (const p of paths){
+        try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ skillType.innerHTML = await r.text(); return; } }catch{}
+      }
+      // Fallback (kısa liste)
+      skillType.innerHTML = `
+        <option value="" disabled selected>- Select value -</option>
+        <option>ACIDS</option><option>AMMONIA EXPERIENCE</option>
+        <option>CHEMICALS</option><option>STS OPERATIONS</option>
+        <option>DRY DOCKING</option><option>NEW BUILDING</option>`;
     }
-    window.del = async id => { if(!confirm('Delete item?')) return; await deleteDoc(doc(db,`seafarers/${userId}/cv/specialSkills/items/${id}`)); await render();
-      toastBody.textContent='Skill deleted ❌'; toast.show(); };
+    async function loadRankOptions(){
+      const paths=['/options/options-ranks.html','/options-ranks.html','/assets/options-ranks.html'];
+      for (const p of paths){
+        try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ rank.innerHTML = '<option value="">- Select value -</option>' + await r.text(); return; } }catch{}
+      }
+    }
+
+    // open/close
+    window.openForm = (id=null, data=null)=>{
+      form.reset(); editId=id; submitBtn.textContent = id ? 'Save' : 'Add';
+      panel.classList.add('active');
+      if(data){
+        skillType.value = data.skillType || '';
+        vessel.value    = data.vessel    || '';
+        rank.value      = data.rank      || '';
+        fromDate.value  = data.fromDate  || '';
+        toDate.value    = data.toDate    || '';
+        charterer.value = data.charterer || '';
+        cargo.value     = data.cargo     || '';
+        equipment.value = data.equipment || '';
+        remarks.value   = data.remarks   || '';
+      }
+    };
+    window.closeForm = ()=>{ panel.classList.remove('active'); editId=null; };
+
+    // auth + initial
+    onAuthStateChanged(auth, async user=>{
+      if(!user) return location.href='/index.html';
+      userId=user.uid;
+      await Promise.all([loadSkillTypes(), loadRankOptions()]);
+      await render();
+    });
+
+    // save
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      if(!form.checkValidity()){ form.reportValidity(); return; }
+      if(fromDate.value && toDate.value && toDate.value < fromDate.value){
+        alert('“To” tarihi “From” tarihinden önce olamaz.'); return;
+      }
+      const payload = {
+        skillType: skillType.value,
+        vessel   : vessel.value.trim(),
+        rank     : rank.value,
+        fromDate : fromDate.value,
+        toDate   : toDate.value,
+        charterer: charterer.value.trim(),
+        cargo    : cargo.value.trim(),
+        equipment: equipment.value.trim(),
+        remarks  : remarks.value.trim()
+      };
+      const base = collection(db,`seafarers/${userId}/cv/specialSkills/items`);
+      try{
+        if(editId) await updateDoc(doc(base,editId), payload);
+        else       await addDoc(base, payload);
+        await render(); closeForm();
+      }catch(err){ console.error(err); alert('Save failed.'); }
+    });
+
+    // render
+    async function render(){
+      rows.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">Loading…</td></tr>';
+      const base = collection(db,`seafarers/${userId}/cv/specialSkills/items`);
+      const snap = await getDocs(base);
+      const items=[]; snap.forEach(s=>items.push({id:s.id,...s.data()}));
+      if(!items.length){ rows.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">No skills yet. Click <b>+</b> to add.</td></tr>'; return; }
+      rows.innerHTML='';
+      for(const d of items){
+        const safe = JSON.stringify(d).replace(/"/g,'&quot;');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${d.id}", JSON.parse("${safe}"))'>Edit</button>
+            <button class="btn btn-sm btn-outline-danger" onclick='delItem("${d.id}")'>Delete</button>
+          </td>
+          <td>${esc(d.skillType||'')}</td>
+          <td>${esc(d.vessel||'')}</td>
+          <td>${esc(d.rank||'')}</td>
+          <td>${esc(d.fromDate||'')}</td>
+          <td>${esc(d.toDate||'')}</td>
+          <td>${esc(d.charterer||'')}</td>
+          <td>${esc(d.cargo||'')}</td>
+          <td>${esc(d.equipment||'')}</td>
+          <td>${esc(d.remarks||'')}</td>
+        `;
+        rows.appendChild(tr);
+      }
+    }
+
+    // delete
+    window.delItem = async (id)=>{
+      if(!confirm('Delete item?')) return;
+      try{
+        await deleteDoc(doc(db,`seafarers/${userId}/cv/specialSkills/items/${id}`));
+        await render();
+      }catch(err){ console.error(err); alert('Delete failed.'); }
+    };
   </script>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
