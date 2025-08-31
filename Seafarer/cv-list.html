@@ -88,11 +88,15 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script type="module">
+    // role guard
     if ((localStorage.getItem('role')||'').toLowerCase() !== 'seafarer') location.href='/index.html';
 
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { collection, query, where, orderBy, limit, startAfter, getDocs, deleteDoc, doc, updateDoc, addDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      collection, query, where, orderBy, limit, startAfter, getDocs,
+      deleteDoc, doc, updateDoc, addDoc, serverTimestamp, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     let currentUser = null;
     const pageSize = 10;
@@ -179,6 +183,7 @@
       if (reset) { lastVisible = null; prevStack = []; tbody.innerHTML=''; }
 
       try {
+        // --- Normal (indexed) path ---
         const baseRef = collection(db, 'cvs');
         const cons = [ where('ownerUid', '==', currentUser.uid) ];
         if (activeFilters.visibility === 'public')  cons.push(where('public', '==', true));
@@ -188,6 +193,7 @@
 
         const snap = await getDocs(query(baseRef, ...cons));
         const docsArr = snap.docs;
+
         if (!goingBack && docsArr.length > 0) {
           const newLast = docsArr[docsArr.length-1];
           if (lastVisible) prevStack.push(lastVisible);
@@ -206,9 +212,51 @@
         countText.textContent = `${rendered} CV listed`;
         nextBtn.disabled = (docsArr.length < pageSize);
         prevBtn.disabled = (prevStack.length === 0);
+
       } catch (e) {
-        console.error(e); countText.textContent = "Failed to load CVs.";
-      } finally { toggleLoading(false); }
+        console.error(e);
+        // --- Fallback while index is building: client-side sort & no pagination ---
+        const isIndexBuild = e?.code === 'failed-precondition' && /index.*(building|cannot be used|create)/i.test(e.message || "");
+        if (isIndexBuild) {
+          countText.textContent = "Temporary view (index is initializing)…";
+          try {
+            const baseRef = collection(db, 'cvs');
+            const cons = [ where('ownerUid','==', currentUser.uid) ];
+            if (activeFilters.visibility === 'public')  cons.push(where('public','==', true));
+            if (activeFilters.visibility === 'private') cons.push(where('public','==', false));
+
+            const snap = await getDocs(query(baseRef, ...cons, limit(500)));
+
+            let arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            if (activeFilters.text) {
+              const t = activeFilters.text;
+              arr = arr.filter(cv => {
+                const hay = [cv.name, cv.position, (cv.skills||[]).join(', '), cv.ownerEmail]
+                  .join(' ').toLowerCase();
+                return hay.includes(t);
+              });
+            }
+            arr.sort((a,b)=>{
+              const ta = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : (a.updatedAt ? +new Date(a.updatedAt) : 0);
+              const tb = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : (b.updatedAt ? +new Date(b.updatedAt) : 0);
+              return tb - ta; // DESC
+            });
+
+            tbody.innerHTML = '';
+            arr.slice(0, pageSize).forEach(appendRow);
+            countText.textContent = `${Math.min(arr.length, pageSize)} of ${arr.length} CVs (temporary)`;
+            nextBtn.disabled = true;
+            prevBtn.disabled = true;
+          } catch (e2) {
+            console.error(e2);
+            countText.textContent = "Failed to load CVs.";
+          }
+        } else {
+          countText.textContent = "Failed to load CVs.";
+        }
+      } finally {
+        toggleLoading(false);
+      }
     }
 
     function appendRow(cv){
@@ -252,9 +300,9 @@
               toggleLoading(true);
               const ref = doc(db,'cvs', btn.dataset.id);
               const publish = btn.textContent.trim()==='Publish';
-              await updateDoc(ref, { public: publish, updatedAt: new Date() });
+              await updateDoc(ref, { public: publish, updatedAt: serverTimestamp() });
               await loadPage(true);
-            }catch(e){ alert('Action failed'); }
+            }catch(e){ console.error(e); alert('Action failed'); }
             finally{ toggleLoading(false); }
           });
         }
@@ -266,7 +314,7 @@
               toggleLoading(true);
               await deleteDoc(doc(db,'cvs', btn.dataset.id));
               await loadPage(true);
-            }catch(e){ alert('Delete failed'); }
+            }catch(e){ console.error(e); alert('Delete failed'); }
             finally{ toggleLoading(false); }
           });
         }
