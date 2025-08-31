@@ -1,83 +1,272 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Documents</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="/style.css"/>
   <style>
-    .wrap{max-width:640px;margin:28px auto;background:#fff;border-radius:18px;box-shadow:0 2px 12px #e8ebf3;padding:24px}
-    .blk{background:#f7fafd;border:1.5px solid #e3e6ec;border-radius:12px;padding:16px;margin-bottom:18px}
-    @media(max-width:768px){ .form-label,.form-control,.form-select{font-size:.95rem} }
+    body{background:#f6f8fb}
+    .cardish{background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+    .required::after{content:" *";color:#dc3545}
   </style>
 </head>
-<body class="bg-light p-4">
-  <div class="wrap">
-    <h4 class="mb-3 text-center">Documents</h4>
-    <form id="docForm">
-      <div class="blk">
-        <h6 class="mb-3">Passport</h6>
-        <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Issue Country</label><select id="passportCountry" class="form-select"></select></div>
-          <div class="col-md-6"><label class="form-label">Number</label><input id="passportNumber" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Issue Date</label><input id="passportIssue" type="date" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Expiry Date</label><input id="passportExpiry" type="date" class="form-control"></div>
-        </div>
-      </div>
+<body class="p-4">
+  <div class="container">
 
-      <div class="blk">
-        <h6 class="mb-3">Seaman Book</h6>
-        <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Issue Country</label><select id="seamanBookCountry" class="form-select"></select></div>
-          <div class="col-md-6"><label class="form-label">Number</label><input id="seamanBookNumber" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Issue Date</label><input id="seamanBookIssue" type="date" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Expiry Date</label><input id="seamanBookExpiry" type="date" class="form-control"></div>
-        </div>
-      </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h4 class="mb-0 fw-bold">Documents</h4>
+      <button class="btn btn-success" id="addBtn">+ Add</button>
+    </div>
 
-      <div class="text-end"><button class="btn btn-primary" id="saveBtn">Save</button><span id="saveStatus" class="ms-3 text-success" style="display:none">✓ Saved!</span></div>
-    </form>
+    <div class="cardish p-3">
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle mb-0">
+          <thead class="table-primary text-center">
+            <tr>
+              <th style="width:130px">Actions</th>
+              <th style="width:140px">Type</th>
+              <th>Number</th>
+              <th>Issue Country</th>
+              <th>Issue Date</th>
+              <th>Expiry Date</th>
+            </tr>
+          </thead>
+          <tbody id="docList">
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">
+                No documents added yet. Click <b>+ Add</b> to create one.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="alert alert-light border small mt-3">
+      <b>Tip:</b> Birden fazla pasaport veya seaman book ekleyebilirsin. Hepsi listede görünür.
+    </div>
   </div>
 
-  <script>
-    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
-    fetch('/options/options-countries.html').then(r=>r.text()).then(h=>{ passportCountry.innerHTML=h; seamanBookCountry.innerHTML=h; });
-  </script>
+  <!-- Add/Edit Modal -->
+  <div class="modal fade" id="docModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="docForm" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title" id="docModalTitle">Add Document</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label required">Type</label>
+                <select id="type" class="form-select" required>
+                  <option value="" selected disabled>Select…</option>
+                  <option value="Passport">Passport</option>
+                  <option value="Seaman Book">Seaman Book</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label required">Number</label>
+                <input id="number" class="form-control" placeholder="e.g., U12345678" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label required">Issue Country</label>
+                <select id="issueCountry" class="form-select" required>
+                  <option value="" selected disabled>Select Country</option>
+                  <!-- options will be injected -->
+                </select>
+              </div>
 
+              <div class="col-md-6">
+                <label class="form-label required">Issue Date</label>
+                <input id="issueDate" type="date" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Expiry Date</label>
+                <input id="expiryDate" type="date" class="form-control">
+                <div class="form-check mt-1">
+                  <input id="noExpiry" class="form-check-input" type="checkbox">
+                  <label class="form-check-label" for="noExpiry">No expiry date</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" id="saveBtn">Save</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase + App -->
   <script type="module">
+    // sadece seafarer
+    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
+
     import { auth, db } from '/firebase-config.js';
-    import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import {
+      collection, addDoc, updateDoc, deleteDoc, getDocs, doc, query, orderBy
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-    const form=document.getElementById('docForm'); const saveBtn=document.getElementById('saveBtn'); const saveStatus=document.getElementById('saveStatus');
-    let userId=null;
+    // DOM
+    const docList     = document.getElementById('docList');
+    const addBtn      = document.getElementById('addBtn');
+    const docForm     = document.getElementById('docForm');
+    const docModalEl  = document.getElementById('docModal');
+    const docModal    = new bootstrap.Modal(docModalEl);
+    const modalTitle  = document.getElementById('docModalTitle');
 
-    onAuthStateChanged(auth, async (user)=>{
-      if(!user) return location.href='/index.html';
-      userId=user.uid;
-      const ref=doc(db,'seafarers',userId,'cv','documents');
-      const snap=await getDoc(ref);
-      if(snap.exists()){
-        const d=snap.data();
-        form.passportCountry.value=d.passportCountry||''; form.passportNumber.value=d.passportNumber||'';
-        form.passportIssue.value=d.passportIssue||''; form.passportExpiry.value=d.passportExpiry||'';
-        form.seamanBookCountry.value=d.seamanBookCountry||''; form.seamanBookNumber.value=d.seamanBookNumber||'';
-        form.seamanBookIssue.value=d.seamanBookIssue||''; form.seamanBookExpiry.value=d.seamanBookExpiry||'';
+    const type        = document.getElementById('type');
+    const number      = document.getElementById('number');
+    const issueCountry= document.getElementById('issueCountry');
+    const issueDate   = document.getElementById('issueDate');
+    const expiryDate  = document.getElementById('expiryDate');
+    const noExpiry    = document.getElementById('noExpiry');
+    const saveBtn     = document.getElementById('saveBtn');
+
+    function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    let uid=null, editId=null;
+
+    // Ülke seçeneklerini yükle (sizin klasör yapınıza göre; asla çift "Select Country" olmaz)
+    async function loadCountryOptions() {
+      const paths = [
+        '/options/options-countries.html', // sizin path
+        '/options-countries.html',
+        '/assets/options-countries.html',
+        '/options/options-country-codes.html', // son çare
+        '/options-country-codes.html'
+      ];
+      for (const path of paths) {
+        try {
+          const r = await fetch(path, { cache: 'no-store' });
+          if (r.ok) {
+            const html = await r.text();
+            if (html.toLowerCase().includes('select country')) {
+              issueCountry.innerHTML = html;
+            } else {
+              issueCountry.innerHTML =
+                '<option value="" disabled selected>Select Country</option>' + html;
+            }
+            return;
+          }
+        } catch {}
       }
+      // Fallback (kısa liste)
+      issueCountry.innerHTML = `
+        <option value="" disabled selected>Select Country</option>
+        <option value="Türkiye">Türkiye</option>
+        <option value="Greece">Greece</option>
+        <option value="Italy">Italy</option>
+        <option value="United Kingdom">United Kingdom</option>
+        <option value="United States">United States</option>
+      `;
+    }
+    loadCountryOptions();
+
+    // Expiry kapalı/açık
+    noExpiry.addEventListener('change', ()=>{
+      expiryDate.disabled = noExpiry.checked;
+      if (noExpiry.checked) expiryDate.value='';
     });
 
-    form.addEventListener('submit', async e=>{
-      e.preventDefault(); saveBtn.disabled=true; saveStatus.style.display='none';
-      const data={
-        passportCountry:form.passportCountry.value, passportNumber:form.passportNumber.value,
-        passportIssue:form.passportIssue.value, passportExpiry:form.passportExpiry.value,
-        seamanBookCountry:form.seamanBookCountry.value, seamanBookNumber:form.seamanBookNumber.value,
-        seamanBookIssue:form.seamanBookIssue.value, seamanBookExpiry:form.seamanBookExpiry.value
+    // Add / Edit modal aç
+    addBtn.addEventListener('click', ()=> openModal());
+    function openModal(data=null, id=null){
+      docForm.reset();
+      noExpiry.checked=false; expiryDate.disabled=false;
+      editId = id;
+      modalTitle.textContent = id ? 'Edit Document' : 'Add Document';
+      saveBtn.textContent = id ? 'Save' : 'Add';
+
+      if(data){
+        type.value         = data.type || '';
+        number.value       = data.number || '';
+        issueCountry.value = data.issueCountry || '';
+        issueDate.value    = data.issueDate || '';
+        if(!data.expiryDate){ noExpiry.checked = true; expiryDate.disabled = true; }
+        expiryDate.value   = data.expiryDate || '';
+      }
+      docModal.show();
+    }
+
+    // Kaydet
+    docForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      if(!docForm.checkValidity()){ docForm.reportValidity(); return; }
+      if(!noExpiry.checked && expiryDate.value && issueDate.value && expiryDate.value < issueDate.value){
+        alert('Expiry date cannot be before issue date.'); expiryDate.focus(); return;
+      }
+      const payload = {
+        type: type.value,
+        number: number.value.trim(),
+        issueCountry: issueCountry.value,
+        issueDate: issueDate.value,
+        expiryDate: noExpiry.checked ? '' : (expiryDate.value || '')
       };
-      await setDoc(doc(db,'seafarers',userId,'cv','documents'), data);
-      saveBtn.disabled=false; saveStatus.style.display='inline';
-      setTimeout(()=>saveStatus.style.display='none', 1800);
+      const base = collection(db, `seafarers/${uid}/cv/documents/items`);
+      try{
+        if(editId) await updateDoc(doc(base, editId), payload);
+        else await addDoc(base, payload);
+        await render();
+        docModal.hide();
+      }catch(err){ console.error(err); alert('Save failed.'); }
     });
+
+    // Sil
+    async function delItem(id){
+      if(!confirm('Delete this document?')) return;
+      try{
+        const base = collection(db, `seafarers/${uid}/cv/documents/items`);
+        await deleteDoc(doc(base,id));
+        await render();
+      }catch(err){ console.error(err); alert('Delete failed.'); }
+    }
+
+    // Listele
+    onAuthStateChanged(auth, async user=>{
+      if(!user) return location.href='/index.html';
+      uid=user.uid; await render();
+    });
+
+    async function render(){
+      docList.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Loading…</td></tr>';
+      try{
+        const base = collection(db, `seafarers/${uid}/cv/documents/items`);
+        const snap = await getDocs(query(base, orderBy('type'), orderBy('issueDate','desc')));
+        if(snap.empty){
+          docList.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No documents added yet. Click <b>+ Add</b> to create one.</td></tr>';
+          return;
+        }
+        docList.innerHTML='';
+        snap.forEach(s=>{
+          const d=s.data();
+          const tr=document.createElement('tr');
+          tr.innerHTML=`
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-secondary me-1" data-act="edit">Edit</button>
+              <button class="btn btn-sm btn-outline-danger" data-act="del">Delete</button>
+            </td>
+            <td>${esc(d.type||'')}</td>
+            <td>${esc(d.number||'')}</td>
+            <td>${esc(d.issueCountry||'')}</td>
+            <td>${esc(d.issueDate||'')}</td>
+            <td>${d.expiryDate ? esc(d.expiryDate) : '—'}</td>
+          `;
+          tr.querySelector('[data-act="edit"]').addEventListener('click',()=>openModal(d, s.id));
+          tr.querySelector('[data-act="del"]').addEventListener('click',()=>delItem(s.id));
+          docList.appendChild(tr);
+        });
+      }catch(err){
+        console.error(err);
+        docList.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4">Load failed.</td></tr>';
+      }
+    }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
