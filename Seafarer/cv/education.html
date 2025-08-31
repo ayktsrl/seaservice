@@ -1,102 +1,290 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Education</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="/style.css"/>
   <style>
-    @media(max-width:768px){ .table{font-size:.9rem} .btn,.form-control,.form-check-label{font-size:.9rem} .add-btn{width:40px;height:40px} }
-    .form-slide{background:#fff;border-radius:10px;box-shadow:0 1px 10px #e3e7ee;margin-bottom:18px;display:none}
-    .form-slide.active{display:block}
+    body{ background:#fff; }
+    .card-shadow{ box-shadow:0 6px 18px rgba(0,0,0,.06); border:0; }
+    .table td,.table th{ vertical-align:middle; }
+    .toolbar{ position:sticky; top:0; z-index:10; background:#fff; }
+    .required::after{ content:" *"; color:#dc3545; }
   </style>
 </head>
-<body class="bg-light p-4">
-  <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h4 class="fw-bold">Education</h4>
-      <button class="btn btn-success rounded-circle add-btn" onclick="openForm()">+</button>
+<body>
+  <div class="container py-3">
+    <div class="d-flex align-items-center justify-content-between toolbar mb-2">
+      <h4 class="mb-0">Education</h4>
+      <button id="addBtn" class="btn btn-success rounded-circle" title="Add"><span class="fw-bold">+</span></button>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped align-middle">
-        <thead class="table-primary text-center">
-          <tr><th style="width:80px"></th><th>Institution</th><th>Qualification</th><th>Field</th><th>From</th><th>To</th><th>Location</th><th>Remarks</th></tr>
-        </thead>
-        <tbody id="educationList"></tbody>
-        <tfoot><tr><td colspan="8" class="text-center text-muted small">List all education and qualifications.</td></tr></tfoot>
-      </table>
+    <div class="card card-shadow mb-3">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0" id="eduTable">
+          <thead class="table-light">
+            <tr>
+              <th>University</th>
+              <th>Department</th>
+              <th>From</th>
+              <th>To</th>
+              <th>City</th>
+              <th>GPA</th>
+              <th style="width:160px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyEdu">
+            <tr><td colspan="7" class="text-center text-muted py-4">List all education and qualifications.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div id="educationForm" class="form-slide">
-      <form id="form" class="p-3">
+    <!-- Editor -->
+    <div class="card card-shadow d-none" id="formCard">
+      <div class="card-body">
         <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Institution</label><input id="institution" class="form-control" required></div>
-          <div class="col-md-6"><label class="form-label">Qualification</label><input id="qualification" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Field of Study</label><input id="field" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">From</label><input id="from" type="date" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">To</label><input id="to" type="date" class="form-control"></div>
-          <div class="col-md-6"><label class="form-label">Location</label><input id="location" class="form-control"></div>
-          <div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control"></textarea></div>
+          <div class="col-md-6">
+            <label class="form-label required">University</label>
+            <input type="text" class="form-control" id="university" placeholder="e.g., Istanbul Technical University">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Department</label>
+            <input type="text" class="form-control" id="department" placeholder="e.g., Naval Architecture">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label required">From</label>
+            <input type="date" class="form-control" id="fromDate">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">To</label>
+            <div class="input-group">
+              <input type="date" class="form-control" id="toDate">
+              <span class="input-group-text">
+                <input class="form-check-input mt-0" type="checkbox" id="ongoing" title="Ongoing">
+              </span>
+            </div>
+            <div class="form-text">Check if ongoing</div>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" id="city" placeholder="e.g., Istanbul">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">GPA</label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="gpa" step="0.01" min="0">
+              <select class="form-select" id="gpaScale" style="max-width:120px">
+                <option value="4">/ 4.00</option>
+                <option value="100">/ 100</option>
+              </select>
+            </div>
+            <div class="form-text">Leave empty if unknown.</div>
+          </div>
         </div>
-        <div class="text-end mt-3">
-          <button class="btn btn-primary" id="submitBtn">Add</button>
-          <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancel</button>
+
+        <div class="d-flex justify-content-end gap-2 mt-3">
+          <button class="btn btn-primary" id="saveBtn">Add</button>
+          <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 
   <script type="module">
-    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
     import { auth, db } from '/firebase-config.js';
-    import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    let userId=null, editId=null;
-    const list=document.getElementById('educationList');
-    const formBox=document.getElementById('educationForm');
-    const form=document.getElementById('form');
-    const submitBtn=document.getElementById('submitBtn');
+    const tbody = document.getElementById('tbodyEdu');
+    const addBtn = document.getElementById('addBtn');
+    const formCard = document.getElementById('formCard');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
 
-    onAuthStateChanged(auth, async user=>{
-      if(!user) return location.href='/index.html';
-      userId=user.uid; await render();
+    const university = document.getElementById('university');
+    const department = document.getElementById('department');
+    const fromDate   = document.getElementById('fromDate');
+    const toDate     = document.getElementById('toDate');
+    const ongoing    = document.getElementById('ongoing');
+    const city       = document.getElementById('city');
+    const gpa        = document.getElementById('gpa');
+    const gpaScale   = document.getElementById('gpaScale');
+
+    let currentUser = null;
+    let baseRef = null;
+    let editingId = null;
+
+    // Ongoing -> To disabled
+    ongoing.addEventListener('change', () => {
+      toDate.disabled = ongoing.checked;
+      if (ongoing.checked) toDate.value = '';
     });
 
-    window.openForm=(id=null,data=null)=>{
-      formBox.classList.add('active'); submitBtn.textContent=id?'Save':'Add'; editId=id; form.reset();
-      if(data){ for(const k in data){ if(form[k]) form[k].value=data[k]||''; } }
-    };
-    window.closeForm=()=>{ formBox.classList.remove('active'); editId=null; };
+    addBtn.addEventListener('click', () => openEditor());
+    cancelBtn.addEventListener('click', () => closeEditor());
 
-    form.addEventListener('submit', async e=>{
-      e.preventDefault();
-      const data={ institution:form.institution.value, qualification:form.qualification.value, field:form.field.value,
-                   from:form.from.value, to:form.to.value, location:form.location.value, remarks:form.remarks.value };
-      const base=collection(db,`seafarers/${userId}/cv/education/items`);
-      if(editId) await updateDoc(doc(base,editId),data); else await addDoc(base,data);
-      await render(); closeForm();
+    saveBtn.addEventListener('click', async () => {
+      const payload = readForm();
+      if (!payload) return; // validation failed
+      try {
+        if (editingId) {
+          await updateDoc(doc(baseRef, editingId), payload);
+        } else {
+          await addDoc(baseRef, payload);
+        }
+        closeEditor();
+        await loadList();
+      } catch (e) {
+        console.error(e); alert('Save failed.');
+      }
     });
 
-    async function render(){
-      list.innerHTML=''; const base=collection(db,`seafarers/${userId}/cv/education/items`);
-      const snap=await getDocs(base);
-      snap.forEach(s=>{
-        const d=s.data();
-        const tr=document.createElement('tr');
-        tr.innerHTML=`
-          <td>
-            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${s.id}", ${JSON.stringify(d).replace(/"/g,'&quot;')})'>Edit</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='del("${s.id}")'>Delete</button>
-          </td>
-          <td>${d.institution||''}</td><td>${d.qualification||''}</td><td>${d.field||''}</td>
-          <td>${d.from||''}</td><td>${d.to||''}</td><td>${d.location||''}</td><td>${d.remarks||''}</td>`;
-        list.appendChild(tr);
-      });
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return;
+      currentUser = user;
+      baseRef = collection(db, 'seafarers', currentUser.uid, 'cv', 'education');
+      await loadList();
+    });
+
+    async function loadList() {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Loading…</td></tr>`;
+      try {
+        const snap = await getDocs(query(baseRef, orderBy('from','desc')));
+        if (snap.empty) {
+          tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No education added yet.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = '';
+        snap.forEach(d => {
+          const row = d.data();
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${esc(row.university)}</td>
+            <td>${esc(row.department || '')}</td>
+            <td>${fmtDate(row.from)}</td>
+            <td>${row.to ? fmtDate(row.to) : '<span class="badge bg-info-subtle text-info-emphasis">Ongoing</span>'}</td>
+            <td>${esc(row.city || '')}</td>
+            <td>${fmtGpa(row.gpa, row.gpaScale)}</td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" data-act="edit" data-id="${d.id}">Edit</button>
+                <button class="btn btn-outline-danger" data-act="del"  data-id="${d.id}">Delete</button>
+              </div>
+            </td>
+          `;
+          tr.querySelector('[data-act="edit"]').addEventListener('click', () => openEditor(d.id, row));
+          tr.querySelector('[data-act="del"]').addEventListener('click', async () => {
+            if (!confirm('Delete this record?')) return;
+            try { await deleteDoc(doc(baseRef, d.id)); await loadList(); }
+            catch(e){ console.error(e); alert('Delete failed.'); }
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-4">Failed to load.</td></tr>`;
+      }
     }
-    window.del = async id => { if(!confirm('Delete item?')) return; await deleteDoc(doc(db,`seafarers/${userId}/cv/education/items/${id}`)); await render(); };
+
+    function openEditor(id=null, data=null){
+      editingId = id;
+      saveBtn.textContent = id ? 'Save' : 'Add';
+      formCard.classList.remove('d-none');
+      (data ? fillForm(data) : clearForm());
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+    function closeEditor(){
+      formCard.classList.add('d-none');
+      clearForm(); editingId = null;
+    }
+
+    function clearForm(){
+      university.value=''; department.value=''; fromDate.value='';
+      toDate.value=''; ongoing.checked=false; toDate.disabled=false;
+      city.value=''; gpa.value=''; gpaScale.value='4';
+    }
+    function fillForm(d){
+      university.value = d.university || '';
+      department.value = d.department || '';
+      fromDate.value   = toInputDate(d.from) || '';
+      if (d.to){ toDate.value = toInputDate(d.to); ongoing.checked=false; toDate.disabled=false; }
+      else { toDate.value=''; ongoing.checked=true; toDate.disabled=true; }
+      city.value       = d.city || '';
+      gpa.value        = (typeof d.gpa === 'number') ? d.gpa : '';
+      gpaScale.value   = d.gpaScale || '4';
+    }
+
+    function readForm(){
+      const uni = university.value.trim();
+      const dep = department.value.trim();
+      const fromV = fromDate.value;
+      const toV   = toDate.value;
+      const isOngoing = ongoing.checked;
+      const cityV = city.value.trim();
+      const gpaV  = gpa.value.trim();
+      const gpaSc = gpaScale.value;
+
+      if (!uni){ alert('Please enter University.'); university.focus(); return null; }
+      if (!fromV){ alert('Please select From date.'); fromDate.focus(); return null; }
+
+      const payload = {
+        university: uni,
+        department: dep || null,
+        from: Timestamp.fromDate(new Date(fromV)),
+        city: cityV || null,
+        gpa: gpaV === '' ? null : Number(gpaV),
+        gpaScale: (gpaV === '' ? null : (gpaSc === '100' ? '100' : '4'))
+      };
+      if (!isOngoing && toV){
+        payload.to = Timestamp.fromDate(new Date(toV));
+      } else {
+        payload.to = null;
+      }
+      // basic GPA sanity
+      if (payload.gpa !== null){
+        if (payload.gpaScale === '4' && (payload.gpa < 0 || payload.gpa > 4.0)){
+          alert('GPA must be between 0.00 and 4.00'); gpa.focus(); return null;
+        }
+        if (payload.gpaScale === '100' && (payload.gpa < 0 || payload.gpa > 100)){
+          alert('GPA must be between 0 and 100'); gpa.focus(); return null;
+        }
+      }
+      // if to < from
+      if (payload.to && payload.to.toMillis() < payload.from.toMillis()){
+        alert('"To" date cannot be before "From"'); toDate.focus(); return null;
+      }
+      return payload;
+    }
+
+    // utils
+    function fmtDate(ts){
+      try{
+        const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
+        return d ? d.toLocaleDateString() : '';
+      }catch{ return ''; }
+    }
+    function toInputDate(ts){
+      const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
+      if (!d) return '';
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+    function fmtGpa(v, scale){
+      if (v === null || v === undefined || v === '') return '';
+      const n = Number(v);
+      if (scale === '100') return `${Math.round(n)}/100`;
+      return `${n.toFixed(2)}/4.00`;
+    }
+    function esc(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
