@@ -15,7 +15,7 @@
   </style>
 </head>
 <body class="bg-light">
-  <!-- NAVBAR (fetch yerine tek JS) -->
+  <!-- NAVBAR -->
   <div id="navbar-host"></div>
   <script type="module" src="/shared/navbar-inject.js"></script>
 
@@ -27,29 +27,30 @@
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <h4 class="card-title">Personal Details</h4>
-        <p><strong>Full Name:</strong> <span id="fullName">Loading...</span></p>
-        <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+        <p><strong>Full Name:</strong> <span id="fullName">Loading…</span></p>
+        <p><strong>Email:</strong> <span id="email">Loading…</span></p>
       </div>
     </div>
 
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <h4 class="card-title">Qualifications</h4>
-        <p><strong>Applied Rank:</strong> <span id="rank">Loading...</span></p>
+        <p><strong>Applied Rank:</strong> <span id="appliedRank">Loading…</span></p>
       </div>
     </div>
 
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <h4 class="card-title">Experience</h4>
-        <p><span id="experience">Loading...</span></p>
+        <ul id="expList"><li>Loading…</li></ul>
+        <p class="mt-2"><strong>Total (verified):</strong> <span id="expTotal">—</span></p>
       </div>
     </div>
 
     <div class="card shadow-sm">
       <div class="card-body">
         <h4 class="card-title">Certificates</h4>
-        <ul id="certificatesList"><li>Loading...</li></ul>
+        <ul id="certList"><li>Loading…</li></ul>
       </div>
     </div>
 
@@ -61,113 +62,177 @@
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const params = new URLSearchParams(location.search);
-    const cvIdParam      = params.get('cvId');
-    const legacyUidParam = params.get('userId') || params.get('uid'); // eski kullanım
+    // ---------- helpers ----------
+    const qs         = new URLSearchParams(location.search);
+    const cvId       = qs.get('cvId');
+    const autoPdf    = qs.get('pdf') === '1';
 
-    const fullName = document.getElementById("fullName");
-    const email    = document.getElementById("email");
-    const rank     = document.getElementById("rank");
-    const experience = document.getElementById("experience");
-    const certificatesList = document.getElementById("certificatesList");
-    const errorMsg  = document.getElementById("errorMsg");
-    const infoBox   = document.getElementById("infoBox");
+    const $fullName  = document.getElementById('fullName');
+    const $email     = document.getElementById('email');
+    const $applied   = document.getElementById('appliedRank');
+    const $expList   = document.getElementById('expList');
+    const $expTotal  = document.getElementById('expTotal');
+    const $certList  = document.getElementById('certList');
+    const $error     = document.getElementById('errorMsg');
+    const $info      = document.getElementById('infoBox');
 
+    const setText = (el, v) => el.textContent = (v ?? '—');
+    const safe    = s => (s??'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const parseDate = s => { if(!s) return null; const d = new Date(s); return isNaN(d.getTime()) ? null : d; };
+
+    function showInfo(text, type='info') {
+      $info.className = 'alert alert-' + type;
+      $info.textContent = text;
+      $info.classList.remove('d-none');
+    }
+
+    function showError(err) {
+      console.error(err);
+      $error.textContent = err?.message || String(err);
+    }
+
+    // ---------- main ----------
     let viewer = null;
-
     onAuthStateChanged(auth, async (user) => {
       viewer = user;
-      try { await loadCV(); }
-      catch (e) { errorMsg.textContent = "Error loading CV: " + e.message; }
+      try {
+        if (!cvId) throw new Error('No CV specified.');
+        await loadAndRender(cvId, viewer);
+        // PDF: tüm veriler geldikten sonra yazdır
+        if (autoPdf) {
+          await document.fonts?.ready;
+          await new Promise(r => setTimeout(r, 200));
+          window.print();
+        }
+      } catch (e) { showError(e); }
     });
 
-    async function loadCV() {
-      // Mode A: cvId (önerilen)
-      if (cvIdParam) {
-        const metaRef = doc(db, 'cvs', cvIdParam);
-        const metaSnap = await getDoc(metaRef);
-        if (!metaSnap.exists()) throw new Error("CV not found");
-        const meta = metaSnap.data(); // { ownerUid, public, ... }
+    async function loadAndRender(cvId, viewer){
+      // 1) meta
+      const metaRef  = doc(db, 'cvs', cvId);
+      const metaSnap = await getDoc(metaRef);
+      if (!metaSnap.exists()) throw new Error('CV not found.');
+      const meta = metaSnap.data(); // {ownerUid, public, ownerEmail, name, …}
 
-        const isOwner = viewer && meta.ownerUid === viewer.uid;
-        if (!meta.public && !isOwner) {
-          showInfo('This CV is not published yet. Only the owner can view it.', 'warning');
-          throw new Error("Not published");
-        }
-
-        await loadSeafarerCvByOwner(meta.ownerUid);
-        showInfo(meta.public ? 'This CV is published.' : 'This CV is in draft (only visible to you).',
-                 meta.public ? 'success' : 'secondary', isOwner);
-        return;
+      const isOwner = viewer && viewer.uid === meta.ownerUid;
+      if (!meta.public && !isOwner) {
+        showInfo('This CV is not published yet. Only the owner can view it.', 'warning');
+        throw new Error('Not published');
       }
+      showInfo(meta.public ? 'This CV is published.' : 'This CV is in draft (owner view).', meta.public ? 'success' : 'secondary');
 
-      // Mode B (legacy): userId/uid → sadece owner görebilsin
-      if (legacyUidParam) {
-        if (!viewer || viewer.uid !== legacyUidParam) {
-          showInfo('This private draft CV can be viewed only by its owner.', 'warning');
-          throw new Error("Not authorized");
-        }
-        await loadSeafarerCvByOwner(legacyUidParam);
-        showInfo('Private draft view (owner only).', 'secondary', true);
-        return;
-      }
+      const ownerUid = meta.ownerUid;
 
-      throw new Error("No CV specified.");
+      // 2) paralel yükleme
+      await Promise.all([
+        loadPersonal(ownerUid, cvId, meta),
+        loadQualifications(ownerUid, cvId),
+        loadExperience(ownerUid, cvId),
+        loadCertificates(ownerUid, cvId)
+      ]);
     }
 
-    async function loadSeafarerCvByOwner(ownerUid){
-      // Personal
-      const personalRef = doc(db, "seafarers", ownerUid, "cv", "personalDetails");
-      const qualRef     = doc(db, "seafarers", ownerUid, "cv", "qualifications");
-      const certCol     = collection(db, "seafarers", ownerUid, "cv", "certificates/items");
-      const seaServiceCol = collection(db, "seafarers", ownerUid, "seaService");
+    // ---------- sections ----------
+    async function loadPersonal(ownerUid, cvId, meta){
+      // Önce yeni path: seafarers/{uid}/cv/{cvId}/personal/details
+      let snap = await getDoc(doc(db, `seafarers/${ownerUid}/cv/${cvId}/personal/details`));
 
-      const personalSnap = await getDoc(personalRef);
-      let fName = "-", mail = "-";
-      if (personalSnap.exists()) {
-        const d = personalSnap.data();
-        fName = ((d.firstName || "") + " " + (d.middleName || "") + " " + (d.lastName || "")).replace(/\s+/g, " ").trim();
-        mail  = d.email || "-";
-      }
-      fullName.textContent = fName; email.textContent = mail;
+      // Eski fallback: seafarers/{uid}/cv/personalDetails
+      if (!snap.exists()) snap = await getDoc(doc(db, `seafarers/${ownerUid}/cv/personalDetails`));
 
-      const qualSnap = await getDoc(qualRef);
-      rank.textContent = (qualSnap.exists() && qualSnap.data().rankApplied) ? qualSnap.data().rankApplied : "-";
-
-      // Verified sea-service toplam
-      let totalDays = 0;
-      const seaSnaps = await getDocs(seaServiceCol);
-      seaSnaps.forEach(doc => {
-        const d = doc.data();
-        if (d.isVerified && d.start && d.end) {
-          const s = new Date(d.start), e = new Date(d.end);
-          const diff = Math.floor((e - s) / (1000 * 60 * 60 * 24));
-          if (!isNaN(diff) && diff > 0) totalDays += diff;
-        }
-      });
-      const years = Math.floor(totalDays / 365), months = Math.floor((totalDays % 365) / 30), days = totalDays % 30;
-      experience.textContent = (totalDays > 0) ? `${years}y ${months}m ${days}d (${totalDays} days)` : "-";
-
-      // Certificates
-      certificatesList.innerHTML = "";
-      const certSnaps = await getDocs(certCol);
-      if (certSnaps.size === 0) {
-        certificatesList.innerHTML = "<li>No certificates listed.</li>";
+      if (snap.exists()) {
+        const d = snap.data();
+        const name =
+          ((d.firstName||'') + ' ' + (d.middleName||'') + ' ' + (d.lastName||''))
+            .replace(/\s+/g,' ').trim() || meta.name || '—';
+        setText($fullName, name);
+        setText($email, d.email || meta.ownerEmail || '—');
       } else {
-        certSnaps.forEach(doc => {
-          const d = doc.data();
-          certificatesList.innerHTML += `<li><b>${escapeHtml(d.type || d.category || "Certificate")}</b> - ${escapeHtml(d.number || "")} (${escapeHtml(d.expiry || "No Expiry")})</li>`;
-        });
+        // meta’ya düş
+        setText($fullName, meta.name || '—');
+        setText($email, meta.ownerEmail || '—');
       }
     }
 
-    function showInfo(text, type='info', owner=false){
-      infoBox.className = 'alert alert-' + type;
-      infoBox.textContent = text + (owner ? ' (Owner view)' : '');
-      infoBox.classList.remove('d-none');
+    async function loadQualifications(ownerUid, cvId){
+      // Yeni: items içinden applied rank bul
+      let applied = null;
+      const itemsCol = collection(db, `seafarers/${ownerUid}/cv/${cvId}/qualifications/items`);
+      const itemsSnap = await getDocs(itemsCol);
+      itemsSnap.forEach(s => {
+        const d = s.data();
+        applied = applied || d.appliedRank || d.rankApplied;
+      });
+
+      // Eski fallback tek doküman
+      if (!applied) {
+        const legacy = await getDoc(doc(db, `seafarers/${ownerUid}/cv/qualifications`));
+        if (legacy.exists()) applied = legacy.data().rankApplied || legacy.data().appliedRank;
+      }
+
+      setText($applied, applied || '—');
     }
 
-    function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    async function loadExperience(ownerUid, cvId){
+      const list = [];
+      const col = collection(db, `seafarers/${ownerUid}/cv/${cvId}/experience/items`);
+      const snap = await getDocs(col);
+
+      $expList.innerHTML = '';
+      let totalDays = 0;
+
+      if (snap.empty) {
+        $expList.innerHTML = '<li>—</li>';
+      } else {
+        snap.forEach(s => list.push(s.data()));
+        list.sort((a,b) => (a.startDate||a.from||a.joined||'') < (b.startDate||b.from||b.joined||'') ? 1 : -1);
+        for (const x of list) {
+          const vsl = x.vessel || '';
+          const imo = x.imo || '';
+          const rnk = x.rank || '';
+          const type= x.type || '';
+          const sdt = parseDate(x.startDate || x.from || x.joined);
+          const edt = parseDate(x.endDate   || x.to   || x.signedOff);
+
+          // sadece doğrulanmış gün toplamı
+          if (x.isVerified && sdt && edt && edt > sdt) {
+            const diff = Math.floor((edt - sdt) / 86400000);
+            if (diff > 0) totalDays += diff;
+          }
+
+          const li = document.createElement('li');
+          li.innerHTML =
+            `<b>${safe(vsl)}</b>${imo ? ' (IMO ' + safe(imo) + ')' : ''} — ${safe(rnk)} ${type ? '• ' + safe(type) : ''} ` +
+            `${sdt ? '• ' + sdt.toISOString().slice(0,10) : ''} – ${edt ? edt.toISOString().slice(0,10) : ''}`;
+          $expList.appendChild(li);
+        }
+      }
+
+      const years = Math.floor(totalDays/365);
+      const months= Math.floor((totalDays%365)/30);
+      const days  = totalDays%30;
+      setText($expTotal, totalDays > 0 ? `${years}y ${months}m ${days}d (${totalDays} days)` : '—');
+    }
+
+    async function loadCertificates(ownerUid, cvId){
+      const col  = collection(db, `seafarers/${ownerUid}/cv/${cvId}/certificates/items`);
+      const snap = await getDocs(col);
+
+      $certList.innerHTML = '';
+      if (snap.empty) {
+        $certList.innerHTML = '<li>—</li>';
+        return;
+      }
+      snap.forEach(s => {
+        const d = s.data();
+        const name = d.name || d.type || d.category || 'Certificate';
+        const number = d.number ? ' • ' + d.number : '';
+        const issue  = d.issue || d.issueDate;
+        const expiry = d.expiry || d.expiryDate || 'No expiry';
+        const line = `<li><b>${safe(name)}</b>${safe(number)}${issue ? ' • Issue: ' + safe(issue) : ''} • Expiry: ${safe(expiry)}</li>`;
+        $certList.insertAdjacentHTML('beforeend', line);
+      });
+    }
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
