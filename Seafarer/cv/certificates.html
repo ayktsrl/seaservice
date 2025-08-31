@@ -45,7 +45,9 @@
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label required">Certificate Name</label>
-            <input id="name" class="form-control" placeholder="e.g., Personal Survival Techniques" required>
+            <input id="name" list="dl-cert-names" class="form-control"
+                   placeholder="e.g., Personal Survival Techniques" required>
+            <datalist id="dl-cert-names"></datalist>
           </div>
           <div class="col-md-6">
             <label class="form-label required">STCW Code / Reference</label>
@@ -96,11 +98,26 @@
     const cancelBtn=document.getElementById('cancelBtn');
     const noExpiry=document.getElementById('noExpiry');
     const expiryInput=document.getElementById('expiry');
+    const nameInput=document.getElementById('name');
+    const stcwInput=document.getElementById('stcw');
+    const dl=document.getElementById('dl-cert-names');
 
     // helpers
     function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
     let uid=null, editId=null;
+
+    // === options-stcw.html'den datalist'i yükle ve auto-fill yap ===
+    fetch('/options-stcw.html')
+      .then(r=>r.text())
+      .then(html=>{ dl.innerHTML=html; })
+      .catch(()=>{}); // sessiz
+
+    nameInput.addEventListener('change', ()=>{
+      const val = nameInput.value.trim().toLowerCase();
+      const opt = Array.from(dl.options).find(o => o.value.trim().toLowerCase() === val);
+      if (opt?.dataset?.stcw) stcwInput.value = opt.dataset.stcw;
+    });
 
     // UI events
     addBtn.addEventListener('click', ()=> openForm());
