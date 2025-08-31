@@ -13,7 +13,6 @@
 </head>
 <body class="p-4">
   <div class="container">
-
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h4 class="mb-0 fw-bold">Certificates</h4>
       <button class="btn btn-success" id="addBtn">+ Add</button>
@@ -27,13 +26,12 @@
             <tr>
               <th style="width:130px">Actions</th>
               <th>Certificate</th>
-              <th>STCW Code / Ref.</th>
               <th>Issue</th>
               <th>Expiry</th>
             </tr>
           </thead>
           <tbody id="certList">
-            <tr><td colspan="5" class="text-center text-muted py-4">No certificates added yet.</td></tr>
+            <tr><td colspan="4" class="text-center text-muted py-4">No certificates added yet.</td></tr>
           </tbody>
         </table>
       </div>
@@ -43,15 +41,11 @@
     <div id="certForm" class="cardish p-3 d-none">
       <form id="form" novalidate>
         <div class="row g-3">
-          <div class="col-md-6">
+          <div class="col-md-12">
             <label class="form-label required">Certificate Name</label>
             <input id="name" list="dl-cert-names" class="form-control"
-                   placeholder="e.g., Personal Survival Techniques" required>
+                   placeholder="yazmaya başlayın (örn. Personal Survival Techniques)" required>
             <datalist id="dl-cert-names"></datalist>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label required">STCW Code / Reference</label>
-            <input id="stcw" class="form-control" placeholder="e.g., A-VI/1-1" required>
           </div>
           <div class="col-md-6">
             <label class="form-label required">Issue Date</label>
@@ -71,6 +65,9 @@
           <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
         </div>
       </form>
+      <div class="small text-muted mt-2">
+        İpucu: Liste yazdıkça açılır. STCW kodu tutulmuyor.
+      </div>
     </div>
 
     <div class="alert alert-light border small mt-3">
@@ -80,7 +77,6 @@
 
   <!-- Firebase + App -->
   <script type="module">
-    // yalnızca seafarer girebilsin
     if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
 
     import { auth, db } from '/firebase-config.js';
@@ -89,7 +85,6 @@
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-    // DOM
     const list=document.getElementById('certList');
     const formBox=document.getElementById('certForm');
     const form=document.getElementById('form');
@@ -99,27 +94,29 @@
     const noExpiry=document.getElementById('noExpiry');
     const expiryInput=document.getElementById('expiry');
     const nameInput=document.getElementById('name');
-    const stcwInput=document.getElementById('stcw');
     const dl=document.getElementById('dl-cert-names');
 
-    // helpers
     function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
     let uid=null, editId=null;
 
-    // === options-stcw.html'den datalist'i yükle ve auto-fill yap ===
-    fetch('/options-stcw.html')
-      .then(r=>r.text())
-      .then(html=>{ dl.innerHTML=html; })
-      .catch(()=>{}); // sessiz
+    // options-stcw.html'i yükle (birkaç yol dene)
+    async function loadOptions(){
+      const paths=['/options-stcw.html','/options/options-stcw.html','/assets/options-stcw.html'];
+      for(const p of paths){
+        try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ dl.innerHTML=await r.text(); return; } }catch(e){}
+      }
+      // fallback birkaç seçenek
+      dl.innerHTML = `
+        <option value="Personal Survival Techniques Training Cert"></option>
+        <option value="Elementary First Aid Training Certificate"></option>
+        <option value="Fire Prevention & Fire fighting Training Cert"></option>
+        <option value="Personal Safety & Social Responsibilities Training Cert"></option>
+      `;
+    }
+    loadOptions();
 
-    nameInput.addEventListener('change', ()=>{
-      const val = nameInput.value.trim().toLowerCase();
-      const opt = Array.from(dl.options).find(o => o.value.trim().toLowerCase() === val);
-      if (opt?.dataset?.stcw) stcwInput.value = opt.dataset.stcw;
-    });
-
-    // UI events
+    // UI
     addBtn.addEventListener('click', ()=> openForm());
     cancelBtn.addEventListener('click', ()=> closeForm());
     noExpiry.addEventListener('change',()=>{ expiryInput.disabled = noExpiry.checked; if(noExpiry.checked) expiryInput.value=''; });
@@ -132,7 +129,6 @@
       }
       const data = {
         name: form.name.value.trim(),
-        stcw: form.stcw.value.trim(),
         issue: form.issue.value,
         expiry: noExpiry.checked ? '' : (form.expiry.value || '')
       };
@@ -146,7 +142,12 @@
     function openForm(id=null,data=null){
       form.reset(); noExpiry.checked=false; expiryInput.disabled=false;
       submitBtn.textContent=id?'Save':'Add'; editId=id;
-      if(data){ form.name.value=data.name||''; form.stcw.value=data.stcw||''; form.issue.value=data.issue||''; form.expiry.value=data.expiry||''; if(!data.expiry){ noExpiry.checked=true; expiryInput.disabled=true; } }
+      if(data){
+        form.name.value=data.name||'';
+        form.issue.value=data.issue||'';
+        form.expiry.value=data.expiry||'';
+        if(!data.expiry){ noExpiry.checked=true; expiryInput.disabled=true; }
+      }
       formBox.classList.remove('d-none');
       window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
     }
@@ -168,10 +169,10 @@
     });
 
     async function render(){
-      list.innerHTML='<tr><td colspan="5" class="text-center text-muted py-4">Loading…</td></tr>';
+      list.innerHTML='<tr><td colspan="4" class="text-center text-muted py-4">Loading…</td></tr>';
       const base=collection(db, `seafarers/${uid}/cv/certificates/items`);
       const snap=await getDocs(query(base, orderBy('issue','desc')));
-      if(snap.empty){ list.innerHTML='<tr><td colspan="5" class="text-center text-muted py-4">No certificates added yet.</td></tr>'; return; }
+      if(snap.empty){ list.innerHTML='<tr><td colspan="4" class="text-center text-muted py-4">No certificates added yet.</td></tr>'; return; }
       list.innerHTML='';
       snap.forEach(s=>{
         const d=s.data();
@@ -182,7 +183,6 @@
             <button class="btn btn-sm btn-outline-danger" data-act="del">Delete</button>
           </td>
           <td>${esc(d.name||'')}</td>
-          <td>${esc(d.stcw||'')}</td>
           <td>${esc(d.issue||'')}</td>
           <td>${d.expiry ? esc(d.expiry) : '—'}</td>
         `;
