@@ -226,11 +226,10 @@
   <!-- Tesseract + OCR (MODULE #2) -->
   <script type="module">
     import { collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-    // globallardan al
-    const db = window.__db;
+    const db  = window.__db;
     const esc = window.__esc;
 
-    // === Main OCR pipeline ===
+    // OCR UI hooks
     document.getElementById('ocrInput').addEventListener('change', async (e)=>{
       const f=e.target.files?.[0]; if(!f) return; await runOCR(f);
     });
@@ -274,28 +273,78 @@
       finally{ document.getElementById('ocrInput').value=''; setTimeout(()=>URL.revokeObjectURL(url),30000); }
     }
 
-    // === Parse by rows (canvas) ===
+    // ======== IMAGE PRE-PROCESSING ========
+    function upscale(c, factor=2){
+      const o=document.createElement('canvas'); o.width=c.width*factor; o.height=c.height*factor;
+      const ctx=o.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.drawImage(c,0,0,o.width,o.height); return o;
+    }
+    function adaptiveBinarize(c){
+      const ctx=c.getContext('2d'); const {width:w,height:h}=c;
+      const img=ctx.getImageData(0,0,w,h), a=img.data;
+      for(let i=0;i<a.length;i+=4){ const g=(a[i]*0.299+a[i+1]*0.587+a[i+2]*0.114)|0; a[i]=a[i+1]=a[i+2]=g; }
+      const S=15, win=(S|1); const integ=new Uint32Array((w+1)*(h+1));
+      for(let y=1;y<=h;y++){ let row=0; for(let x=1;x<=w;x++){ const g=a[((y-1)*w+(x-1))*4]; row+=g; integ[y*(w+1)+x]=integ[(y-1)*(w+1)+x]+row; } }
+      const T=7;
+      for(let y=0;y<h;y++){
+        const y1=Math.max(y-(win>>1),0), y2=Math.min(y+(win>>1),h-1);
+        for(let x=0;x<w;x++){
+          const x1=Math.max(x-(win>>1),0), x2=Math.min(x+(win>>1),w-1);
+          const count=(x2-x1+1)*(y2-y1+1);
+          const sum= integ[(y2+1)*(w+1)+(x2+1)] - integ[y1*(w+1)+(x2+1)]
+                   - integ[(y2+1)*(w+1)+x1] + integ[y1*(w+1)+x1];
+          const mean=(sum/count)|0; const i=((y*w)+x)*4; const v=a[i]<(mean-T)?0:255; a[i]=a[i+1]=a[i+2]=v;
+        }
+      }
+      ctx.putImageData(img,0,0); return c;
+    }
+    async function ocrRegion(canvas, lang, params={}){
+      const pre = adaptiveBinarize(upscale(canvas, 2));
+      const out = await Tesseract.recognize(pre, lang, params);
+      return out.data.text || '';
+    }
+
+    // ======== ROW/COLUMN PARSING ========
     async function parseByRows(url){
-      const img=await loadImage(url); const base=imageToCanvas(img); const bin=binarize(base); const rows=segmentRows(bin);
-      const W=bin.width, Lw=Math.round(W*0.22), Rx=Math.round(W*0.74);
+      const img=await loadImage(url);
+      const base=imageToCanvas(img);
+      const bin=adaptiveBinarize(upscale(base,1)); // hafif iyileştir
+      const rows=segmentRows(bin);
+
+      // kolon sınırları: sol tarih, orta ad, sağ STCW
+      const W=bin.width, Lw=Math.round(W*0.20), Rx=Math.round(W*0.76);
+
+      // Tesseract ayarları
+      const cfgDates = { tessedit_pageseg_mode: 7, tessedit_char_whitelist: '0123456789./-' };
+      const cfgStcw  = { tessedit_pageseg_mode: 7, tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZIVX/- .,' };
+      const cfgName  = { tessedit_pageseg_mode: 6 };
+
       const items=[];
       for(const r of rows){
-        if(r.y2-r.y1<40) continue;
-        const left=crop(bin,0,r.y1,Lw,r.y2-r.y1);
-        const mid=crop(bin,Lw,r.y1,Rx-Lw,r.y2-r.y1);
-        const right=crop(bin,Rx,r.y1,W-Rx,r.y2-r.y1);
-        const [t1,t2,t3]=await Promise.all([
-          Tesseract.recognize(left,'eng',{}),
-          Tesseract.recognize(mid,'eng+tur',{}),
-          Tesseract.recognize(right,'eng',{})
+        if(r.y2-r.y1<30) continue; // çok kısa gürültüyü at
+        const left = crop(bin, 0,   r.y1, Lw,      r.y2-r.y1);
+        const mid  = crop(bin, Lw,  r.y1, Rx-Lw,   r.y2-r.y1);
+        const right= crop(bin, Rx,  r.y1, W-Rx,    r.y2-r.y1);
+
+        const [txtDates, txtName, txtStcw] = await Promise.all([
+          ocrRegion(left,  'eng',     cfgDates),
+          ocrRegion(mid,   'eng+tur', cfgName),
+          ocrRegion(right, 'eng',     cfgStcw)
         ]);
-        const dates=findDates(t1.data.text||''); const stcw=findSTCW((t3.data.text||'')+' '+(t2.data.text||'')); const name=extractName(t2.data.text||'',stcw);
-        if(dates.length){ const issue=toISO(dates[0])||''; const expiry=dates[1]?toISO(dates[1]):''; items.push({name,stcw,issue,expiry}); }
+
+        const dates = findDates(txtDates);
+        let stcw    = normalizeSTCW(findSTCW((txtStcw + ' ' + txtName)));
+        let name    = extractName(txtName, stcw).replace(/\s{2,}/g,' ').trim();
+
+        if(dates.length){
+          const issue  = toISO(dates[0]) || '';
+          const expiry = dates[1] ? toISO(dates[1]) : '';
+          items.push({name, stcw, issue, expiry});
+        }
       }
       return items;
     }
 
-    // === Detected list ===
+    // ======== DETECTED LIST ========
     function renderDetected(items, message){
       const box=document.getElementById('detectedBox'); const list=document.getElementById('detectedList');
       document.getElementById('foundMsg').textContent=message||'Detected items';
@@ -350,32 +399,25 @@
       document.getElementById('clearDetectedBtn').onclick=()=>{ list.innerHTML=''; box.classList.add('d-none'); };
     }
 
-    // === Canvas helpers ===
+    // ======== CANVAS HELPERS ========
     function loadImage(src){ return new Promise(r=>{ const i=new Image(); i.onload=()=>r(i); i.src=src; }); }
     function imageToCanvas(img){ const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight; const x=c.getContext('2d'); x.drawImage(img,0,0); return c; }
-    function binarize(c){
-      const x=c.getContext('2d'), {width:w,height:h}=c; const d=x.getImageData(0,0,w,h); const a=d.data;
-      let sum=0; for(let i=0;i<a.length;i+=4){ const g=(a[i]*0.299+a[i+1]*0.587+a[i+2]*0.114)|0; a[i]=a[i+1]=a[i+2]=g; sum+=g; }
-      const mean=(sum/(a.length/4))|0, thr=Math.max(80, mean-10);
-      for(let i=0;i<a.length;i+=4){ const v=a[i]<thr?0:255; a[i]=a[i+1]=a[i+2]=v; }
-      x.putImageData(d,0,0); return c;
-    }
     function segmentRows(c){
       const x=c.getContext('2d'), {width:w,height:h}=c; const d=x.getImageData(0,0,w,h).data;
       const proj=new Array(h).fill(0);
       for(let y=0;y<h;y++){ let s=0; for(let x0=0;x0<w;x0++){ const i=(y*w+x0)*4; s += (d[i]===0)?1:0; } proj[y]=s; }
-      const rows=[]; const T=Math.max(...proj)*0.10;
+      const rows=[]; const T=Math.max(...proj)*0.08; // biraz daha hassas
       let inRow=false, start=0;
       for(let y=0;y<h;y++){
         if(proj[y]>T){ if(!inRow){start=y; inRow=true;} }
-        else if(inRow){ const end=y; if(end-start>35) rows.push({y1:start,y2:end}); inRow=false; }
+        else if(inRow){ const end=y; if(end-start>30) rows.push({y1:start,y2:end}); inRow=false; }
       }
       if(inRow) rows.push({y1:start,y2:h-1});
       return rows;
     }
     function crop(c,x,y,w,h){ const o=document.createElement('canvas'); o.width=w; o.height=h; o.getContext('2d').drawImage(c,x,y,w,h,0,0,w,h); return o; }
 
-    // === Fallback (simple) ===
+    // ======== SIMPLE FALLBACK ========
     function extractCertificates(raw){
       const text = raw.replace(/\r/g,'').replace(/[|]+/g,' ').replace(/\s{2,}/g,' ');
       const date='(?:\\d{2}[./-]\\d{2}[./-]\\d{4}|\\d{4}[./-]\\d{2}[./-]\\d{2})';
@@ -388,22 +430,38 @@
     function parseBlock(block){
       const ds=findDates(block); if(!ds.length) return null;
       const issue=toISO(ds[0])||''; const expiry=ds[1]?toISO(ds[1]):'';
-      const stcw=findSTCW(block);
+      let stcw=findSTCW(block); stcw=normalizeSTCW(stcw);
       let zone=block; if(ds[1]) zone=block.slice(block.indexOf(ds[1])+ds[1].length); else zone=block.slice(block.indexOf(ds[0])+ds[0].length);
       if(stcw){ const i=zone.toUpperCase().indexOf(stcw.toUpperCase()); if(i>0) zone=zone.slice(0,i); }
       let name=zone.split('/').pop().replace(/\(\d+\)/g,'').replace(/\b(CERTIFICATE|BELGESI)\b/ig,'').replace(/\s{2,}/g,' ').trim();
       if(name.length<6) name=zone.trim(); return {name,stcw,issue,expiry};
     }
 
-    // === small helpers ===
+    // ======== TEXT HELPERS ========
     function findDates(s){ const re=/\b(\d{2}[./-]\d{2}[./-]\d{4}|\d{4}[./-]\d{2}[./-]\d{2})\b/g; const out=[]; let m; while((m=re.exec(s))!==null) out.push(m[1]); return out.slice(0,3);}
     function toISO(d){ const p=d.split(/[./-]/).map(x=>parseInt(x,10)); let y,m,dd; if(p[0]>1900){y=p[0];m=p[1];dd=p[2];} else {y=p[2];m=p[1];dd=p[0];} if(m<1||m>12||dd<1||dd>31)return''; return `${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;}
     function findSTCW(s){
-      const t=s.replace(/\s+/g,' '); const rx1=/\bA-[IVX]{1,3}\/\d+(?:-\d+)?\b/i; const rx2=/\bReg\.?\s*([IVX]{1,3}\/\d+(?:-\d+)?)/i; const rx3=/\bTable\s*A-([IVX]{1,3}\/\d+(?:-\d+)?)/i;
-      const fix=t.replace(/V1/g,'VI').replace(/A- ?V1/g,'A-VI'); const m1=(t.match(rx1)||fix.match(rx1)); if(m1) return m1[0].toUpperCase();
-      const m2=t.match(rx2); if(m2) return ('A-'+m2[1]).toUpperCase(); const m3=t.match(rx3); if(m3) return ('A-'+m3[1]).toUpperCase(); return '';
+      const t=s.replace(/\s+/g,' ');
+      const rx1=/\bA-[IVX]{1,3}\/\d+(?:-\d+)?\b/i;
+      const rx2=/\bReg\.?\s*([IVX]{1,3}\/\d+(?:-\d+)?)/i;
+      const rx3=/\bTable\s*A-([IVX]{1,3}\/\d+(?:-\d+)?)/i;
+      const fix=t.replace(/V1/g,'VI').replace(/A- ?V1/g,'A-VI');
+      const m1=(t.match(rx1)||fix.match(rx1)); if(m1) return m1[0].toUpperCase();
+      const m2=t.match(rx2); if(m2) return ('A-'+m2[1]).toUpperCase();
+      const m3=t.match(rx3); if(m3) return ('A-'+m3[1]).toUpperCase();
+      return '';
     }
-    function extractName(mid,stcw){ let zone=mid; if(stcw){ const i=zone.toUpperCase().indexOf(stcw.toUpperCase()); if(i>0) zone=zone.slice(0,i);} zone=zone.split('/').pop(); return zone.replace(/\(\d+\)/g,'').replace(/\b(CERTIFICATE|BELGESI)\b/ig,'').replace(/\s{2,}/g,' ').trim(); }
+    function normalizeSTCW(s){
+      return (s||'').toUpperCase()
+        .replace(/A-\s?V1/g,'A-VI').replace(/\bV1\b/g,'VI')
+        .replace(/[^A-Z0-9/.\- ]/g,'').replace(/\s{2,}/g,' ').trim();
+    }
+    function extractName(mid,stcw){
+      let zone=mid||'';
+      if(stcw){ const i=zone.toUpperCase().indexOf(stcw.toUpperCase()); if(i>0) zone=zone.slice(0,i); }
+      zone = zone.split('/').pop();
+      return zone.replace(/\(\d+\)/g,'').replace(/\b(CERTIFICATE|BELGESI)\b/ig,'').replace(/\s{2,}/g,' ').trim();
+    }
 
     // editor doldur
     function applyFieldsToForm(f){
