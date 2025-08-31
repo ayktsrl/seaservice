@@ -9,270 +9,481 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --ink:#0f2437; --muted:#6b7a86; --line:#e9eef3; --chip:#f1f6fb; --brand:#0E6FFF;
+      --ink:#14172A;
+      --muted:#6b7280;
+      --line:#E6E8EC;
+      --accent:#0ea5e9;
+      --bg:#F7F8FA;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;height:100%;background:#f6f9fc;color:var(--ink);font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto}
-    .page{max-width:780px;margin:48px auto;background:#fff;border-radius:14px;box-shadow:0 6px 28px rgba(15,36,55,.06);padding:36px 36px 28px}
-    h1{margin:0 0 4px;font-size:28px;letter-spacing:.1px}
-    h2{margin:22px 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
-    .muted{color:var(--muted)}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-    .card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fafcfe}
-    .divider{height:1px;background:var(--line);margin:14px 0}
-    .chips{display:flex;gap:8px;flex-wrap:wrap}
-    .chip{background:var(--chip);border:1px solid #dbe7f3;color:#20507a;padding:4px 10px;border-radius:999px;font-weight:600;font-size:12px}
-    table{width:100%;border-collapse:collapse;border:1px solid var(--line)}
-    th,td{border-top:1px solid var(--line);padding:8px 10px;text-align:left;font-size:13px}
-    th{background:#f3f7fb;font-size:12px;color:#20507a;letter-spacing:.08em;text-transform:uppercase}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-    .list{margin:0;padding-left:16px}
-    .list li{margin:4px 0}
-    .kpis div{display:flex;justify-content:space-between;padding:4px 0}
-    .fab{position:fixed;right:24px;bottom:24px;background:var(--brand);color:#fff;border:none;border-radius:999px;padding:12px 16px;
-      font-weight:600;cursor:pointer;box-shadow:0 8px 28px rgba(14,111,255,.35)}
-    .fab:active{transform:translateY(1px)}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background:#fff;
+      color:var(--ink);
+      font:14px/1.45 "Inter",system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    }
+    .page{
+      max-width:900px;
+      margin:40px auto 96px auto;
+      padding:0 20px;
+    }
+    header{
+      margin-bottom:18px;
+    }
+    h1{
+      font-size:28px;
+      line-height:1.1;
+      margin:0 0 6px 0;
+      letter-spacing:-0.02em;
+    }
+    .lead{ color:var(--muted); font-weight:500; }
+
+    .sec{ background: #fff; border:1px solid var(--line); border-radius:14px; padding:18px; margin:14px 0; }
+    .sec h3{ margin:0 0 8px 0; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:#0f172a; }
+    .hr{ height:1px; background:var(--line); margin:8px 0 12px 0; }
+
+    .kv{ display:grid; grid-template-columns: 160px 1fr; gap:6px 12px; }
+    .k{ color:var(--muted); }
+    .pill{ display:inline-block; padding:4px 10px; border:1px solid var(--line); border-radius:999px; font-size:12px; margin-right:8px; }
+
+    table{ width:100%; border-collapse:collapse; }
+    th,td{ padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+    thead th{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#1f2937; background:#f8fafc; }
+    tbody tr:last-child td{ border-bottom:0; }
+    .muted{ color:var(--muted); }
+    .grid2{ display:grid; gap:18px; grid-template-columns: 1fr 1fr; }
+    @media (max-width:880px){ .grid2{ grid-template-columns:1fr; } }
+
+    .fab{
+      position:fixed; right:20px; bottom:20px;
+      background:#0ea5e9; color:#fff; border:0; border-radius:999px;
+      padding:14px 16px; font-weight:600; box-shadow:0 6px 24px rgba(14,165,233,.25);
+      cursor:pointer;
+    }
+    .fab:active{ transform:translateY(1px); }
+
+    @media print{
+      .page{ margin:0; padding:0 6mm; }
+      .fab{ display:none; }
+      body{ background:#fff; }
+      .sec{ page-break-inside:avoid; }
+      header{ margin-top:6mm; }
+    }
   </style>
 </head>
 <body>
-  <main class="page" id="cv">
+  <div class="page">
     <header>
       <h1 id="fullName">Full Name</h1>
-      <div class="muted" id="appliedRank">Applied Rank</div>
-      <div class="divider"></div>
+      <div class="lead" id="appliedRank">Applied Rank</div>
     </header>
 
-    <section>
-      <h2>Profile</h2>
-      <div class="card"><span id="profileText" class="muted">Experienced seafarer…</span></div>
-    </section>
+    <!-- PROFILE -->
+    <div class="sec">
+      <h3>Profile</h3>
+      <div class="hr"></div>
+      <div class="kv">
+        <div class="k">Summary</div>
+        <div><span id="summary" class="muted">Experienced seafarer…</span></div>
 
-    <section class="row">
-      <div>
-        <h2>Key Metrics</h2>
-        <div class="kpis">
-          <div><span>Total verified</span><strong id="kpiTotal">—</strong></div>
-          <div><span>Last contract</span><strong id="kpiLast">—</strong></div>
-          <div><span>Flags served</span><strong id="kpiFlags">—</strong></div>
+        <div class="k">Key metrics</div>
+        <div>
+          <div><span class="muted">Total verified:</span> <span id="totalVerified">—</span></div>
+          <div><span class="muted">Last contract:</span> <span id="lastContract">—</span></div>
+          <div><span class="muted">Flags served:</span> <span id="flagsServed">—</span></div>
         </div>
+
+        <div class="k">Special skills</div>
+        <div id="skillsBox"><span class="pill muted">—</span></div>
+      </div>
+    </div>
+
+    <!-- SEA SERVICE -->
+    <div class="sec">
+      <h3>Sea Service History</h3>
+      <div class="hr"></div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Vessel</th>
+              <th>IMO</th>
+              <th>Type</th>
+              <th>GRT/DWT</th>
+              <th>Flag</th>
+              <th>Rank</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Days</th>
+            </tr>
+          </thead>
+          <tbody id="seaBody">
+            <tr><td class="muted" colspan="9">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- GRID: licenses & certificates -->
+    <div class="sec grid2">
+      <div>
+        <h3>Licenses</h3>
+        <div class="hr"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th><th>Rank</th><th>Number</th><th>Issued</th><th>Expiry</th><th>Place</th><th>Authority</th>
+            </tr>
+          </thead>
+          <tbody id="licBody"><tr><td class="muted" colspan="7">—</td></tr></tbody>
+        </table>
       </div>
       <div>
-        <h2>Special Skills</h2>
-        <div class="chips" id="skillsWrap"><span class="chip muted">—</span></div>
+        <h3>Certificates</h3>
+        <div class="hr"></div>
+        <table>
+          <thead>
+            <tr><th>Certificate</th><th>Issue</th><th>Expiry</th></tr>
+          </thead>
+          <tbody id="certBody"><tr><td class="muted" colspan="3">—</td></tr></tbody>
+        </table>
       </div>
-    </section>
+    </div>
 
-    <section>
-      <h2>Sea Service History</h2>
-      <table id="tblSea">
-        <thead>
-          <tr>
-            <th>Vessel</th><th>IMO</th><th>Type</th><th>GRT/DWT</th><th>Flag</th><th>Rank</th><th>Start</th><th>End</th><th>Days</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
+    <!-- EDUCATION -->
+    <div class="sec">
+      <h3>Education</h3>
+      <div class="hr"></div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+          <tr><th>University</th><th>Department</th><th>City</th><th>From</th><th>To</th><th>GPA</th></tr>
+          </thead>
+          <tbody id="eduBody"><tr><td class="muted" colspan="6">—</td></tr></tbody>
+        </table>
+      </div>
+    </div>
 
-    <section class="grid">
+    <!-- TRAVEL + FLAGS + VISAS + VACCINATIONS -->
+    <div class="sec grid2">
       <div>
-        <h2>Licenses</h2>
-        <ul class="list" id="licensesList"><li class="muted">—</li></ul>
+        <h3>Travel Documents</h3>
+        <div class="hr"></div>
+        <table>
+          <thead>
+          <tr><th>Type</th><th>Number</th><th>Issue Country</th><th>Issued</th><th>Expiry</th></tr>
+          </thead>
+          <tbody id="docBody"><tr><td class="muted" colspan="5">—</td></tr></tbody>
+        </table>
+        <div class="hr" style="margin-top:12px"></div>
+        <h3>Flag Documents</h3>
+        <div class="hr"></div>
+        <table>
+          <thead>
+          <tr><th>Country</th><th>Type</th><th>Number</th><th>Issue</th><th>Expiry</th></tr>
+          </thead>
+          <tbody id="flagBody"><tr><td class="muted" colspan="5">—</td></tr></tbody>
+        </table>
       </div>
       <div>
-        <h2>Certificates</h2>
-        <ul class="list" id="certsList"><li class="muted">—</li></ul>
+        <h3>Visas</h3>
+        <div class="hr"></div>
+        <table>
+          <thead>
+          <tr><th>Country</th><th>Type</th><th>Number</th><th>Issued</th><th>Expiry</th><th>Place</th></tr>
+          </thead>
+          <tbody id="visaBody"><tr><td class="muted" colspan="6">—</td></tr></tbody>
+        </table>
+        <div class="hr" style="margin-top:12px"></div>
+        <h3>Vaccinations</h3>
+        <div class="hr"></div>
+        <table>
+          <thead>
+          <tr><th>Vaccine</th><th>Dose/Note</th><th>Issue</th><th>Expiry</th></tr>
+          </thead>
+          <tbody id="vaccBody"><tr><td class="muted" colspan="4">—</td></tr></tbody>
+        </table>
       </div>
-    </section>
-  </main>
+    </div>
 
-  <button class="fab" id="btnPdf">Download PDF</button>
+    <!-- REFERENCES -->
+    <div class="sec">
+      <h3>References</h3>
+      <div class="hr"></div>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+          <tr><th>Name</th><th>Company</th><th>Position</th><th>Email</th><th>Phone</th></tr>
+          </thead>
+        <tbody id="refBody"><tr><td class="muted" colspan="5">—</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-  <!-- html2pdf for PDF -->
-  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <button class="fab" onclick="window.print()">Download PDF</button>
 
-  <!-- Firebase (modular) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getFirestore, doc, getDoc, collection, getDocs, query, orderBy
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  <!-- Firebase compat (varsayılan başlatma uygunsa bunu kullanmaz) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 
-    // ----------------- CONFIG -----------------
-    // Diğer sayfalardaki ile AYNI config'i koy:
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_BUCKET",
-      messagingSenderId: "YOUR_SENDER",
-      appId: "YOUR_APPID"
-    };
-    // ------------------------------------------
-
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
-
-    // Helpers
-    const qs  = (s)=>document.querySelector(s);
-    const qsa = (s)=>document.querySelectorAll(s);
-    const fmt = (d)=> d ? new Date(d).toLocaleDateString('en-GB') : "—";
-    const daysBetween = (a,b)=>{
-      if(!a||!b) return 0;
-      const ms = (new Date(b) - new Date(a));
-      return Math.max(0, Math.round(ms/86400000)+1);
-    };
-
-    const url = new URL(location.href);
-    const cvId = url.searchParams.get("cvId");
-
-    async function loadCV() {
-      if(!cvId) return;
-
-      // 1) cvs/{cvId} -> ownerUid ve basic alanlar
-      const cvRef = doc(db, "cvs", cvId);
-      const cvSnap = await getDoc(cvRef);
-      if(!cvSnap.exists()) { console.warn("CV not found"); return; }
-      const cv = cvSnap.data();
-
-      const ownerUid = cv.ownerUid;
-      const fullName = cv.name || cv.fullName || "";
-      const appliedRank = cv.position || "";
-
-      qs("#fullName").textContent = fullName || "Full Name";
-      qs("#appliedRank").textContent = appliedRank ? `Applied Rank • ${appliedRank}` : "Applied Rank";
-
-      // 2) Kişisel detaylar (opsiyonel)
-      try {
-        const pSnap = await getDoc(doc(db, "seafarers", ownerUid, "cv", cvId, "personalDetails", "profile"));
-        if (pSnap.exists() && pSnap.data().profile) {
-          qs("#profileText").textContent = pSnap.data().profile;
+  <script>
+  (async () => {
+    // --- small helpers ----------------------------------------------------
+    const qs = sel => document.querySelector(sel);
+    const qsp = (key) => new URL(location.href).searchParams.get(key);
+    const pad = n => String(n).padStart(2,"0");
+    const fmt = (v) => {
+      if (!v && v !== 0) return "";
+      try{
+        if (typeof v === "string"){
+          // keep ISO-like dates, normalize: 2020-12-03
+          const m = v.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+          if (m) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+          const d = new Date(v);
+          if(!isNaN(d)) return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+          return v;
         }
-      } catch(e){ /* yoksa sorun değil */ }
+        if (typeof v === "number"){
+          const d = new Date(v < 2e10 ? v*1000 : v);
+          return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+        }
+        if (v && typeof v.toDate === "function"){
+          const d = v.toDate();
+          return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+        }
+      }catch(e){}
+      return String(v);
+    };
+    const diffDays = (a,b) => {
+      try{
+        const da = a ? new Date(a) : null;
+        const db = b ? new Date(b) : null;
+        if (!da || !db || isNaN(da) || isNaN(db)) return 0;
+        return Math.round((db - da) / 86400000);
+      }catch(e){ return 0; }
+    };
 
-      // 3) Special skills
-      const skillsWrap = qs("#skillsWrap");
-      skillsWrap.innerHTML = "";
-      try {
-        const skillsRef = collection(db, "seafarers", ownerUid, "cv", cvId, "specialSkills");
-        const skillsSnap = await getDocs(skillsRef);
-        if (skillsSnap.size === 0) skillsWrap.innerHTML = '<span class="chip muted">—</span>';
-        skillsSnap.forEach(d=>{
-          const s = d.data();
-          if(!s) return;
-          const label = s.skillType || s.type || s.name || "";
-          if(!label) return;
-          const chip = document.createElement("span");
-          chip.className = "chip";
-          chip.textContent = label;
-          skillsWrap.appendChild(chip);
-        });
-      } catch(e){
-        skillsWrap.innerHTML = '<span class="chip muted">—</span>';
-      }
-
-      // 4) Sea Service
-      const tbody = qs("#tblSea tbody");
-      tbody.innerHTML = "";
-      let totalVerifiedDays = 0;
-      let lastContractEnd   = null;
-      const flags = new Set();
-
-      try {
-        const seaRef = query(collection(db, "seafarers", ownerUid, "cv", cvId, "seaService"), orderBy("joined","desc"));
-        const seaSnap = await getDocs(seaRef);
-        seaSnap.forEach(d=>{
-          const s = d.data();
-          const tr = document.createElement("tr");
-
-          const vessel = s.vesselName || s.vessel || "";
-          const imo    = s.imo || s.IMO || "";
-          const type   = s.type || "";
-          const grt    = s.grt || s.GRT || s.grtDwt || s.dwt || "";
-          const flag   = s.flag || "";
-          const rank   = s.rank || "";
-          const start  = s.joined || s.start || s.from || "";
-          const end    = s.signedOff || s.end || s.to || "";
-
-          // gün hesabı
-          const days = daysBetween(start, end);
-          if (s.verified === true || s.isVerified === true) totalVerifiedDays += days;
-          if (end) {
-            const endDt = new Date(end);
-            if (!lastContractEnd || endDt > lastContractEnd) lastContractEnd = endDt;
-          }
-          if (flag) flags.add(flag);
-
-          [vessel,imo,type,grt,flag,rank,fmt(start),fmt(end), days?String(days):"—"].forEach((val)=>{
-            const td = document.createElement("td");
-            td.textContent = val || "—";
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
-      } catch(e){
-        console.error(e);
-      }
-
-      // KPI'lar
-      qs("#kpiTotal").textContent = totalVerifiedDays ? `${totalVerifiedDays} days` : "—";
-      qs("#kpiLast").textContent  = lastContractEnd ? lastContractEnd.toLocaleDateString('en-GB') : "—";
-      qs("#kpiFlags").textContent = flags.size ? `${flags.size} flags` : "—";
-
-      // 5) Licenses
-      const licUL = qs("#licensesList");
-      licUL.innerHTML = "";
-      try {
-        const licSnap = await getDocs(collection(db, "seafarers", ownerUid, "cv", cvId, "licenses"));
-        if (licSnap.size === 0) licUL.innerHTML = '<li class="muted">—</li>';
-        licSnap.forEach(d=>{
-          const L = d.data();
-          const li = document.createElement("li");
-          const t  = L.type || L.licenseType || "License";
-          const num = L.number ? ` • ${L.number}` : "";
-          const exp = L.expiry ? ` • Expires: ${fmt(L.expiry)}` : "";
-          li.textContent = `${t}${num}${exp}`;
-          licUL.appendChild(li);
-        });
-      } catch(e){
-        licUL.innerHTML = '<li class="muted">—</li>';
-      }
-
-      // 6) Certificates
-      const certUL = qs("#certsList");
-      certUL.innerHTML = "";
-      try {
-        const certSnap = await getDocs(collection(db, "seafarers", ownerUid, "cv", cvId, "certificates"));
-        if (certSnap.size === 0) certUL.innerHTML = '<li class="muted">—</li>';
-        certSnap.forEach(d=>{
-          const C = d.data();
-          const li = document.createElement("li");
-          const name = C.certificateName || C.certificate || "Certificate";
-          const code = C.stcw || C.stcwRef || C.code ? ` (${C.stcw || C.stcwRef || C.code})` : "";
-          const iss  = C.issueDate ? ` • Issued: ${fmt(C.issueDate)}` : "";
-          const exp  = C.expiryDate ? ` • Expires: ${fmt(C.expiryDate)}` : (C.noExpiry ? " • No expiry" : "");
-          li.textContent = `${name}${code}${iss}${exp}`;
-          certUL.appendChild(li);
-        });
-      } catch(e){
-        certUL.innerHTML = '<li class="muted">—</li>';
+    // --- firebase init (guard) -------------------------------------------
+    // Eğer sayfa zaten bir yerde initialize ettiyse tekrar etme
+    if (!(window.firebase && firebase.apps && firebase.apps.length)){
+      // Opsiyonel: window.__FIREBASE_CONFIG varsa onu kullan
+      if (window.__FIREBASE_CONFIG){
+        firebase.initializeApp(window.__FIREBASE_CONFIG);
+      } else {
+        // Çoğu projede zaten global init var; yoksa read-only çağrılar çalışmayabilir.
+        // Gerekirse buraya kendi firebaseConfig'inizi koyabilirsiniz.
+        console.warn("Firebase initialized with default app (no explicit config).");
+        try { firebase.initializeApp({}); } catch(e){}
       }
     }
+    const db = firebase.firestore();
 
-    // PDF
-    qs("#btnPdf").addEventListener("click", ()=>{
-      const node = qs("#cv");
-      const opt = {
-        filename: "Seafarer-CV.pdf",
-        image:   { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF:   { unit: "pt", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all"] }
-      };
-      html2pdf().set(opt).from(node).save();
-    });
+    // --- ids --------------------------------------------------------------
+    const cvId = qsp("cvid") || qsp("cvId") || qsp("cv");
+    if (!cvId){ alert("Missing CV id"); return; }
 
-    loadCV();
+    // 1) cv metadata (ownerUid, position)
+    const cvDoc = await db.collection("cvs").doc(cvId).get();
+    if (!cvDoc.exists){ alert("CV not found"); return; }
+    const cvMeta = cvDoc.data();
+    const ownerUid = cvMeta.ownerUid || cvMeta.uid || cvMeta.userId;
+    if (!ownerUid){ alert("Owner not found"); return; }
+
+    // 2) personal / name / email
+    const seafarerDoc = await db.collection("seafarers").doc(ownerUid).get().catch(()=>null);
+    const person = seafarerDoc?.data() || {};
+    const fullName = [person.firstName, person.lastName].filter(Boolean).join(" ") || (cvMeta.name || "Full Name");
+    qs("#fullName").textContent = fullName;
+
+    // Applied Rank
+    let appliedRank = cvMeta.position || "";
+    // qualifications doc/collection fallback
+    try{
+      const qcol = db.collection("seafarers").doc(ownerUid).collection("cv").doc(cvId).collection("qualifications");
+      let d = await qcol.limit(1).get();
+      if (!d.empty){
+        const qd = d.docs[0].data();
+        appliedRank = qd.appliedRank || qd.rank || appliedRank;
+      } else {
+        const qdoc = await db.collection("seafarers").doc(ownerUid).collection("cv").doc(cvId).collection("qualifications").doc("details").get();
+        if (qdoc.exists){
+          const qd = qdoc.data();
+          appliedRank = qd.appliedRank || qd.rank || appliedRank;
+        }
+      }
+    }catch(e){}
+    qs("#appliedRank").textContent = appliedRank || "Applied Rank";
+
+    // profile summary (opsiyonel)
+    qs("#summary").textContent = cvMeta.profile || "Experienced seafarer…";
+
+    // --- helpers to read items -------------------------------------------
+    async function getItems(uid, cvid, section){
+      const base = db.collection("seafarers").doc(uid).collection("cv").doc(cvid).collection(section);
+
+      // 1) .../section/items (collection)
+      try{
+        const itemsCol = await base.collection("items").get();
+        if (!itemsCol.empty) return itemsCol.docs.map(d => ({id:d.id, ...d.data()}));
+      }catch(e){}
+
+      // 2) .../section (collection) directly
+      try{
+        const direct = await base.get();
+        if (!direct.empty) return direct.docs.map(d => ({id:d.id, ...d.data()}));
+      }catch(e){}
+
+      // 3) .../section/items (document with array)
+      try{
+        const itemsDoc = await base.doc("items").get();
+        if (itemsDoc.exists){
+          const d = itemsDoc.data();
+          if (Array.isArray(d.items)) return d.items;
+          return Object.values(d || {});
+        }
+      }catch(e){}
+      return [];
+    }
+
+    // --- special skills ---------------------------------------------------
+    const skills = await getItems(ownerUid, cvId, "specialSkills");
+    const skillsBox = qs("#skillsBox");
+    skillsBox.innerHTML = skills.length ? skills.map(s => {
+      const label = s.name || s.skill || s.title || s.type || "Skill";
+      return `<span class="pill">${label}</span>`;
+    }).join("") : `<span class="pill muted">—</span>`;
+
+    // --- sea service ------------------------------------------------------
+    let sea = await getItems(ownerUid, cvId, "seaService");
+    // normalize & sort DESC by end date
+    sea = sea.map(x => ({
+      vessel: x.vessel || x.vesselName || "",
+      imo: x.imo || x.IMO || "",
+      type: x.type || x.vesselType || "",
+      grt:  x.grt || x.grt_dwt || x.grtDwt || x.grt_dwt || x.dwt || "",
+      flag: x.flag || x.country || "",
+      rank: x.rank || "",
+      start: fmt(x.start || x.from || x.joined || x.started),
+      end:   fmt(x.end   || x.to   || x.signedOff || x.ended),
+      days:  x.days || x.duration || 0
+    })).sort((a,b)=> (b.end||"").localeCompare(a.end||""));
+    const seaBody = qs("#seaBody");
+    seaBody.innerHTML = sea.length ? sea.map(r => `
+      <tr>
+        <td>${r.vessel}</td><td>${r.imo}</td><td>${r.type}</td><td>${r.grt}</td>
+        <td>${r.flag}</td><td>${r.rank}</td><td>${r.start||""}</td><td>${r.end||""}</td><td>${r.days || diffDays(r.start,r.end)}</td>
+      </tr>
+    `).join("") : `<tr><td class="muted" colspan="9">—</td></tr>`;
+
+    // metrics: total / last / flags
+    const totalDays = sea.reduce((s,x)=> s + (Number(x.days)||diffDays(x.start,x.end)||0), 0);
+    qs("#totalVerified").textContent = totalDays ? `${totalDays} days` : "—";
+    qs("#lastContract").textContent = sea[0]?.end || "—";
+    const served = [...new Set(sea.map(x => x.flag).filter(Boolean))];
+    qs("#flagsServed").textContent = served.length ? served.join(", ") : "—";
+
+    // --- licenses ---------------------------------------------------------
+    const licenses = await getItems(ownerUid, cvId, "licenses");
+    const licBody = qs("#licBody");
+    licBody.innerHTML = licenses.length ? licenses.map(l => `
+      <tr>
+        <td>${l.type||""}</td><td>${l.rank||""}</td><td>${l.number||""}</td>
+        <td>${fmt(l.issued||l.issue)}</td><td>${fmt(l.expiry)}</td>
+        <td>${l.place||l.placeOfIssue||""}</td><td>${l.authority||""}</td>
+      </tr>
+    `).join("") : `<tr><td class="muted" colspan="7">—</td></tr>`;
+
+    // --- certificates -----------------------------------------------------
+    const certs = await getItems(ownerUid, cvId, "certificates");
+    const certBody = qs("#certBody");
+    certBody.innerHTML = certs.length ? certs.map(c => `
+      <tr><td>${c.name||c.certificate||""}</td><td>${fmt(c.issue)}</td><td>${fmt(c.expiry)}</td></tr>
+    `).join("") : `<tr><td class="muted" colspan="3">—</td></tr>`;
+
+    // --- education --------------------------------------------------------
+    const edu = await getItems(ownerUid, cvId, "education");
+    const eduBody = qs("#eduBody");
+    eduBody.innerHTML = edu.length ? edu.map(e => {
+      const uni = e.university || e.institution || "";
+      const dep = e.department || e.field || e.fieldOfStudy || "";
+      const city = e.city || e.location || "";
+      const from = e.from || e.fromYear || e.start || e.startYear || "";
+      const to   = e.to   || e.toYear   || e.end   || e.endYear   || "";
+      const gpa  = e.gpa || e.gpaValue || "";
+      return `<tr>
+        <td>${uni}</td><td>${dep}</td><td>${city}</td><td>${from}</td><td>${to}</td><td>${gpa}</td>
+      </tr>`;
+    }).join("") : `<tr><td class="muted" colspan="6">—</td></tr>`;
+
+    // --- travel documents -------------------------------------------------
+    const docs = await getItems(ownerUid, cvId, "documents");
+    const docBody = qs("#docBody");
+    docBody.innerHTML = docs.length ? docs.map(d => `
+      <tr>
+        <td>${d.type||d.kind||d.documentType||""}</td><td>${d.number||""}</td>
+        <td>${d.issueCountry||d.country||""}</td><td>${fmt(d.issueDate||d.issued||d.issue)}</td>
+        <td>${fmt(d.expiryDate||d.expiry)}</td>
+      </tr>
+    `).join("") : `<tr><td class="muted" colspan="5">—</td></tr>`;
+
+    // --- flag documents ---------------------------------------------------
+    const flags = await getItems(ownerUid, cvId, "flagbooks");
+    const flagBody = qs("#flagBody");
+    flagBody.innerHTML = flags.length ? flags.map(f => `
+      <tr>
+        <td>${f.country||f.flag||""}</td><td>${f.type||f.name||""}</td><td>${f.number||""}</td>
+        <td>${fmt(f.issue||f.issueDate)}</td><td>${fmt(f.expiry||f.expiryDate)}</td>
+      </tr>
+    `).join("") : `<tr><td class="muted" colspan="5">—</td></tr>`;
+
+    // --- visas ------------------------------------------------------------
+    const visas = await getItems(ownerUid, cvId, "visas");
+    const visaBody = qs("#visaBody");
+    visaBody.innerHTML = visas.length ? visas.map(v => `
+      <tr>
+        <td>${v.forCountry||v.country||""}</td><td>${v.type||v.visaType||""}</td><td>${v.number||""}</td>
+        <td>${fmt(v.issued||v.issueDate||v.issue)}</td><td>${fmt(v.expiry||v.expiryDate)}</td><td>${v.place||v.placeOfIssue||""}</td>
+      </tr>
+    `).join("") : `<tr><td class="muted" colspan="6">—</td></tr>`;
+
+    // --- vaccinations -----------------------------------------------------
+    const vaccs = await getItems(ownerUid, cvId, "vaccinations");
+    const vaccBody = qs("#vaccBody");
+    vaccBody.innerHTML = vaccs.length ? vaccs.map(v => `
+      <tr><td>${v.name||v.vaccine||""}</td><td>${v.note||v.dose||""}</td>
+          <td>${fmt(v.issue||v.issueDate||v.date)}</td><td>${fmt(v.expiry||v.expiryDate)}</td></tr>
+    `).join("") : `<tr><td class="muted" colspan="4">—</td></tr>`;
+
+    // --- references -------------------------------------------------------
+    const refs = await getItems(ownerUid, cvId, "references");
+    const refBody = qs("#refBody");
+    refBody.innerHTML = refs.length ? refs.map(r => `
+      <tr>
+        <td>${r.name||""}</td><td>${r.company||""}</td><td>${r.position||""}</td>
+        <td>${r.email||""}</td><td>${r.phone||""}</td>
+      </tr>
+    `).join("") : `<tr><td class="muted" colspan="5">—</td></tr>`;
+
+    // --- personal details (optional extras) -------------------------------
+    try{
+      const pdoc = await db.collection("seafarers").doc(ownerUid)
+        .collection("cv").doc(cvId).collection("personalDetails").doc("details").get();
+      if (pdoc.exists){
+        const p = pdoc.data();
+        const extras = [];
+        if (p.dob) extras.push(`DoB: ${fmt(p.dob)}`);
+        if (p.phone) extras.push(`Phone: ${p.phone}`);
+        if (p.nationality) extras.push(`Nationality: ${p.nationality}`);
+        if (extras.length){
+          const kv = document.querySelector(".kv");
+          kv.insertAdjacentHTML("beforeend",
+            `<div class="k">Personal</div><div>${extras.join(" · ")}</div>`);
+        }
+      }
+    }catch(e){/* optional */}
+
+  })();
   </script>
 </body>
 </html>
