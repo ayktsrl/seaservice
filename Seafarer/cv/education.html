@@ -47,21 +47,21 @@
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label required">University</label>
-            <input type="text" class="form-control" id="university" placeholder="e.g., Istanbul Technical University">
+            <input type="text" class="form-control" id="university" placeholder="e.g., Blacksea Technical University">
           </div>
           <div class="col-md-6">
             <label class="form-label">Department</label>
-            <input type="text" class="form-control" id="department" placeholder="e.g., Naval Architecture">
+            <input type="text" class="form-control" id="department" placeholder="e.g., Transportation and Management Engineering">
           </div>
 
           <div class="col-md-3">
-            <label class="form-label required">From</label>
-            <input type="date" class="form-control" id="fromDate">
+            <label class="form-label required">From (Year)</label>
+            <input type="number" class="form-control" id="fromYear" min="1950" max="2099" step="1" placeholder="e.g., 2006">
           </div>
           <div class="col-md-3">
-            <label class="form-label">To</label>
+            <label class="form-label">To (Year)</label>
             <div class="input-group">
-              <input type="date" class="form-control" id="toDate">
+              <input type="number" class="form-control" id="toYear" min="1950" max="2099" step="1" placeholder="e.g., 2011">
               <span class="input-group-text">
                 <input class="form-check-input mt-0" type="checkbox" id="ongoing" title="Ongoing">
               </span>
@@ -71,7 +71,7 @@
 
           <div class="col-md-3">
             <label class="form-label">City</label>
-            <input type="text" class="form-control" id="city" placeholder="e.g., Istanbul">
+            <input type="text" class="form-control" id="city" placeholder="e.g., Trabzon">
           </div>
 
           <div class="col-md-3">
@@ -99,8 +99,7 @@
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
-      collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy,
-      Timestamp
+      collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const tbody = document.getElementById('tbodyEdu');
@@ -111,8 +110,8 @@
 
     const university = document.getElementById('university');
     const department = document.getElementById('department');
-    const fromDate   = document.getElementById('fromDate');
-    const toDate     = document.getElementById('toDate');
+    const fromYear   = document.getElementById('fromYear');
+    const toYear     = document.getElementById('toYear');
     const ongoing    = document.getElementById('ongoing');
     const city       = document.getElementById('city');
     const gpa        = document.getElementById('gpa');
@@ -124,8 +123,8 @@
 
     // Ongoing -> To disabled
     ongoing.addEventListener('change', () => {
-      toDate.disabled = ongoing.checked;
-      if (ongoing.checked) toDate.value = '';
+      toYear.disabled = ongoing.checked;
+      if (ongoing.checked) toYear.value = '';
     });
 
     addBtn.addEventListener('click', () => openEditor());
@@ -150,14 +149,17 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) return;
       currentUser = user;
-      baseRef = collection(db, 'seafarers', currentUser.uid, 'cv', 'education');
+
+      // ✅ Doğru koleksiyon yolu: seafarers/{uid}/education
+      baseRef = collection(db, 'seafarers', currentUser.uid, 'education');
+
       await loadList();
     });
 
     async function loadList() {
       tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Loading…</td></tr>`;
       try {
-        const snap = await getDocs(query(baseRef, orderBy('from','desc')));
+        const snap = await getDocs(query(baseRef, orderBy('fromYear','desc')));
         if (snap.empty) {
           tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No education added yet.</td></tr>`;
           return;
@@ -169,8 +171,8 @@
           tr.innerHTML = `
             <td>${esc(row.university)}</td>
             <td>${esc(row.department || '')}</td>
-            <td>${fmtDate(row.from)}</td>
-            <td>${row.to ? fmtDate(row.to) : '<span class="badge bg-info-subtle text-info-emphasis">Ongoing</span>'}</td>
+            <td>${row.fromYear ?? ''}</td>
+            <td>${row.toYear ?? '<span class="badge bg-info-subtle text-info-emphasis">Ongoing</span>'}</td>
             <td>${esc(row.city || '')}</td>
             <td>${fmtGpa(row.gpa, row.gpaScale)}</td>
             <td>
@@ -207,16 +209,16 @@
     }
 
     function clearForm(){
-      university.value=''; department.value=''; fromDate.value='';
-      toDate.value=''; ongoing.checked=false; toDate.disabled=false;
+      university.value=''; department.value='';
+      fromYear.value=''; toYear.value=''; ongoing.checked=false; toYear.disabled=false;
       city.value=''; gpa.value=''; gpaScale.value='4';
     }
     function fillForm(d){
       university.value = d.university || '';
       department.value = d.department || '';
-      fromDate.value   = toInputDate(d.from) || '';
-      if (d.to){ toDate.value = toInputDate(d.to); ongoing.checked=false; toDate.disabled=false; }
-      else { toDate.value=''; ongoing.checked=true; toDate.disabled=true; }
+      fromYear.value   = d.fromYear ?? '';
+      if (d.toYear){ toYear.value = d.toYear; ongoing.checked=false; toYear.disabled=false; }
+      else { toYear.value=''; ongoing.checked=true; toYear.disabled=true; }
       city.value       = d.city || '';
       gpa.value        = (typeof d.gpa === 'number') ? d.gpa : '';
       gpaScale.value   = d.gpaScale || '4';
@@ -225,30 +227,30 @@
     function readForm(){
       const uni = university.value.trim();
       const dep = department.value.trim();
-      const fromV = fromDate.value;
-      const toV   = toDate.value;
+      const fromV = parseInt((fromYear.value || '').trim(), 10);
+      const toV   = parseInt((toYear.value || '').trim(), 10);
       const isOngoing = ongoing.checked;
       const cityV = city.value.trim();
       const gpaV  = gpa.value.trim();
       const gpaSc = gpaScale.value;
 
       if (!uni){ alert('Please enter University.'); university.focus(); return null; }
-      if (!fromV){ alert('Please select From date.'); fromDate.focus(); return null; }
+      if (!fromV || isNaN(fromV)){ alert('Please enter From (year).'); fromYear.focus(); return null; }
+      if (!isOngoing && toYear.value && (isNaN(toV) || toV < fromV)){
+        alert('"To (year)" must be greater than or equal to "From (year)".'); toYear.focus(); return null;
+      }
 
       const payload = {
         university: uni,
         department: dep || null,
-        from: Timestamp.fromDate(new Date(fromV)),
+        fromYear: fromV,
         city: cityV || null,
         gpa: gpaV === '' ? null : Number(gpaV),
-        gpaScale: (gpaV === '' ? null : (gpaSc === '100' ? '100' : '4'))
+        gpaScale: (gpaV === '' ? null : (gpaSc === '100' ? '100' : '4')),
+        toYear: (isOngoing || !toYear.value) ? null : toV
       };
-      if (!isOngoing && toV){
-        payload.to = Timestamp.fromDate(new Date(toV));
-      } else {
-        payload.to = null;
-      }
-      // basic GPA sanity
+
+      // GPA sanity
       if (payload.gpa !== null){
         if (payload.gpaScale === '4' && (payload.gpa < 0 || payload.gpa > 4.0)){
           alert('GPA must be between 0.00 and 4.00'); gpa.focus(); return null;
@@ -257,27 +259,10 @@
           alert('GPA must be between 0 and 100'); gpa.focus(); return null;
         }
       }
-      // if to < from
-      if (payload.to && payload.to.toMillis() < payload.from.toMillis()){
-        alert('"To" date cannot be before "From"'); toDate.focus(); return null;
-      }
       return payload;
     }
 
     // utils
-    function fmtDate(ts){
-      try{
-        const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
-        return d ? d.toLocaleDateString() : '';
-      }catch{ return ''; }
-    }
-    function toInputDate(ts){
-      const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
-      if (!d) return '';
-      const m = String(d.getMonth()+1).padStart(2,'0');
-      const day = String(d.getDate()).padStart(2,'0');
-      return `${d.getFullYear()}-${m}-${day}`;
-    }
     function fmtGpa(v, scale){
       if (v === null || v === undefined || v === '') return '';
       const n = Number(v);
