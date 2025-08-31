@@ -4,61 +4,115 @@
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Certificates</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="/style.css"/>
   <style>
-    @media(max-width:768px){ .table{font-size:.9rem} .btn,.form-control,.form-check-label{font-size:.9rem} .add-btn{width:40px;height:40px} }
-    .form-slide{background:#fff;border-radius:10px;box-shadow:0 1px 10px #e3e7ee;margin-bottom:18px;display:none}
+    body{background:#f6f8fb}
+    .form-slide{background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.06);margin:18px 0;display:none}
     .form-slide.active{display:block}
+    .required::after{content:" *";color:#dc3545}
+    .ocr-box{background:#0b5ed7; color:#fff}
+    .ocr-progress{height:6px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; max-height: 200px; overflow:auto; background:#f2f4f8; padding:.75rem; border-radius:8px;}
   </style>
 </head>
-<body class="bg-light p-4">
+<body class="p-4">
   <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h4 class="fw-bold">Certificates</h4>
-      <button class="btn btn-success rounded-circle add-btn" onclick="openForm()">+</button>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h4 class="mb-0 fw-bold">Certificates</h4>
+      <div class="d-flex gap-2">
+        <button class="btn btn-secondary" id="scanBtn">Scan from Photo</button>
+        <button class="btn btn-success" id="addBtn">+ Add</button>
+      </div>
     </div>
 
     <div class="table-responsive">
       <table class="table table-bordered table-striped align-middle">
         <thead class="table-primary text-center">
           <tr>
-            <th style="width:80px"></th><th>Category</th><th>Certificate</th><th>Number</th>
-            <th>Authority</th><th>Issue</th><th>Expiry</th><th>Place</th><th>Remarks</th>
+            <th style="width:130px">Actions</th>
+            <th>Certificate</th>
+            <th>STCW Code / Ref.</th>
+            <th>Issue</th>
+            <th>Expiry</th>
           </tr>
         </thead>
-        <tbody id="certList"></tbody>
-        <tfoot><tr><td colspan="9" class="text-center text-muted small">List all valid held National/STCW and non-STCW certificates.</td></tr></tfoot>
+        <tbody id="certList">
+          <tr><td colspan="5" class="text-center text-muted py-4">List all valid National/STCW and non-STCW certificates.</td></tr>
+        </tbody>
       </table>
     </div>
 
+    <!-- Editor -->
     <div id="certForm" class="form-slide p-3">
-      <form id="form">
+      <form id="form" novalidate>
         <div class="row g-3">
-          <div class="col-md-6"><label class="form-label">Category</label><input id="category" class="form-control" required></div>
-          <div class="col-md-6"><label class="form-label">Certificate Name</label><input id="type" class="form-control" required></div>
-          <div class="col-md-6"><label class="form-label">Number</label><input id="number" class="form-control" required></div>
-          <div class="col-md-6"><label class="form-label">Issuing Authority</label><input id="authority" class="form-control" required></div>
-          <div class="col-md-6"><label class="form-label">Issue Date</label><input id="issue" type="date" class="form-control" required></div>
+          <div class="col-md-6">
+            <label class="form-label required">Certificate Name</label>
+            <input id="name" class="form-control" placeholder="e.g., Basic Safety Training" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label required">STCW Code / Reference</label>
+            <input id="stcw" class="form-control" placeholder="e.g., STCW A-VI/1-1" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label required">Issue Date</label>
+            <input id="issue" type="date" class="form-control" required>
+          </div>
           <div class="col-md-6">
             <label class="form-label">Expiry Date</label>
             <input id="expiry" type="date" class="form-control">
-            <div class="form-check mt-1"><input id="noExpiry" class="form-check-input" type="checkbox"><label class="form-check-label">No expiry date</label></div>
+            <div class="form-check mt-1">
+              <input id="noExpiry" class="form-check-input" type="checkbox">
+              <label class="form-check-label" for="noExpiry">No expiry date</label>
+            </div>
           </div>
-          <div class="col-md-12"><label class="form-label">Place of Issue</label><input id="place" class="form-control"></div>
-          <div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control"></textarea></div>
         </div>
         <div class="text-end mt-3">
           <button class="btn btn-primary" id="submitBtn">Add</button>
-          <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancel</button>
+          <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
         </div>
       </form>
     </div>
+
+    <!-- OCR UI -->
+    <input id="ocrInput" type="file" accept="image/*" class="d-none">
+    <div id="ocrPane" class="form-slide p-3 d-none">
+      <div class="p-3 rounded ocr-box">
+        <div class="d-flex justify-content-between align-items-center">
+          <strong>OCR • Scan from Photo</strong>
+          <button class="btn btn-sm btn-light" id="ocrCloseBtn">Close</button>
+        </div>
+        <div class="progress bg-white mt-2 ocr-progress">
+          <div id="ocrProgress" class="progress-bar" role="progressbar" style="width:0%"></div>
+        </div>
+        <div id="ocrStatus" class="small mt-2">Waiting for image…</div>
+      </div>
+
+      <div class="row g-3 mt-3">
+        <div class="col-md-6">
+          <img id="ocrPreview" class="img-fluid rounded border" alt="Preview">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Extracted text (for verification)</label>
+          <div id="ocrText" class="mono small">—</div>
+          <div class="alert alert-info mt-2 py-2 small">
+            Tip: We filled the form with our best guess. Please review and correct if needed, then click <b>Add</b>.
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
+  <!-- Firebase & App -->
   <script type="module">
+    // Role guard
     if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
+
     import { auth, db } from '/firebase-config.js';
-    import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import {
+      collection, addDoc, updateDoc, deleteDoc, getDocs, doc, query, orderBy
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
     let userId=null, editId=null;
@@ -66,50 +120,234 @@
     const formBox=document.getElementById('certForm');
     const form=document.getElementById('form');
     const submitBtn=document.getElementById('submitBtn');
+    const cancelBtn=document.getElementById('cancelBtn');
+    const addBtn=document.getElementById('addBtn');
 
+    const noExpiry=document.getElementById('noExpiry');
+    const expiryInput=document.getElementById('expiry');
+
+    // OCR elements
+    const scanBtn=document.getElementById('scanBtn');
+    const ocrInput=document.getElementById('ocrInput');
+    const ocrPane=document.getElementById('ocrPane');
+    const ocrCloseBtn=document.getElementById('ocrCloseBtn');
+    const ocrPreview=document.getElementById('ocrPreview');
+    const ocrText=document.getElementById('ocrText');
+    const ocrStatus=document.getElementById('ocrStatus');
+    const ocrProgress=document.getElementById('ocrProgress');
+
+    // UX
+    noExpiry.addEventListener('change',()=>{ expiryInput.disabled = noExpiry.checked; if(noExpiry.checked) expiryInput.value=''; });
+    addBtn.addEventListener('click', ()=> openForm());
+    cancelBtn.addEventListener('click', ()=> closeForm());
+
+    // OCR triggers
+    scanBtn.addEventListener('click', ()=> ocrInput.click());
+    ocrCloseBtn.addEventListener('click', ()=> ocrPane.classList.add('d-none'));
+    ocrInput.addEventListener('change', async (e)=>{
+      const file = e.target.files?.[0]; if(!file) return;
+      await runOCR(file);
+    });
+
+    // Save
+    form.addEventListener('submit', async e=>{
+      e.preventDefault();
+      if(!form.checkValidity()){ form.reportValidity(); return; }
+      if(!noExpiry.checked && form.expiry.value && form.issue.value && form.expiry.value < form.issue.value){
+        alert('Expiry date cannot be before issue date.'); form.expiry.focus(); return;
+      }
+      const data = {
+        name: form.name.value.trim(),
+        stcw: form.stcw.value.trim(),
+        issue: form.issue.value,
+        expiry: noExpiry.checked ? '' : (form.expiry.value || '')
+      };
+      const base=collection(db, `seafarers/${userId}/cv/certificates/items`);
+      try{
+        if(editId) await updateDoc(doc(base,editId),data); else await addDoc(base,data);
+        await render(); closeForm();
+      }catch(err){ console.error(err); alert('Save failed.'); }
+    });
+
+    // Edit/Delete
+    function bindRowActions(tr, id, data){
+      tr.querySelector('[data-act="edit"]').addEventListener('click',()=>openForm(id,data));
+      tr.querySelector('[data-act="del"]').addEventListener('click',()=>delItem(id));
+    }
+    async function delItem(id){
+      if(!confirm('Delete this certificate?')) return;
+      const base=collection(db, `seafarers/${userId}/cv/certificates/items`);
+      try{ await deleteDoc(doc(base,id)); await render(); }catch(err){ console.error(err); alert('Delete failed.'); }
+    }
+
+    // Auth & render
     onAuthStateChanged(auth, async user=>{
       if(!user) return location.href='/index.html';
       userId=user.uid; await render();
     });
 
-    window.openForm=(id=null,data=null)=>{
-      formBox.classList.add('active'); submitBtn.textContent=id?'Save':'Add'; editId=id; form.reset();
-      if(data){ for(const k in data){ if(form[k]) form[k].value=data[k]||''; } form.noExpiry.checked=!data.expiry; }
-    };
-    window.closeForm=()=>{ formBox.classList.remove('active'); editId=null; };
-
-    form.addEventListener('submit', async e=>{
-      e.preventDefault();
-      const data = {
-        category:form.category.value, type:form.type.value, number:form.number.value,
-        authority:form.authority.value, issue:form.issue.value,
-        expiry: form.noExpiry.checked ? '' : form.expiry.value,
-        place:form.place.value, remarks:form.remarks.value
-      };
-      const base=collection(db,`seafarers/${userId}/cv/certificates/items`);
-      if(editId) await updateDoc(doc(base,editId),data); else await addDoc(base,data);
-      await render(); closeForm();
-    });
-
     async function render(){
-      list.innerHTML=''; const base=collection(db,`seafarers/${userId}/cv/certificates/items`);
-      const snap=await getDocs(base);
+      list.innerHTML='<tr><td colspan="5" class="text-center text-muted py-4">Loading…</td></tr>';
+      const base=collection(db, `seafarers/${userId}/cv/certificates/items`);
+      const snap=await getDocs(query(base, orderBy('issue','desc')));
+      if(snap.empty){ list.innerHTML='<tr><td colspan="5" class="text-center text-muted py-4">No certificates added yet.</td></tr>'; return; }
+      list.innerHTML='';
       snap.forEach(s=>{
         const d=s.data();
         const tr=document.createElement('tr');
         tr.innerHTML=`
-          <td>
-            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${s.id}", ${JSON.stringify(d).replace(/"/g,'&quot;')})'>Edit</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='del("${s.id}")'>Delete</button>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-secondary me-1" data-act="edit">Edit</button>
+            <button class="btn btn-sm btn-outline-danger" data-act="del">Delete</button>
           </td>
-          <td>${d.category||''}</td><td>${d.type||''}</td><td>${d.number||''}</td>
-          <td>${d.authority||''}</td><td>${d.issue||''}</td><td>${d.expiry||'-'}</td>
-          <td>${d.place||''}</td><td>${d.remarks||''}</td>`;
+          <td>${esc(d.name||'')}</td>
+          <td>${esc(d.stcw||'')}</td>
+          <td>${esc(d.issue||'')}</td>
+          <td>${d.expiry ? esc(d.expiry) : '—'}</td>
+        `;
+        bindRowActions(tr, s.id, d);
         list.appendChild(tr);
       });
     }
-    window.del = async id => { if(!confirm('Delete item?')) return; await deleteDoc(doc(db,`seafarers/${userId}/cv/certificates/items/${id}`)); await render(); };
+
+    // Editor open/close
+    function openForm(id=null,data=null){
+      form.reset(); noExpiry.checked=false; expiryInput.disabled=false;
+      submitBtn.textContent=id?'Save':'Add'; editId=id;
+      if(data){ form.name.value=data.name||''; form.stcw.value=data.stcw||''; form.issue.value=data.issue||''; form.expiry.value=data.expiry||''; if(!data.expiry){ noExpiry.checked=true; expiryInput.disabled=true; } }
+      formBox.classList.add('active'); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+    }
+    function closeForm(){ formBox.classList.remove('active'); editId=null; }
+
+    // Utils
+    function esc(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
   </script>
+
+  <!-- Tesseract (OCR) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+  <script>
+    // OCR runner
+    async function runOCR(file){
+      const ocrPane = document.getElementById('ocrPane');
+      const ocrPreview = document.getElementById('ocrPreview');
+      const ocrText = document.getElementById('ocrText');
+      const ocrStatus = document.getElementById('ocrStatus');
+      const ocrProgress = document.getElementById('ocrProgress');
+
+      ocrPane.classList.remove('d-none');
+      ocrPane.classList.add('active');
+
+      // preview
+      ocrPreview.src = URL.createObjectURL(file);
+
+      ocrStatus.textContent = 'Recognizing…';
+      ocrProgress.style.width = '0%';
+
+      const worker = await Tesseract.createWorker('eng', 1, { logger: m=>{
+        if(m.status && m.progress!=null){
+          ocrStatus.textContent = `${m.status}… ${(m.progress*100).toFixed(0)}%`;
+          ocrProgress.style.width = `${m.progress*100}%`;
+        }
+      }});
+
+      const { data:{ text } } = await worker.recognize(file);
+      await worker.terminate();
+
+      ocrText.textContent = text || '—';
+      ocrStatus.textContent = 'Done. Parsed fields were applied to the form. Please review.';
+
+      // Parse → fill form
+      const fields = parseCertificate(text||'');
+      applyFieldsToForm(fields);
+      // Open editor so user can save
+      document.getElementById('addBtn').click();
+    }
+
+    function applyFieldsToForm(f){
+      const form = document.getElementById('form');
+      if(f.name) form.name.value = f.name;
+      if(f.stcw) form.stcw.value = f.stcw;
+      if(f.issue) form.issue.value = f.issue;
+      const noExp = document.getElementById('noExpiry');
+      const expIn = document.getElementById('expiry');
+      if(f.expiry){
+        expIn.value = f.expiry;
+        noExp.checked=false; expIn.disabled=false;
+      } else {
+        // if explicitly no expiry
+        if(f.noExpiry){ noExp.checked=true; expIn.value=''; expIn.disabled=true; }
+      }
+    }
+
+    // --- Parsers ---
+    function parseCertificate(text){
+      const t = text.replace(/\s+/g,' ').trim();
+
+      // STCW pattern like A-VI/1-1, A-VI/2, A-V/1-2…
+      const stcwRegex = /\b(?:STCW\s*(?:CODE)?[:\s]*)?([AB]-[IVX]{1,3}(?:\/\d{1,2}(?:-\d{1,2})?)?)\b/i;
+      const stcw = (t.match(stcwRegex)||[])[1] || '';
+
+      // Dates (dd/mm/yyyy, mm-dd-yyyy, yyyy.mm.dd etc.)
+      const allDates = [];
+      const dateRegex = /\b(\d{1,4})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\b/g; // flexible
+      let m;
+      while((m = dateRegex.exec(t))){
+        const parts = [m[1], m[2], m[3]].map(n=>parseInt(n,10));
+        const norm = normalizeToISO(parts[0], parts[1], parts[2]);
+        if(norm) allDates.push({iso:norm, ts:+new Date(norm)});
+      }
+      // Heuristics: earliest → issue, latest → expiry
+      allDates.sort((a,b)=>a.ts-b.ts);
+      const issue = allDates[0]?.iso || '';
+      const expiry = allDates.length>1 ? allDates[allDates.length-1].iso : '';
+
+      // Name heuristics: pick the longest phrase near words "Certificate", "Proficiency", "Training", etc.
+      const lines = (text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      let name = '';
+      const nameHints = /certificate|proficiency|training|competence|endorsement/i;
+      const candidates = lines.filter(l=>nameHints.test(l)).sort((a,b)=>b.length-a.length);
+      if(candidates[0]) name = cleanupTitle(candidates[0]);
+      if(!name){
+        // fallback: longest ALL CAPS-ish line
+        const caps = lines.filter(l=>/[A-Z]{3,}/.test(l)).sort((a,b)=>b.length-a.length);
+        if(caps[0]) name = cleanupTitle(caps[0]);
+      }
+
+      // detect "no expiry" phrasing
+      const noExpiry = /\bno\s+expiry|no\s+expiration|unlimited|lifetime\b/i.test(t);
+
+      return { name, stcw, issue, expiry, noExpiry };
+    }
+
+    // Normalize messy date tokens to YYYY-MM-DD
+    function normalizeToISO(a,b,c){
+      // inputs can be (yyyy,mm,dd) or (dd,mm,yyyy) or (mm,dd,yyyy)
+      let y, m, d;
+      if(a>1900){ // yyyy-* -*
+        y=a; m=b; d=c;
+      } else if(c>1900){
+        // guess day-first if a>12
+        if(a>12){ d=a; m=b; y=c; }
+        else { m=a; d=b; y=c; }
+      } else {
+        return ''; // ambiguous
+      }
+      if(m<1||m>12||d<1||d>31) return '';
+      const mm=String(m).padStart(2,'0'), dd=String(d).padStart(2,'0');
+      return `${y}-${mm}-${dd}`;
+    }
+    function cleanupTitle(s){
+      return s.replace(/\s{2,}/g,' ').replace(/\bcertificate\b\s*:?\s*/ig,'').trim();
+    }
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <div class="container mt-4">
+    <div class="alert alert-light border small">
+      <b>Scan tips:</b> good light, flat document, fill the frame, avoid blur. If the code is misread (`A-VI/1` → `A-V1/1` gibi),
+      formda düzeltip kaydedebilirsin.
+    </div>
+  </div>
 </body>
 </html>
