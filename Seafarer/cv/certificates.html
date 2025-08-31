@@ -102,7 +102,7 @@
 
     // options-stcw.html'i yükle (birkaç yol dene)
     async function loadOptions(){
-      const paths=['/options-stcw.html','/options/options-stcw.html','/assets/options-stcw.html'];
+      const paths=['/options/options-stcw.html'];
       for(const p of paths){
         try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ dl.innerHTML=await r.text(); return; } }catch(e){}
       }
