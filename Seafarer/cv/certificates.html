@@ -1,19 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Certificates</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     body{background:#f6f8fb}
-    .form-slide{background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.06);margin:18px 0;display:none}
-    .form-slide.active{display:block}
+    .cardish{background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
     .required::after{content:" *";color:#dc3545}
-    .ocr-box{background:#0b5ed7;color:#fff}
-    .ocr-progress{height:6px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; max-height: 220px; overflow:auto; background:#f2f4f8; padding:.75rem; border-radius:8px;}
-    .detected li{border:1px solid #e7ebf3;border-radius:10px;padding:.6rem .75rem;margin:.5rem 0;background:#fff}
-    .detected code{background:#eef2ff;padding:.1rem .35rem;border-radius:.4rem}
   </style>
 </head>
 <body class="p-4">
@@ -21,31 +16,31 @@
 
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h4 class="mb-0 fw-bold">Certificates</h4>
-      <div class="d-flex gap-2">
-        <button class="btn btn-secondary" id="scanBtn">Scan from Photo</button>
-        <button class="btn btn-success" id="addBtn">+ Add</button>
+      <button class="btn btn-success" id="addBtn">+ Add</button>
+    </div>
+
+    <!-- Liste -->
+    <div class="cardish p-3 mb-3">
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle mb-0">
+          <thead class="table-primary text-center">
+            <tr>
+              <th style="width:130px">Actions</th>
+              <th>Certificate</th>
+              <th>STCW Code / Ref.</th>
+              <th>Issue</th>
+              <th>Expiry</th>
+            </tr>
+          </thead>
+          <tbody id="certList">
+            <tr><td colspan="5" class="text-center text-muted py-4">No certificates added yet.</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped align-middle">
-        <thead class="table-primary text-center">
-          <tr>
-            <th style="width:130px">Actions</th>
-            <th>Certificate</th>
-            <th>STCW Code / Ref.</th>
-            <th>Issue</th>
-            <th>Expiry</th>
-          </tr>
-        </thead>
-        <tbody id="certList">
-          <tr><td colspan="5" class="text-center text-muted py-4">No certificates added yet.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Editor -->
-    <div id="certForm" class="form-slide p-3">
+    <!-- Form -->
+    <div id="certForm" class="cardish p-3 d-none">
       <form id="form" novalidate>
         <div class="row g-3">
           <div class="col-md-6">
@@ -76,54 +71,14 @@
       </form>
     </div>
 
-    <!-- OCR UI -->
-    <input id="ocrInput" type="file" accept="image/*" class="d-none">
-    <div id="ocrPane" class="form-slide p-3 d-none">
-      <div class="p-3 rounded ocr-box d-flex justify-content-between align-items-center">
-        <div>
-          <strong>OCR • Scan from Photo</strong>
-          <div class="progress bg-white mt-2 ocr-progress">
-            <div id="ocrProgress" class="progress-bar" role="progressbar" style="width:0%"></div>
-          </div>
-          <div id="ocrStatus" class="small mt-2">Waiting for image…</div>
-        </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-light" id="retrySimpleBtn" disabled>Retry (Simple mode)</button>
-          <button class="btn btn-sm btn-light" id="ocrCloseBtn">Close</button>
-        </div>
-      </div>
-
-      <div class="row g-3 mt-3">
-        <div class="col-md-6">
-          <img id="ocrPreview" class="img-fluid rounded border" alt="Preview">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Extracted text (raw)</label>
-          <div id="ocrText" class="mono small">—</div>
-        </div>
-      </div>
-
-      <div id="detectedBox" class="mt-3 d-none">
-        <div class="d-flex justify-content-between align-items-center">
-          <h6 class="mb-2" id="foundMsg">Detected items</h6>
-          <div class="d-flex gap-2">
-            <button id="openEditorGuessBtn" class="btn btn-sm btn-outline-secondary d-none">Open editor with best guess</button>
-            <button id="addSelectedBtn" class="btn btn-sm btn-primary">Add selected</button>
-            <button id="clearDetectedBtn" class="btn btn-sm btn-outline-secondary">Clear</button>
-          </div>
-        </div>
-        <ul id="detectedList" class="list-unstyled detected"></ul>
-        <div class="text-muted small">Tip: “Fill” ile forma atıp düzenleyebilir veya işaretlediklerini “Add selected” ile toplu kaydedebilirsin.</div>
-      </div>
-    </div>
-
     <div class="alert alert-light border small mt-3">
-      <b>Scan tips:</b> good light, flat document, fill the frame, avoid blur. If the code is misread (<code>A-VI/1</code> → <code>A-V1/1</code> gibi), formda düzeltip kaydedebilirsin.
+      <b>Tip:</b> Sertifikaları tek tek ekleyip “Edit” ile güncelleyebilir, “Delete” ile kaldırabilirsin.
     </div>
   </div>
 
-  <!-- Firebase + App (MODULE #1) -->
+  <!-- Firebase + App -->
   <script type="module">
+    // yalnızca seafarer girebilsin
     if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
 
     import { auth, db } from '/firebase-config.js';
@@ -132,31 +87,27 @@
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-    let userId=null, editId=null;
+    // DOM
     const list=document.getElementById('certList');
     const formBox=document.getElementById('certForm');
     const form=document.getElementById('form');
+    const addBtn=document.getElementById('addBtn');
     const submitBtn=document.getElementById('submitBtn');
     const cancelBtn=document.getElementById('cancelBtn');
-    const addBtn=document.getElementById('addBtn');
     const noExpiry=document.getElementById('noExpiry');
     const expiryInput=document.getElementById('expiry');
 
-    // küçük yardımcı
+    // helpers
     function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-    // diğer modülün kullanabilmesi için window’a ver
-    window.__esc = esc;
-    window.__db = db;
 
-    // OCR elemanları
-    const scanBtn=document.getElementById('scanBtn');
-    scanBtn.addEventListener('click', ()=> document.getElementById('ocrInput').click());
+    let uid=null, editId=null;
 
-    noExpiry.addEventListener('change',()=>{ expiryInput.disabled = noExpiry.checked; if(noExpiry.checked) expiryInput.value=''; });
-    cancelBtn.addEventListener('click', ()=> formBox.classList.remove('active'));
+    // UI events
     addBtn.addEventListener('click', ()=> openForm());
+    cancelBtn.addEventListener('click', ()=> closeForm());
+    noExpiry.addEventListener('change',()=>{ expiryInput.disabled = noExpiry.checked; if(noExpiry.checked) expiryInput.value=''; });
 
-    form.addEventListener('submit', async e=>{
+    form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       if(!form.checkValidity()){ form.reportValidity(); return; }
       if(!noExpiry.checked && form.expiry.value && form.issue.value && form.expiry.value < form.issue.value){
@@ -168,12 +119,21 @@
         issue: form.issue.value,
         expiry: noExpiry.checked ? '' : (form.expiry.value || '')
       };
-      const base=collection(db, `seafarers/${userId}/cv/certificates/items`);
+      const base=collection(db, `seafarers/${uid}/cv/certificates/items`);
       try{
         if(editId) await updateDoc(doc(base,editId),data); else await addDoc(base,data);
-        await render(); formBox.classList.remove('active'); editId=null;
+        await render(); closeForm();
       }catch(err){ console.error(err); alert('Save failed.'); }
     });
+
+    function openForm(id=null,data=null){
+      form.reset(); noExpiry.checked=false; expiryInput.disabled=false;
+      submitBtn.textContent=id?'Save':'Add'; editId=id;
+      if(data){ form.name.value=data.name||''; form.stcw.value=data.stcw||''; form.issue.value=data.issue||''; form.expiry.value=data.expiry||''; if(!data.expiry){ noExpiry.checked=true; expiryInput.disabled=true; } }
+      formBox.classList.remove('d-none');
+      window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+    }
+    function closeForm(){ formBox.classList.add('d-none'); editId=null; }
 
     function bindRowActions(tr, id, data){
       tr.querySelector('[data-act="edit"]').addEventListener('click',()=>openForm(id,data));
@@ -181,19 +141,18 @@
     }
     async function delItem(id){
       if(!confirm('Delete this certificate?')) return;
-      const base=collection(db, `seafarers/${userId}/cv/certificates/items`);
+      const base=collection(db, `seafarers/${uid}/cv/certificates/items`);
       try{ await deleteDoc(doc(base,id)); await render(); }catch(err){ console.error(err); alert('Delete failed.'); }
     }
 
     onAuthStateChanged(auth, async user=>{
       if(!user) return location.href='/index.html';
-      userId=user.uid; window.__uid = userId; window.render = render; // diğer modül erişsin
-      await render();
+      uid=user.uid; await render();
     });
 
     async function render(){
       list.innerHTML='<tr><td colspan="5" class="text-center text-muted py-4">Loading…</td></tr>';
-      const base=collection(db, `seafarers/${userId}/cv/certificates/items`);
+      const base=collection(db, `seafarers/${uid}/cv/certificates/items`);
       const snap=await getDocs(query(base, orderBy('issue','desc')));
       if(snap.empty){ list.innerHTML='<tr><td colspan="5" class="text-center text-muted py-4">No certificates added yet.</td></tr>'; return; }
       list.innerHTML='';
@@ -214,264 +173,7 @@
         list.appendChild(tr);
       });
     }
-
-    function openForm(id=null,data=null){
-      form.reset(); noExpiry.checked=false; expiryInput.disabled=false;
-      submitBtn.textContent=id?'Save':'Add'; editId=id;
-      if(data){ form.name.value=data.name||''; form.stcw.value=data.stcw||''; form.issue.value=data.issue||''; form.expiry.value=data.expiry||''; if(!data.expiry){ noExpiry.checked=true; expiryInput.disabled=true; } }
-      formBox.classList.add('active'); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
-    }
   </script>
-
-  <!-- Tesseract + OCR (MODULE #2) -->
-  <script type="module">
-    import { collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-    const db  = window.__db;
-    const esc = window.__esc;
-
-    // OCR UI hooks
-    document.getElementById('ocrInput').addEventListener('change', async (e)=>{
-      const f=e.target.files?.[0]; if(!f) return; await runOCR(f);
-    });
-    document.getElementById('ocrCloseBtn').addEventListener('click', ()=> document.getElementById('ocrPane').classList.add('d-none'));
-
-    async function runOCR(file){
-      const url = URL.createObjectURL(file);
-      const pane = document.getElementById('ocrPane');
-      const prev = document.getElementById('ocrPreview');
-      const rawBox = document.getElementById('ocrText');
-      const status = document.getElementById('ocrStatus');
-      const bar = document.getElementById('ocrProgress');
-      const retryBtn = document.getElementById('retrySimpleBtn');
-
-      pane.classList.remove('d-none'); pane.classList.add('active');
-      prev.src = url; status.textContent='Recognizing…'; bar.style.width='0%'; retryBtn.disabled=true;
-
-      try{
-        const res = await Tesseract.recognize(url,'eng+tur',{logger:m=>{
-          if(m.status && m.progress!=null){ status.textContent=`${m.status}… ${(m.progress*100|0)}%`; bar.style.width=`${m.progress*100}%`; }
-        }});
-        const raw = res.data.text || '';
-        rawBox.textContent = raw;
-        status.textContent = 'Parsing rows…';
-
-        const itemsByRows = await parseByRows(url);
-        if (itemsByRows.length){
-          renderDetected(itemsByRows, 'Found '+itemsByRows.length+' item(s).');
-        }else{
-          const simple = extractCertificates(raw);
-          if (simple.length){
-            renderDetected(simple, 'Row seg. failed • Simple mode found '+simple.length+' item(s).');
-          }else{
-            renderDetected([], 'No items found. Try Simple mode or open editor.');
-            document.getElementById('openEditorGuessBtn').classList.remove('d-none');
-          }
-          retryBtn.disabled=false;
-          retryBtn.onclick=()=>{ const again=extractCertificates(rawBox.textContent||''); renderDetected(again,'Simple mode found '+again.length+' item(s).'); };
-        }
-      }catch(err){ console.error(err); status.textContent='OCR failed.'; }
-      finally{ document.getElementById('ocrInput').value=''; setTimeout(()=>URL.revokeObjectURL(url),30000); }
-    }
-
-    // ======== IMAGE PRE-PROCESSING ========
-    function upscale(c, factor=2){
-      const o=document.createElement('canvas'); o.width=c.width*factor; o.height=c.height*factor;
-      const ctx=o.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.drawImage(c,0,0,o.width,o.height); return o;
-    }
-    function adaptiveBinarize(c){
-      const ctx=c.getContext('2d'); const {width:w,height:h}=c;
-      const img=ctx.getImageData(0,0,w,h), a=img.data;
-      for(let i=0;i<a.length;i+=4){ const g=(a[i]*0.299+a[i+1]*0.587+a[i+2]*0.114)|0; a[i]=a[i+1]=a[i+2]=g; }
-      const S=15, win=(S|1); const integ=new Uint32Array((w+1)*(h+1));
-      for(let y=1;y<=h;y++){ let row=0; for(let x=1;x<=w;x++){ const g=a[((y-1)*w+(x-1))*4]; row+=g; integ[y*(w+1)+x]=integ[(y-1)*(w+1)+x]+row; } }
-      const T=7;
-      for(let y=0;y<h;y++){
-        const y1=Math.max(y-(win>>1),0), y2=Math.min(y+(win>>1),h-1);
-        for(let x=0;x<w;x++){
-          const x1=Math.max(x-(win>>1),0), x2=Math.min(x+(win>>1),w-1);
-          const count=(x2-x1+1)*(y2-y1+1);
-          const sum= integ[(y2+1)*(w+1)+(x2+1)] - integ[y1*(w+1)+(x2+1)]
-                   - integ[(y2+1)*(w+1)+x1] + integ[y1*(w+1)+x1];
-          const mean=(sum/count)|0; const i=((y*w)+x)*4; const v=a[i]<(mean-T)?0:255; a[i]=a[i+1]=a[i+2]=v;
-        }
-      }
-      ctx.putImageData(img,0,0); return c;
-    }
-    async function ocrRegion(canvas, lang, params={}){
-      const pre = adaptiveBinarize(upscale(canvas, 2));
-      const out = await Tesseract.recognize(pre, lang, params);
-      return out.data.text || '';
-    }
-
-    // ======== ROW/COLUMN PARSING ========
-    async function parseByRows(url){
-      const img=await loadImage(url);
-      const base=imageToCanvas(img);
-      const bin=adaptiveBinarize(upscale(base,1)); // hafif iyileştir
-      const rows=segmentRows(bin);
-
-      // kolon sınırları: sol tarih, orta ad, sağ STCW
-      const W=bin.width, Lw=Math.round(W*0.20), Rx=Math.round(W*0.76);
-
-      // Tesseract ayarları
-      const cfgDates = { tessedit_pageseg_mode: 7, tessedit_char_whitelist: '0123456789./-' };
-      const cfgStcw  = { tessedit_pageseg_mode: 7, tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZIVX/- .,' };
-      const cfgName  = { tessedit_pageseg_mode: 6 };
-
-      const items=[];
-      for(const r of rows){
-        if(r.y2-r.y1<30) continue; // çok kısa gürültüyü at
-        const left = crop(bin, 0,   r.y1, Lw,      r.y2-r.y1);
-        const mid  = crop(bin, Lw,  r.y1, Rx-Lw,   r.y2-r.y1);
-        const right= crop(bin, Rx,  r.y1, W-Rx,    r.y2-r.y1);
-
-        const [txtDates, txtName, txtStcw] = await Promise.all([
-          ocrRegion(left,  'eng',     cfgDates),
-          ocrRegion(mid,   'eng+tur', cfgName),
-          ocrRegion(right, 'eng',     cfgStcw)
-        ]);
-
-        const dates = findDates(txtDates);
-        let stcw    = normalizeSTCW(findSTCW((txtStcw + ' ' + txtName)));
-        let name    = extractName(txtName, stcw).replace(/\s{2,}/g,' ').trim();
-
-        if(dates.length){
-          const issue  = toISO(dates[0]) || '';
-          const expiry = dates[1] ? toISO(dates[1]) : '';
-          items.push({name, stcw, issue, expiry});
-        }
-      }
-      return items;
-    }
-
-    // ======== DETECTED LIST ========
-    function renderDetected(items, message){
-      const box=document.getElementById('detectedBox'); const list=document.getElementById('detectedList');
-      document.getElementById('foundMsg').textContent=message||'Detected items';
-      list.innerHTML='';
-      document.getElementById('openEditorGuessBtn').classList.add('d-none');
-
-      const addSelectedBtn=document.getElementById('addSelectedBtn');
-      addSelectedBtn.disabled = !items.length;
-
-      if(!items.length){ box.classList.remove('d-none'); return; }
-
-      items.forEach((it,i)=>{
-        const li=document.createElement('li'); const id='pick_'+i;
-        li.innerHTML=`
-          <div class="d-flex justify-content-between align-items-start gap-2">
-            <div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="${id}" checked>
-                <label for="${id}" class="form-check-label">
-                  <b>${esc(it.name||'(name?)')}</b>
-                  <div class="text-muted small mt-1">
-                    <code>${esc(it.stcw||'(stcw?)')}</code> •
-                    Issue: <code>${esc(it.issue||'—')}</code> •
-                    Expiry: <code>${esc(it.expiry||'—')}</code>
-                  </div>
-                </label>
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              <button class="btn btn-sm btn-outline-primary">Fill</button>
-            </div>
-          </div>`;
-        li.querySelector('button').addEventListener('click',()=>{
-          applyFieldsToForm(it); document.getElementById('addBtn').click();
-        });
-        list.appendChild(li);
-      });
-      box.classList.remove('d-none');
-
-      addSelectedBtn.onclick=async ()=>{
-        const picks=[...list.querySelectorAll('input[type="checkbox"]')];
-        const selected=picks.map((cb,i)=>cb.checked?items[i]:null).filter(Boolean);
-        if(!selected.length) return;
-        try{
-          const uid = window.__uid; if(!uid) return alert('Not signed in.');
-          const base=collection(db,`seafarers/${uid}/cv/certificates/items`);
-          for(const d of selected){ await addDoc(base,{name:d.name||'',stcw:d.stcw||'',issue:d.issue||'',expiry:d.expiry||''}); }
-          if(typeof window.render==='function') await window.render();
-          alert('Selected items added.');
-        }catch(e){ console.error(e); alert('Bulk add failed.'); }
-      };
-      document.getElementById('clearDetectedBtn').onclick=()=>{ list.innerHTML=''; box.classList.add('d-none'); };
-    }
-
-    // ======== CANVAS HELPERS ========
-    function loadImage(src){ return new Promise(r=>{ const i=new Image(); i.onload=()=>r(i); i.src=src; }); }
-    function imageToCanvas(img){ const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight; const x=c.getContext('2d'); x.drawImage(img,0,0); return c; }
-    function segmentRows(c){
-      const x=c.getContext('2d'), {width:w,height:h}=c; const d=x.getImageData(0,0,w,h).data;
-      const proj=new Array(h).fill(0);
-      for(let y=0;y<h;y++){ let s=0; for(let x0=0;x0<w;x0++){ const i=(y*w+x0)*4; s += (d[i]===0)?1:0; } proj[y]=s; }
-      const rows=[]; const T=Math.max(...proj)*0.08; // biraz daha hassas
-      let inRow=false, start=0;
-      for(let y=0;y<h;y++){
-        if(proj[y]>T){ if(!inRow){start=y; inRow=true;} }
-        else if(inRow){ const end=y; if(end-start>30) rows.push({y1:start,y2:end}); inRow=false; }
-      }
-      if(inRow) rows.push({y1:start,y2:h-1});
-      return rows;
-    }
-    function crop(c,x,y,w,h){ const o=document.createElement('canvas'); o.width=w; o.height=h; o.getContext('2d').drawImage(c,x,y,w,h,0,0,w,h); return o; }
-
-    // ======== SIMPLE FALLBACK ========
-    function extractCertificates(raw){
-      const text = raw.replace(/\r/g,'').replace(/[|]+/g,' ').replace(/\s{2,}/g,' ');
-      const date='(?:\\d{2}[./-]\\d{2}[./-]\\d{4}|\\d{4}[./-]\\d{2}[./-]\\d{2})';
-      const pairRe=new RegExp(`${date}\\s+${date}`,'g');
-      const blocks=[]; let m,starts=[];
-      while((m=pairRe.exec(text))!==null){ starts.push({i:m.index}); }
-      for(let i=0;i<starts.length;i++){ const start=starts[i].i; const end=(i+1<starts.length)?starts[i+1].i:text.length; blocks.push(text.slice(start,end).trim()); }
-      return blocks.map(parseBlock).filter(Boolean);
-    }
-    function parseBlock(block){
-      const ds=findDates(block); if(!ds.length) return null;
-      const issue=toISO(ds[0])||''; const expiry=ds[1]?toISO(ds[1]):'';
-      let stcw=findSTCW(block); stcw=normalizeSTCW(stcw);
-      let zone=block; if(ds[1]) zone=block.slice(block.indexOf(ds[1])+ds[1].length); else zone=block.slice(block.indexOf(ds[0])+ds[0].length);
-      if(stcw){ const i=zone.toUpperCase().indexOf(stcw.toUpperCase()); if(i>0) zone=zone.slice(0,i); }
-      let name=zone.split('/').pop().replace(/\(\d+\)/g,'').replace(/\b(CERTIFICATE|BELGESI)\b/ig,'').replace(/\s{2,}/g,' ').trim();
-      if(name.length<6) name=zone.trim(); return {name,stcw,issue,expiry};
-    }
-
-    // ======== TEXT HELPERS ========
-    function findDates(s){ const re=/\b(\d{2}[./-]\d{2}[./-]\d{4}|\d{4}[./-]\d{2}[./-]\d{2})\b/g; const out=[]; let m; while((m=re.exec(s))!==null) out.push(m[1]); return out.slice(0,3);}
-    function toISO(d){ const p=d.split(/[./-]/).map(x=>parseInt(x,10)); let y,m,dd; if(p[0]>1900){y=p[0];m=p[1];dd=p[2];} else {y=p[2];m=p[1];dd=p[0];} if(m<1||m>12||dd<1||dd>31)return''; return `${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;}
-    function findSTCW(s){
-      const t=s.replace(/\s+/g,' ');
-      const rx1=/\bA-[IVX]{1,3}\/\d+(?:-\d+)?\b/i;
-      const rx2=/\bReg\.?\s*([IVX]{1,3}\/\d+(?:-\d+)?)/i;
-      const rx3=/\bTable\s*A-([IVX]{1,3}\/\d+(?:-\d+)?)/i;
-      const fix=t.replace(/V1/g,'VI').replace(/A- ?V1/g,'A-VI');
-      const m1=(t.match(rx1)||fix.match(rx1)); if(m1) return m1[0].toUpperCase();
-      const m2=t.match(rx2); if(m2) return ('A-'+m2[1]).toUpperCase();
-      const m3=t.match(rx3); if(m3) return ('A-'+m3[1]).toUpperCase();
-      return '';
-    }
-    function normalizeSTCW(s){
-      return (s||'').toUpperCase()
-        .replace(/A-\s?V1/g,'A-VI').replace(/\bV1\b/g,'VI')
-        .replace(/[^A-Z0-9/.\- ]/g,'').replace(/\s{2,}/g,' ').trim();
-    }
-    function extractName(mid,stcw){
-      let zone=mid||'';
-      if(stcw){ const i=zone.toUpperCase().indexOf(stcw.toUpperCase()); if(i>0) zone=zone.slice(0,i); }
-      zone = zone.split('/').pop();
-      return zone.replace(/\(\d+\)/g,'').replace(/\b(CERTIFICATE|BELGESI)\b/ig,'').replace(/\s{2,}/g,' ').trim();
-    }
-
-    // editor doldur
-    function applyFieldsToForm(f){
-      const form=document.getElementById('form'); const noExp=document.getElementById('noExpiry'); const expIn=document.getElementById('expiry');
-      if(f.name) form.name.value=f.name; if(f.stcw) form.stcw.value=f.stcw; if(f.issue) form.issue.value=f.issue;
-      if(f.expiry){ expIn.value=f.expiry; noExp.checked=false; expIn.disabled=false; } else { noExp.checked=true; expIn.value=''; expIn.disabled=true; }
-    }
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
