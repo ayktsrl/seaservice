@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Seafarer CV</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Opsiyonel: Inter + Source Sans 3 (istemiyorsan linkleri sil) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    /* Kurumsal palet */
+    --ink:#1b1f23;
+    --sub:#586069;
+    --muted:#8a949e;
+    --line:#e6ebf1;
+    --brand:#0a3d62;      /* koyu deniz mavisi */
+    --brand-weak:#ecf3f8; /* açık arkaplan */
+    --chip:#eef4f9;
+  }
+  /* Ekran için kenar boşluğu; baskıda @page devreye girer */
+  body{margin:0; background:#f5f7fb; color:var(--ink); font: 13.5px/1.55 Inter, "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";}
+  .page{
+    max-width: 210mm;  /* A4 genişlik */
+    margin: 16mm auto;
+    background:#fff;
+    box-shadow: 0 6px 24px rgba(10,61,98,.08);
+    padding: 14mm 14mm 22mm;
+    position: relative;
+  }
+
+  /* Başlık alanı */
+  .head{
+    display:grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items:center;
+    border-bottom:2px solid var(--brand);
+    padding-bottom:10px;
+    margin-bottom:14px;
+  }
+  .head .name{
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing:.2px;
+  }
+  .head .rank{
+    color:var(--brand);
+    font-weight: 700;
+    margin-top:2px;
+  }
+  .contact{
+    display:flex; flex-wrap:wrap; gap:10px 18px; margin-top:10px;
+    color:var(--sub); font-size:12.5px;
+  }
+  .contact span{white-space:nowrap;}
+  .photo{
+    width: 36mm; height: 44mm; border-radius: 6px; object-fit: cover; object-position: center;
+    border: 1px solid var(--line);
+    background:#fafbff;
+  }
+
+  /* Bölüm başlığı */
+  .sec{
+    margin-top:14px;
+    break-inside: avoid;
+  }
+  .sec h3{
+    font-size: 14px;
+    letter-spacing:.7px;
+    color:var(--brand);
+    text-transform: uppercase;
+    margin:0 0 8px;
+    font-weight: 800;
+  }
+  .summary{
+    background: var(--brand-weak);
+    border:1px solid var(--line);
+    padding:10px 12px;
+    border-radius:8px;
+  }
+
+  /* Chip list (skills) */
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top: 2px;}
+  .chip{
+    background:var(--chip);
+    border:1px solid var(--line);
+    padding:5px 8px; border-radius:999px; font-size:12px;
+  }
+
+  /* Çift kolon alanlar */
+  .cols {display:grid; grid-template-columns: 1fr 1fr; gap:12px;}
+  @media (max-width: 720px){ .cols{grid-template-columns: 1fr;} }
+
+  /* Tablo – Sea Service */
+  table{
+    border-collapse: collapse; width:100%;
+    font-size: 12.5px;
+  }
+  thead th{
+    background: var(--brand-weak);
+    color: var(--brand);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11.5px;
+    letter-spacing:.4px;
+    border-bottom: 1px solid var(--line);
+    padding:8px 6px;
+  }
+  tbody td{
+    border-bottom: 1px solid var(--line);
+    padding:7px 6px;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(odd) td{background:#fafcff;}
+  .tag-verified{
+    color:#0f7b0f; font-weight:700; font-size: 11.5px;
+  }
+  .kpi{
+    margin-top:6px; font-size:12.5px; color:var(--sub);
+  }
+
+  /* Sertifika/License list */
+  .list{list-style:none; padding:0; margin:0;}
+  .list li{
+    padding:8px 10px; border:1px solid var(--line); border-radius:8px; margin-bottom:6px; background:#fff;
+    display:flex; gap:8px; align-items:baseline;
+  }
+  .list li b{color:var(--ink)}
+  .dim{color:var(--muted)}
+
+  /* Sabit footer: sayfa numarası */
+  .footer{
+    position: fixed; bottom: 8mm; left: 14mm; right:14mm;
+    display:flex; justify-content: space-between; align-items:center;
+    color:var(--muted); font-size:11.5px;
+  }
+  .pageno:after{ content: "Page " counter(page) " of " counter(pages); }
+
+  /* Print kuralları */
+  @page{
+    size: A4;
+    margin: 12mm 12mm 18mm;
+  }
+  @media print{
+    body{background:#fff;}
+    .page{
+      box-shadow: none; margin: 0; padding: 0; border:0;
+    }
+    .head{padding:12mm 12mm 6mm; margin:0 0 6mm; border-bottom-width: 1.5px}
+    .content{padding: 0 12mm 18mm;}
+    .footer{position: fixed}
+    thead { display: table-header-group; }      /* tablo başlığı tekrarı */
+    tfoot { display: table-row-group; }
+    tr, img { break-inside: avoid; }
+    .no-print{ display:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <!-- Üst başlık -->
+  <div class="head">
+    <div>
+      <div class="name" id="cv_name">Full Name</div>
+      <div class="rank" id="cv_rank">Applied Rank</div>
+      <div class="contact" id="cv_contact">
+        <!-- örnek; JS doldurur -->
+        <!-- <span>aykutsaral@gmail.com</span><span>+90 555 123 45 67</span><span>TR</span> -->
+      </div>
+    </div>
+    <img id="cv_photo" class="photo" alt="Photo" src="" onerror="this.style.display='none'">
+  </div>
+
+  <div class="content">
+
+    <!-- Özet -->
+    <section class="sec">
+      <h3>Profile</h3>
+      <div class="summary" id="cv_summary">Experienced seafarer...</div>
+    </section>
+
+    <!-- KPI ve Yetenekler -->
+    <section class="sec cols">
+      <div>
+        <h3>Key Metrics</h3>
+        <div class="kpi" id="kpi_total">Total verified: —</div>
+        <div class="kpi" id="kpi_last">Last contract: —</div>
+        <div class="kpi" id="kpi_flags">Flags served: —</div>
+      </div>
+      <div>
+        <h3>Special Skills</h3>
+        <div class="chips" id="cv_skills"><span class="chip">STS Operations</span></div>
+      </div>
+    </section>
+
+    <!-- Sea Service -->
+    <section class="sec">
+      <h3>Sea Service History</h3>
+      <table id="tbl_service">
+        <thead>
+          <tr>
+            <th>Vessel</th>
+            <th>IMO</th>
+            <th>Type</th>
+            <th>GRT/DWT</th>
+            <th>Flag</th>
+            <th>Rank</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Days</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="kpi" id="service_total"></div>
+    </section>
+
+    <!-- Licenses & Certificates (yanyana) -->
+    <section class="sec cols">
+      <div>
+        <h3>Licenses</h3>
+        <ul class="list" id="list_licenses"></ul>
+      </div>
+      <div>
+        <h3>Certificates</h3>
+        <ul class="list" id="list_certs"></ul>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="footer">
+    <div id="cv_owner">© Seafarer</div>
+    <div class="pageno"></div>
+  </div>
+</div>
+
+<script>
+/* -----------------------------------------------------------
+   RENDER ENGINE
+   window.renderCV(cvData) çağır; içini doldurur.
+   Tarih formatı ISO (YYYY-MM-DD) veya Date kabul edilir.
+----------------------------------------------------------- */
+
+function fmtDate(x){
+  if(!x) return '';
+  const d = (x instanceof Date) ? x : new Date(x);
+  if(isNaN(d)) return '';
+  return d.toISOString().slice(0,10);
+}
+function daysBetween(a,b){
+  const da = (a instanceof Date) ? a : new Date(a);
+  const db = (b instanceof Date) ? b : new Date(b);
+  if(isNaN(da) || isNaN(db)) return 0;
+  const diff = Math.floor((db - da)/86400000);
+  return diff>0 ? diff : 0;
+}
+function esc(s){ return (s??'').toString()
+  .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;'); }
+
+window.renderCV = function(cv){
+  // Header
+  document.getElementById('cv_name').textContent = cv?.personal?.fullName ?? '—';
+  document.getElementById('cv_rank').textContent = cv?.personal?.appliedRank ?? cv?.personal?.rank ?? '—';
+  document.getElementById('cv_owner').textContent = cv?.personal?.fullName ? `© ${cv.personal.fullName}` : '© Seafarer';
+  if(cv?.personal?.photoUrl) {
+    document.getElementById('cv_photo').src = cv.personal.photoUrl;
+  }
+
+  // İletişim satırı
+  const contact = [];
+  if(cv?.personal?.email) contact.push(esc(cv.personal.email));
+  if(cv?.personal?.phone) contact.push(esc(cv.personal.phone));
+  if(cv?.personal?.nationality) contact.push(esc(cv.personal.nationality));
+  if(cv?.personal?.dob) contact.push(`DOB: ${fmtDate(cv.personal.dob)}`);
+  document.getElementById('cv_contact').innerHTML = contact.map(s=>`<span>${s}</span>`).join('');
+
+  // Özet
+  document.getElementById('cv_summary').textContent = cv?.summary ?? '—';
+
+  // Skills
+  const skillsHost = document.getElementById('cv_skills');
+  skillsHost.innerHTML = '';
+  (cv?.skills ?? []).forEach(s=>{
+    const el = document.createElement('span');
+    el.className='chip'; el.textContent = s;
+    skillsHost.appendChild(el);
+  });
+
+  // Service table
+  const tbody = document.querySelector('#tbl_service tbody');
+  tbody.innerHTML = '';
+  const service = (cv?.seaService ?? []).slice().sort((a,b)=> (a.start||'') < (b.start||'') ? 1 : -1);
+  let totalVerified = 0, lastEnd=null;
+  const flags = new Set();
+
+  service.forEach(row=>{
+    const start = row.start ? new Date(row.start) : null;
+    const end   = row.end   ? new Date(row.end)   : null;
+    const d = (start && end) ? daysBetween(start,end) : (row.days|0);
+    if(row.verified && d>0) totalVerified += d;
+    if(row.flag) flags.add(row.flag);
+    if(end && (!lastEnd || end>lastEnd)) lastEnd = end;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${esc(row.vessel||'')}</b>${row.verified? ' <span class="tag-verified">✓</span>':''}</td>
+      <td>${esc(row.imo||'')}</td>
+      <td>${esc(row.type||'')}</td>
+      <td>${esc(row.grt||'')}${row.dwt?'/'+esc(row.dwt):''}</td>
+      <td>${esc(row.flag||'')}</td>
+      <td>${esc(row.rank||'')}</td>
+      <td>${fmtDate(start)}</td>
+      <td>${fmtDate(end)}</td>
+      <td>${d||''}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // KPI
+  const y = Math.floor(totalVerified/365), m = Math.floor((totalVerified%365)/30), dd = totalVerified%30;
+  document.getElementById('kpi_total').textContent = totalVerified ? `Total verified: ${y}y ${m}m ${dd}d (${totalVerified} days)` : 'Total verified: —';
+  document.getElementById('kpi_last').textContent  = lastEnd ? `Last contract end: ${fmtDate(lastEnd)}` : 'Last contract: —';
+  document.getElementById('kpi_flags').textContent = flags.size ? `Flags served: ${Array.from(flags).join(', ')}` : 'Flags served: —';
+  document.getElementById('service_total').textContent = totalVerified ? `Verified total: ${totalVerified} days` : '';
+
+  // Licenses
+  const licUl = document.getElementById('list_licenses'); licUl.innerHTML='';
+  (cv?.licenses ?? []).forEach(L=>{
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <b>${esc(L.type||'')}</b> — ${esc(L.rank||'')}
+      <span class="dim"> • No:</span> ${esc(L.number||'')}
+      <span class="dim"> • Issue:</span> ${esc(L.issue?fmtDate(L.issue):'')}
+      <span class="dim"> • Expiry:</span> ${esc(L.expiry?fmtDate(L.expiry):'No expiry')}
+      ${L.authority? `<span class="dim"> • Auth:</span> ${esc(L.authority)}`:''}
+    `;
+    licUl.appendChild(li);
+  });
+
+  // Certificates
+  const certUl = document.getElementById('list_certs'); certUl.innerHTML='';
+  (cv?.certificates ?? []).forEach(C=>{
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <b>${esc(C.name||'')}</b>${C.code?` <span class="dim">(${esc(C.code)})</span>`:''}
+      ${C.number?`<span class="dim"> • No:</span> ${esc(C.number)}`:''}
+      ${C.issue?`<span class="dim"> • Issue:</span> ${fmtDate(C.issue)}`:''}
+      <span class="dim"> • Expiry:</span> ${C.expiry?fmtDate(C.expiry):'No expiry'}
+    `;
+    certUl.appendChild(li);
+  });
+};
+
+// DEMO: Eğer bu dosyayı tek başına açarsan örnek veri ile gör
+if(!('cvBooted' in window)){
+  window.cvBooted = true;
+  const example = {
+    personal:{
+      fullName:"AYKUT SARAL",
+      appliedRank:"MASTER",
+      email:"aykutsaral@gmail.com",
+      phone:"+90 532 225 00 00",
+      nationality:"TR",
+      dob:"1987-11-26",
+      photoUrl:""
+    },
+    summary:"Master Mariner with solid tanker experience, strong safety culture and proven leadership at sea.",
+    skills:["STS Operations","Chemical Products","Dry Docking","New Building","ECIDS","GMDSS"],
+    seaService:[
+      {vessel:"M/T EXAMPLE", imo:"9430000", type:"Chemical Tanker", grt:"12,040", dwt:"19,800", flag:"TR", rank:"Master", start:"2023-03-01", end:"2023-12-01", verified:true},
+      {vessel:"M/T SAMPLE",  imo:"9301111", type:"Oil/Chem",       grt:"10,850", dwt:"17,300", flag:"PA", rank:"C/O",    start:"2022-03-01", end:"2022-10-15", verified:true},
+    ],
+    licenses:[
+      {type:"COC", rank:"MASTER", number:"TR-123456", issue:"2020-06-01", expiry:"2025-06-01", authority:"TR"},
+      {type:"GMDSS", rank:"", number:"TR-9988", issue:"2021-05-10", expiry:"2026-05-10", authority:"TR"},
+    ],
+    certificates:[
+      {name:"Personal Survival Techniques", code:"A-VI/1-1", issue:"2020-12-03", expiry:"2025-12-03"},
+      {name:"Advanced Fire Fighting", code:"A-VI/3", issue:"2020-12-03", expiry:"2025-12-03"},
+      {name:"SSO", code:"VI/5", issue:"2020-12-03", expiry:"2025-12-03"},
+    ]
+  };
+  // Eğer üst sayfa veri enjekte etmediyse örneği göster
+  setTimeout(()=>{ try{ if(!window._cvInjected){ renderCV(example); } }catch(e){} }, 50);
+}
+</script>
+
+<!-- İstersen görünmez bir buton ekleyebilirsin -->
+<button class="no-print" style="position:fixed;right:14px;bottom:14px;padding:10px 14px;background:var(--brand);color:#fff;border:0;border-radius:8px;box-shadow:0 6px 18px rgba(10,61,98,.2);cursor:pointer" onclick="window.print()">Download PDF</button>
+
+</body>
+</html>

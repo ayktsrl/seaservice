@@ -22,7 +22,7 @@
       .nav-pills .nav-link { padding:.5rem; font-size:.9rem; }
       iframe { min-height:600px; }
     }
-    /* Her ihtimale karşı olası debug ID alanlarını gizle */
+    /* Olası debug ID alanlarını gizle */
     #docIdBadge, #docIdChip, [data-debug="doc-id"] { display:none !important; }
   </style>
 </head>
@@ -34,7 +34,7 @@
 
   <div class="container mt-4">
 
-    <!-- Header (ID METNİ YOK) -->
+    <!-- Header -->
     <div class="card card-shadow mb-3">
       <div class="card-body d-flex flex-wrap align-items-center gap-2 justify-content-between">
         <div class="d-flex align-items-center gap-3">
@@ -44,7 +44,8 @@
         <div class="d-flex gap-2">
           <button id="saveDraftBtn" class="btn btn-outline-primary">Save Draft</button>
           <button id="togglePublishBtn" class="btn btn-success">Publish</button>
-          <a id="previewBtn" href="#" target="_blank" class="btn btn-outline-secondary disabled">Preview</a>
+          <!-- Önceden "Preview" idi; artık doğrudan print görünümüne gidiyor -->
+          <a id="previewBtn" href="#" target="_blank" class="btn btn-outline-secondary disabled">View / Print CV</a>
         </div>
       </div>
     </div>
@@ -69,7 +70,7 @@
       </div>
 
       <div class="col-md-9">
-        <iframe id="cvFrame" src="cv/personal-details.html"></iframe>
+        <iframe id="cvFrame" src="cv/personal-details.html" title="CV Editor"></iframe>
       </div>
     </div>
   </div>
@@ -96,14 +97,12 @@
     let currentUser = null;
     let isPublished = false;
 
-    // Stil uyarılarını azaltmak için tüm ağır init işlemlerini sayfa yüklenince başlat
     const onLoaded = (fn) => {
       if (document.readyState === 'complete') fn();
       else window.addEventListener('load', fn, { once:true });
     };
 
     onLoaded(() => {
-      // Event listeners
       saveDraftBtn.addEventListener('click', async () => {
         try { await saveDraft(); } catch(e){ console.error(e); alert('Save failed: ' + e.message); }
       });
@@ -212,9 +211,10 @@
       }
     }
 
+    // Artık print görünümünü açıyoruz
     function reflectPreviewUrl() {
       if (cvId) {
-        previewBtn.href = `/shared/view-cv.html?cvId=${cvId}`;
+        previewBtn.href = `/shared/cv-print.html?cvId=${cvId}`;
         previewBtn.classList.remove('disabled');
       } else {
         previewBtn.href = '#';
