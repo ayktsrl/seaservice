@@ -3,273 +3,246 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Education</title>
+  <title>Education - Seafarer CV</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="/style.css"/>
   <style>
-    body{ background:#fff; }
-    .card-shadow{ box-shadow:0 6px 18px rgba(0,0,0,.06); border:0; }
-    .table td,.table th{ vertical-align:middle; }
-    .toolbar{ position:sticky; top:0; z-index:10; background:#fff; }
-    .required::after{ content:" *"; color:#dc3545; }
+    .sheet{background:#fff;border-radius:12px;box-shadow:0 1px 12px rgba(0,0,0,.06)}
+    .panel{display:none}
+    .panel.active{display:block}
+    .add-btn{width:40px;height:40px}
+    @media (max-width: 768px){
+      .table{font-size:.92rem}
+      .add-btn{width:40px;height:40px}
+    }
   </style>
 </head>
-<body>
-  <div class="container py-3">
-    <div class="d-flex align-items-center justify-content-between toolbar mb-2">
-      <h4 class="mb-0">Education</h4>
-      <button id="addBtn" class="btn btn-success rounded-circle" title="Add"><span class="fw-bold">+</span></button>
+<body class="bg-light p-4">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+      <h4 class="fw-bold m-0">Education</h4>
+      <button class="btn btn-success rounded-circle add-btn" title="Add" onclick="openForm()">+</button>
     </div>
 
-    <div class="card card-shadow mb-3">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0" id="eduTable">
-          <thead class="table-light">
-            <tr>
-              <th>University</th>
-              <th>Department</th>
-              <th>From</th>
-              <th>To</th>
-              <th>City</th>
-              <th>GPA</th>
-              <th style="width:160px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyEdu">
-            <tr><td colspan="7" class="text-center text-muted py-4">List all education and qualifications.</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="table-responsive sheet">
+      <table class="table table-bordered table-striped align-middle m-0">
+        <thead class="table-primary text-center">
+          <tr>
+            <th style="width:120px">Actions</th>
+            <th>University</th>
+            <th>Department</th>
+            <th>From</th>
+            <th>To</th>
+            <th>City</th>
+            <th>GPA</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="7" class="text-center text-muted py-4">No education added yet.</td></tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- Editor -->
-    <div class="card card-shadow d-none" id="formCard">
-      <div class="card-body">
+    <!-- Add / Edit panel -->
+    <div id="formPanel" class="panel sheet mt-3">
+      <form id="eduForm" class="p-3" novalidate>
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label required">University</label>
-            <input type="text" class="form-control" id="university" placeholder="e.g., Blacksea Technical University">
+            <label class="form-label">University <span class="text-danger">*</span></label>
+            <input id="university" class="form-control" required placeholder="e.g., Black Sea Technical University"/>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Department</label>
-            <input type="text" class="form-control" id="department" placeholder="e.g., Transportation and Management Engineering">
+            <label class="form-label">Department <span class="text-danger">*</span></label>
+            <input id="department" class="form-control" required placeholder="e.g., Naval Architecture"/>
           </div>
 
           <div class="col-md-3">
-            <label class="form-label required">From (Year)</label>
-            <input type="number" class="form-control" id="fromYear" min="1950" max="2099" step="1" placeholder="e.g., 2006">
+            <label class="form-label">From (year) <span class="text-danger">*</span></label>
+            <input id="fromYear" class="form-control" type="number" min="1950" max="2100" required placeholder="YYYY"/>
           </div>
           <div class="col-md-3">
-            <label class="form-label">To (Year)</label>
-            <div class="input-group">
-              <input type="number" class="form-control" id="toYear" min="1950" max="2099" step="1" placeholder="e.g., 2011">
-              <span class="input-group-text">
-                <input class="form-check-input mt-0" type="checkbox" id="ongoing" title="Ongoing">
-              </span>
+            <label class="form-label">To (year)</label>
+            <div class="d-flex gap-2">
+              <input id="toYear" class="form-control" type="number" min="1950" max="2100" placeholder="YYYY"/>
             </div>
-            <div class="form-text">Check if ongoing</div>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="ongoingChk" onclick="toggleOngoing()">
+              <label for="ongoingChk" class="form-check-label">Ongoing</label>
+            </div>
           </div>
 
-          <div class="col-md-3">
+          <div class="col-md-6">
             <label class="form-label">City</label>
-            <input type="text" class="form-control" id="city" placeholder="e.g., Trabzon">
+            <input id="city" class="form-control" placeholder="e.g., Trabzon"/>
           </div>
 
           <div class="col-md-3">
             <label class="form-label">GPA</label>
-            <div class="input-group">
-              <input type="number" class="form-control" id="gpa" step="0.01" min="0">
-              <select class="form-select" id="gpaScale" style="max-width:120px">
-                <option value="4">/ 4.00</option>
-                <option value="100">/ 100</option>
-              </select>
-            </div>
-            <div class="form-text">Leave empty if unknown.</div>
+            <input id="gpaValue" class="form-control" type="number" step="0.01" min="0" placeholder="e.g., 3.45 or 85"/>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Scale</label>
+            <select id="gpaScale" class="form-select">
+              <option value="">—</option>
+              <option value="4.00">/ 4.00</option>
+              <option value="100">/ 100</option>
+            </select>
           </div>
         </div>
 
-        <div class="d-flex justify-content-end gap-2 mt-3">
-          <button class="btn btn-primary" id="saveBtn">Add</button>
-          <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+        <div class="text-end mt-3">
+          <button id="submitBtn" class="btn btn-primary">Add</button>
+          <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancel</button>
         </div>
+      </form>
+      <div class="px-3 pb-3 small text-muted">
+        Tip: Sadece yıl girilir. “Ongoing” seçilirse <em>To</em> yılı boş bırakılır.
       </div>
     </div>
   </div>
 
   <script type="module">
-    import { auth, db } from '/firebase-config.js';
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    // Sadece seafarer
+    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
 
-    const tbody = document.getElementById('tbodyEdu');
-    const addBtn = document.getElementById('addBtn');
-    const formCard = document.getElementById('formCard');
-    const saveBtn = document.getElementById('saveBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
+    import { auth, db } from '/firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import {
+      collection, addDoc, updateDoc, deleteDoc, getDocs, doc, serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    // ---- DOM
+    const rows = document.getElementById('rows');
+    const panel = document.getElementById('formPanel');
+    const form  = document.getElementById('eduForm');
+    const submitBtn = document.getElementById('submitBtn');
 
     const university = document.getElementById('university');
     const department = document.getElementById('department');
     const fromYear   = document.getElementById('fromYear');
     const toYear     = document.getElementById('toYear');
-    const ongoing    = document.getElementById('ongoing');
+    const ongoingChk = document.getElementById('ongoingChk');
     const city       = document.getElementById('city');
-    const gpa        = document.getElementById('gpa');
+    const gpaValue   = document.getElementById('gpaValue');
     const gpaScale   = document.getElementById('gpaScale');
 
-    let currentUser = null;
-    let baseRef = null;
-    let editingId = null;
+    const esc = s => (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    let userId=null, editId=null;
 
-    // Ongoing -> To disabled
-    ongoing.addEventListener('change', () => {
-      toYear.disabled = ongoing.checked;
-      if (ongoing.checked) toYear.value = '';
-    });
+    function baseRef(){
+      // Standart yol: seafarers/{uid}/cv/education/items
+      return collection(db,'seafarers', userId, 'cv', 'education', 'items');
+    }
 
-    addBtn.addEventListener('click', () => openEditor());
-    cancelBtn.addEventListener('click', () => closeEditor());
+    function toggleOngoing(){
+      const on = ongoingChk.checked;
+      toYear.disabled = on;
+      if(on) toYear.value = '';
+    }
+    window.toggleOngoing = toggleOngoing;
 
-    saveBtn.addEventListener('click', async () => {
-      const payload = readForm();
-      if (!payload) return; // validation failed
-      try {
-        if (editingId) {
-          await updateDoc(doc(baseRef, editingId), payload);
-        } else {
-          await addDoc(baseRef, payload);
-        }
-        closeEditor();
-        await loadList();
-      } catch (e) {
-        console.error(e); alert('Save failed.');
+    // Panel açık/kapalı
+    window.openForm = (id=null, data=null)=>{
+      form.reset(); toggleOngoing(); editId=id;
+      submitBtn.textContent = id ? 'Save' : 'Add';
+      panel.classList.add('active');
+      if (data){
+        university.value = data.university || '';
+        department.value = data.department || '';
+        fromYear.value   = data.fromYear || '';
+        toYear.value     = data.toYear || '';
+        ongoingChk.checked = !data.toYear; toggleOngoing();
+        city.value       = data.city || '';
+        gpaValue.value   = (data.gpa && data.gpa.value!=null) ? data.gpa.value : '';
+        gpaScale.value   = (data.gpa && data.gpa.scale) ? data.gpa.scale : '';
       }
+    };
+    window.closeForm = ()=>{ panel.classList.remove('active'); editId=null; };
+
+    // Auth ve ilk render
+    onAuthStateChanged(auth, async user=>{
+      if(!user) return location.href='/index.html';
+      userId = user.uid;
+      await render();
     });
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
-      currentUser = user;
+    // Kaydet
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      if(!form.checkValidity()){ form.reportValidity(); return; }
 
-      // ✅ Doğru koleksiyon yolu: seafarers/{uid}/education
-      baseRef = collection(db, 'seafarers', currentUser.uid, 'education');
-
-      await loadList();
-    });
-
-    async function loadList() {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Loading…</td></tr>`;
-      try {
-        const snap = await getDocs(query(baseRef, orderBy('fromYear','desc')));
-        if (snap.empty) {
-          tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No education added yet.</td></tr>`;
-          return;
-        }
-        tbody.innerHTML = '';
-        snap.forEach(d => {
-          const row = d.data();
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${esc(row.university)}</td>
-            <td>${esc(row.department || '')}</td>
-            <td>${row.fromYear ?? ''}</td>
-            <td>${row.toYear ?? '<span class="badge bg-info-subtle text-info-emphasis">Ongoing</span>'}</td>
-            <td>${esc(row.city || '')}</td>
-            <td>${fmtGpa(row.gpa, row.gpaScale)}</td>
-            <td>
-              <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-primary" data-act="edit" data-id="${d.id}">Edit</button>
-                <button class="btn btn-outline-danger" data-act="del"  data-id="${d.id}">Delete</button>
-              </div>
-            </td>
-          `;
-          tr.querySelector('[data-act="edit"]').addEventListener('click', () => openEditor(d.id, row));
-          tr.querySelector('[data-act="del"]').addEventListener('click', async () => {
-            if (!confirm('Delete this record?')) return;
-            try { await deleteDoc(doc(baseRef, d.id)); await loadList(); }
-            catch(e){ console.error(e); alert('Delete failed.'); }
-          });
-          tbody.appendChild(tr);
-        });
-      } catch (e) {
-        console.error(e);
-        tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-4">Failed to load.</td></tr>`;
-      }
-    }
-
-    function openEditor(id=null, data=null){
-      editingId = id;
-      saveBtn.textContent = id ? 'Save' : 'Add';
-      formCard.classList.remove('d-none');
-      (data ? fillForm(data) : clearForm());
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
-    function closeEditor(){
-      formCard.classList.add('d-none');
-      clearForm(); editingId = null;
-    }
-
-    function clearForm(){
-      university.value=''; department.value='';
-      fromYear.value=''; toYear.value=''; ongoing.checked=false; toYear.disabled=false;
-      city.value=''; gpa.value=''; gpaScale.value='4';
-    }
-    function fillForm(d){
-      university.value = d.university || '';
-      department.value = d.department || '';
-      fromYear.value   = d.fromYear ?? '';
-      if (d.toYear){ toYear.value = d.toYear; ongoing.checked=false; toYear.disabled=false; }
-      else { toYear.value=''; ongoing.checked=true; toYear.disabled=true; }
-      city.value       = d.city || '';
-      gpa.value        = (typeof d.gpa === 'number') ? d.gpa : '';
-      gpaScale.value   = d.gpaScale || '4';
-    }
-
-    function readForm(){
-      const uni = university.value.trim();
-      const dep = department.value.trim();
-      const fromV = parseInt((fromYear.value || '').trim(), 10);
-      const toV   = parseInt((toYear.value || '').trim(), 10);
-      const isOngoing = ongoing.checked;
-      const cityV = city.value.trim();
-      const gpaV  = gpa.value.trim();
-      const gpaSc = gpaScale.value;
-
-      if (!uni){ alert('Please enter University.'); university.focus(); return null; }
-      if (!fromV || isNaN(fromV)){ alert('Please enter From (year).'); fromYear.focus(); return null; }
-      if (!isOngoing && toYear.value && (isNaN(toV) || toV < fromV)){
-        alert('"To (year)" must be greater than or equal to "From (year)".'); toYear.focus(); return null;
+      if (fromYear.value && toYear.value && Number(toYear.value) < Number(fromYear.value)){
+        alert('“To (year)” “From (year)” yılından küçük olamaz.'); return;
       }
 
       const payload = {
-        university: uni,
-        department: dep || null,
-        fromYear: fromV,
-        city: cityV || null,
-        gpa: gpaV === '' ? null : Number(gpaV),
-        gpaScale: (gpaV === '' ? null : (gpaSc === '100' ? '100' : '4')),
-        toYear: (isOngoing || !toYear.value) ? null : toV
+        university: university.value.trim(),
+        department: department.value.trim(),
+        fromYear  : fromYear.value ? Number(fromYear.value) : null,
+        toYear    : ongoingChk.checked ? null : (toYear.value ? Number(toYear.value) : null),
+        city      : city.value.trim(),
+        gpa       : (gpaValue.value ? { value: Number(gpaValue.value), scale: gpaScale.value || null } : null),
+        updatedAt : serverTimestamp()
       };
 
-      // GPA sanity
-      if (payload.gpa !== null){
-        if (payload.gpaScale === '4' && (payload.gpa < 0 || payload.gpa > 4.0)){
-          alert('GPA must be between 0.00 and 4.00'); gpa.focus(); return null;
+      try{
+        if (editId){
+          await updateDoc(doc(baseRef(), editId), payload);
+        }else{
+          await addDoc(baseRef(), { ...payload, createdAt: serverTimestamp() });
         }
-        if (payload.gpaScale === '100' && (payload.gpa < 0 || payload.gpa > 100)){
-          alert('GPA must be between 0 and 100'); gpa.focus(); return null;
-        }
+        await render(); closeForm();
+      }catch(err){
+        console.error(err); alert('Save failed.');
       }
-      return payload;
+    });
+
+    // Listele
+    async function render(){
+      rows.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Loading…</td></tr>';
+      const snap = await getDocs(baseRef());
+      const list = [];
+      snap.forEach(s=>list.push({ id:s.id, ...s.data() }));
+      list.sort((a,b)=> (a.fromYear??0) - (b.fromYear??0));
+
+      if (!list.length){
+        rows.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No education added yet.</td></tr>';
+        return;
+      }
+
+      rows.innerHTML = '';
+      for (const d of list){
+        const safe = JSON.stringify(d).replace(/"/g,'&quot;');
+        const gpaText = d.gpa && d.gpa.value!=null ? `${d.gpa.value}${d.gpa.scale? ' / '+d.gpa.scale : ''}` : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${d.id}", JSON.parse("${safe}"))'>Edit</button>
+            <button class="btn btn-sm btn-outline-danger" onclick='delItem("${d.id}")'>Delete</button>
+          </td>
+          <td>${esc(d.university||'')}</td>
+          <td>${esc(d.department||'')}</td>
+          <td class="text-center">${esc(d.fromYear??'')}</td>
+          <td class="text-center">${esc(d.toYear??(d.toYear===null?'Ongoing':''))}</td>
+          <td>${esc(d.city||'')}</td>
+          <td class="text-center">${esc(gpaText)}</td>
+        `;
+        rows.appendChild(tr);
+      }
     }
 
-    // utils
-    function fmtGpa(v, scale){
-      if (v === null || v === undefined || v === '') return '';
-      const n = Number(v);
-      if (scale === '100') return `${Math.round(n)}/100`;
-      return `${n.toFixed(2)}/4.00`;
-    }
-    function esc(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
+    // Sil
+    window.delItem = async (id)=>{
+      if(!confirm('Delete this education item?')) return;
+      try{
+        await deleteDoc(doc(baseRef(), id));
+        await render();
+      }catch(err){
+        console.error(err); alert('Delete failed.');
+      }
+    };
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
