@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Edit My CV - Seafarer</title>
+
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -11,14 +12,18 @@
   <link rel="manifest" href="/site.webmanifest">
   <link rel="stylesheet" href="/style.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
   <style>
+    body.bg-light { background:#f6f8fb !important; }
+    .card-shadow { box-shadow:0 6px 18px rgba(0,0,0,.08); border:0; }
+    iframe { width:100%; border:none; min-height:720px; }
     @media (max-width: 768px) {
-      h4 { font-size: 1.4rem; text-align: center; margin-bottom: 1rem; }
-      .nav-pills .nav-link { padding: 0.5rem; font-size: 0.9rem; }
-      iframe { height: 600px; }
+      h4 { font-size:1.25rem; margin-bottom:.75rem; }
+      .nav-pills .nav-link { padding:.5rem; font-size:.9rem; }
+      iframe { min-height:600px; }
     }
-    iframe { width: 100%; border: none; min-height: 720px; }
-    .card-shadow { box-shadow: 0 6px 18px rgba(0,0,0,.08); border:0; }
+    /* Her ihtimale karşı olası debug ID alanlarını gizle */
+    #docIdBadge, #docIdChip, [data-debug="doc-id"] { display:none !important; }
   </style>
 </head>
 <body class="bg-light">
@@ -28,17 +33,18 @@
   <script type="module" src="/shared/navbar-inject.js"></script>
 
   <div class="container mt-4">
+
+    <!-- Header (ID METNİ YOK) -->
     <div class="card card-shadow mb-3">
       <div class="card-body d-flex flex-wrap align-items-center gap-2 justify-content-between">
         <div class="d-flex align-items-center gap-3">
           <h4 class="mb-0">Edit My CV</h4>
           <span id="statusBadge" class="badge bg-secondary">Draft</span>
-          <small class="text-muted" id="cvIdSmall"></small>
         </div>
         <div class="d-flex gap-2">
           <button id="saveDraftBtn" class="btn btn-outline-primary">Save Draft</button>
           <button id="togglePublishBtn" class="btn btn-success">Publish</button>
-          <a id="previewBtn" href="#" target="_blank" class="btn btn-outline-secondary">Preview</a>
+          <a id="previewBtn" href="#" target="_blank" class="btn btn-outline-secondary disabled">Preview</a>
         </div>
       </div>
     </div>
@@ -61,6 +67,7 @@
           <button class="nav-link" onclick="loadSection('references.html', this)">References</button>
         </div>
       </div>
+
       <div class="col-md-9">
         <iframe id="cvFrame" src="cv/personal-details.html"></iframe>
       </div>
@@ -68,45 +75,66 @@
   </div>
 
   <script type="module">
-    if ((localStorage.getItem("role") || "seafarer").toLowerCase() !== "seafarer") location.href = "/index.html";
+    // Yalnızca Seafarer rolü erişsin
+    if ((localStorage.getItem("role") || "seafarer").toLowerCase() !== "seafarer") {
+      location.href = "/index.html";
+    }
 
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      doc, getDoc, updateDoc, addDoc, collection, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const saveDraftBtn = document.getElementById('saveDraftBtn');
-    const togglePublishBtn = document.getElementById('togglePublishBtn');
-    const previewBtn = document.getElementById('previewBtn');
-    const statusBadge = document.getElementById('statusBadge');
-    const cvIdSmall = document.getElementById('cvIdSmall');
+    const statusBadge       = document.getElementById('statusBadge');
+    const saveDraftBtn      = document.getElementById('saveDraftBtn');
+    const togglePublishBtn  = document.getElementById('togglePublishBtn');
+    const previewBtn        = document.getElementById('previewBtn');
 
     const params = new URLSearchParams(location.search);
     let cvId = params.get('cvId') || null;
     let currentUser = null;
     let isPublished = false;
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { location.href = "/index.html"; return; }
-      currentUser = user;
+    // Stil uyarılarını azaltmak için tüm ağır init işlemlerini sayfa yüklenince başlat
+    const onLoaded = (fn) => {
+      if (document.readyState === 'complete') fn();
+      else window.addEventListener('load', fn, { once:true });
+    };
 
-      if (cvId) {
-        const metaSnap = await getDoc(doc(db, 'cvs', cvId));
-        if (!metaSnap.exists()) {
-          cvId = null;
-        } else {
-          const meta = metaSnap.data();
-          if (meta.ownerUid !== currentUser.uid) {
-            alert('You are not allowed to edit this CV.');
-            location.href = "/home.html"; return;
+    onLoaded(() => {
+      // Event listeners
+      saveDraftBtn.addEventListener('click', async () => {
+        try { await saveDraft(); } catch(e){ console.error(e); alert('Save failed: ' + e.message); }
+      });
+
+      togglePublishBtn.addEventListener('click', async () => {
+        try { await setPublishState(!isPublished); } catch(e){ console.error(e); alert('Action failed: ' + e.message); }
+      });
+
+      onAuthStateChanged(auth, async (user) => {
+        if (!user) { location.href = "/index.html"; return; }
+        currentUser = user;
+
+        if (cvId) {
+          const metaSnap = await getDoc(doc(db, 'cvs', cvId));
+          if (!metaSnap.exists()) {
+            cvId = null;
+          } else {
+            const meta = metaSnap.data() || {};
+            if (meta.ownerUid !== currentUser.uid) {
+              alert('You are not allowed to edit this CV.');
+              location.href = "/home.html"; return;
+            }
+            isPublished = !!meta.public;
+            reflectPublishState();
           }
-          isPublished = !!meta.public;
-          reflectPublishState();
         }
-      }
-      reflectPreviewUrl();
-      reflectCvIdSmall();
+        reflectPreviewUrl();
+      });
     });
 
+    // --- Helpers ---
     async function buildMetaFromSubdocs(ownerUid) {
       const personal = await getDoc(doc(db,"seafarers", ownerUid, "cv", "personalDetails"));
       let fullName = "-", ownerEmail = currentUser?.email || "-";
@@ -125,7 +153,7 @@
     async function saveDraft() {
       const meta = await buildMetaFromSubdocs(currentUser.uid);
       if (!cvId) {
-        const docRef = await addDoc(collection(db,'cvs'), {
+        const ref = await addDoc(collection(db,'cvs'), {
           ownerUid: currentUser.uid,
           ownerEmail: meta.ownerEmail,
           name: meta.name,
@@ -135,7 +163,7 @@
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
-        cvId = docRef.id;
+        cvId = ref.id;
         history.replaceState(null, '', location.pathname + '?cvId=' + cvId);
       } else {
         await updateDoc(doc(db,'cvs', cvId), {
@@ -148,7 +176,8 @@
         });
       }
       isPublished = false;
-      reflectPublishState(); reflectPreviewUrl(); reflectCvIdSmall();
+      reflectPublishState();
+      reflectPreviewUrl();
       toast('Draft saved.');
     }
 
@@ -164,7 +193,8 @@
         updatedAt: serverTimestamp()
       });
       isPublished = !!publish;
-      reflectPublishState(); reflectPreviewUrl();
+      reflectPublishState();
+      reflectPreviewUrl();
       toast(isPublished ? 'CV published.' : 'CV set to draft.');
     }
 
@@ -181,33 +211,44 @@
         togglePublishBtn.className = 'btn btn-success';
       }
     }
+
     function reflectPreviewUrl() {
-      previewBtn.href = cvId ? `/shared/view-cv.html?cvId=${cvId}` : '#';
-      previewBtn.classList.toggle('disabled', !cvId);
+      if (cvId) {
+        previewBtn.href = `/shared/view-cv.html?cvId=${cvId}`;
+        previewBtn.classList.remove('disabled');
+      } else {
+        previewBtn.href = '#';
+        previewBtn.classList.add('disabled');
+      }
     }
-    function reflectCvIdSmall(){ cvIdSmall.textContent = cvId ? `ID: ${cvId}` : ''; }
 
-    saveDraftBtn.addEventListener('click', async () => { try { await saveDraft(); } catch(e){ alert('Save failed: ' + e.message); } });
-    togglePublishBtn.addEventListener('click', async () => { try { await setPublishState(!isPublished); } catch(e){ alert('Action failed: ' + e.message); } });
-
+    // Basit toast
     function toast(msg){
-      const el=document.createElement('div'); el.className='position-fixed bottom-0 end-0 p-3'; el.style.zIndex=1080;
-      el.innerHTML=`<div class="toast align-items-center text-white bg-primary border-0 show" role="alert">
-        <div class="d-flex"><div class="toast-body">${escapeHtml(msg)}</div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`;
-      document.body.appendChild(el); setTimeout(()=>el.remove(), 2500);
+      const wrap=document.createElement('div');
+      wrap.className='position-fixed bottom-0 end-0 p-3';
+      wrap.style.zIndex=1080;
+      wrap.innerHTML=`<div class="toast align-items-center text-white bg-primary border-0 show" role="alert">
+        <div class="d-flex">
+          <div class="toast-body">${escapeHtml(msg)}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>`;
+      document.body.appendChild(wrap);
+      setTimeout(()=>wrap.remove(), 2500);
     }
     function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
   </script>
 
   <script>
+    // Sol menü sekmeleri
     function loadSection(page, el) {
       document.getElementById("cvFrame").src = "cv/" + page;
       document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
       el.classList.add('active');
     }
     window.addEventListener('DOMContentLoaded', () => {
-      const firstTab = document.querySelector('.nav-link'); if (firstTab) firstTab.classList.add('active');
+      const firstTab = document.querySelector('.nav-link');
+      if (firstTab) firstTab.classList.add('active');
     });
   </script>
 
