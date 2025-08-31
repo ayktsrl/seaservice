@@ -95,7 +95,7 @@
           <img id="ocrPreview" class="img-fluid rounded border" alt="Preview">
         </div>
         <div class="col-md-6">
-          <label class="form-label">Extracted text (for verification)</label>
+          <label class="form-label">Extracted text (raw)</label>
           <div id="ocrText" class="mono small">—</div>
         </div>
       </div>
@@ -242,66 +242,86 @@
   <!-- Tesseract (OCR) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
   <script>
-    // --- OCR runner (blob URL + recognize) ---
+    // === Main OCR pipeline ===
     async function runOCR(file){
       const url = URL.createObjectURL(file);
-
       const ocrPane = document.getElementById('ocrPane');
       const ocrPreview = document.getElementById('ocrPreview');
       const ocrText = document.getElementById('ocrText');
       const ocrStatus = document.getElementById('ocrStatus');
       const ocrProgress = document.getElementById('ocrProgress');
+      const detectedBox=document.getElementById('detectedBox');
+      const detectedList=document.getElementById('detectedList');
 
-      ocrPane.classList.remove('d-none');
-      ocrPane.classList.add('active');
-
-      ocrPreview.src = url;
-      ocrStatus.textContent = 'Recognizing…';
-      ocrProgress.style.width = '0%';
+      ocrPane.classList.remove('d-none'); ocrPane.classList.add('active');
+      ocrPreview.src = url; ocrStatus.textContent = 'Recognizing…'; ocrProgress.style.width = '0%';
 
       try {
-        const { data:{ text } } = await Tesseract.recognize(
-          url,
-          // Türkçe + İngilizce
-          'eng+tur',
-          {
-            logger: m => {
-              if (m.status && m.progress != null) {
-                ocrStatus.textContent = `${m.status}… ${(m.progress*100|0)}%`;
-                ocrProgress.style.width = `${m.progress*100}%`;
-              }
-            }
-          }
-        );
-        ocrText.textContent = text || '—';
-        ocrStatus.textContent = 'Done. Parsed fields were applied below.';
+        // 0) Raw text (bilgi amaçlı)
+        const raw = await Tesseract.recognize(url,'eng+tur',{logger:m=>{
+          if(m.status && m.progress!=null){ ocrStatus.textContent=`${m.status}… ${(m.progress*100|0)}%`; ocrProgress.style.width=`${m.progress*100}%`; }
+        }});
+        const rawText = raw.data.text || '';
+        ocrText.textContent = rawText;
+        ocrStatus.textContent = 'Parsing rows…';
 
-        // Çoklu satır çıkar
-        const rows = extractCertificates(text || '');
-        renderDetected(rows);
+        // 1) Canvas -> binarize -> yatay projeksiyon ile satır aralıkları
+        const img = await loadImage(url);
+        const base = imageToCanvas(img);
+        const bin = binarize(base);
+        const rows = segmentRows(bin); // [{y1,y2}...]
+
+        // 2) Sütun oranları (tahmini): sol(0–22%) tarih, orta(22–74%) ad, sağ(74–100%) STCW
+        const W = bin.width;
+        const Lw = Math.round(W*0.22), Rx = Math.round(W*0.74);
+
+        // 3) Her satırı ayrı ayrı OCR: tarih / ad / STCW
+        const items = [];
+        for(const r of rows){
+          if (r.y2 - r.y1 < 40) continue; // çok kısa gürültü
+          const left  = crop(bin, 0, r.y1, Lw, r.y2-r.y1);
+          const mid   = crop(bin, Lw, r.y1, Rx-Lw, r.y2-r.y1);
+          const right = crop(bin, Rx, r.y1, W-Rx, r.y2-r.y1);
+
+          const [tDates, tName, tStcw] = await Promise.all([
+            Tesseract.recognize(left,  'eng',    {}),
+            Tesseract.recognize(mid,   'eng+tur',{}),
+            Tesseract.recognize(right, 'eng',    {})
+          ]);
+
+          const dates = findDates(tDates.data.text||'');
+          const stcw  = findSTCW((tStcw.data.text||'') + ' ' + (tName.data.text||''));
+          const name  = extractName(tName.data.text||'', stcw);
+
+          if (dates.length){
+            const issue = toISO(dates[0]) || '';
+            const expiry = dates[1] ? toISO(dates[1]) : '';
+            items.push({name, stcw, issue, expiry});
+          }
+        }
+
+        // 4) Sonuçları göster
+        renderDetected(items);
 
       } catch (err) {
         console.error(err);
         ocrStatus.textContent = 'OCR failed. Please try another photo.';
       } finally {
-        document.getElementById('ocrInput').value = '';
+        document.getElementById('ocrInput').value='';
         setTimeout(()=>URL.revokeObjectURL(url), 30000);
       }
     }
 
-    // --- Detected list UI & actions ---
+    // === Detected list & actions ===
     function renderDetected(items){
       const box = document.getElementById('detectedBox');
       const list = document.getElementById('detectedList');
-      list.innerHTML = '';
-      if (!items.length){
-        box.classList.add('d-none');
-        return;
-      }
+      list.innerHTML='';
+      if (!items.length){ box.classList.add('d-none'); return; }
+
       items.forEach((it, idx)=>{
-        const li = document.createElement('li');
-        const id = 'pick_' + idx;
-        li.innerHTML = `
+        const li=document.createElement('li'); const id='pick_'+idx;
+        li.innerHTML=`
           <div class="d-flex justify-content-between align-items-start gap-2">
             <div>
               <div class="form-check">
@@ -319,167 +339,91 @@
             <div class="d-flex gap-2">
               <button class="btn btn-sm btn-outline-primary">Fill</button>
             </div>
-          </div>
-        `;
+          </div>`;
         li.querySelector('button').addEventListener('click', ()=>{
-          // Forma at
           applyFieldsToForm(it);
           document.getElementById('addBtn').click();
         });
         list.appendChild(li);
       });
-
       box.classList.remove('d-none');
 
-      // Add selected
       document.getElementById('addSelectedBtn').onclick = async ()=>{
         const picks = [...list.querySelectorAll('input[type="checkbox"]')];
-        const selected = picks
-          .map((cb,i)=> cb.checked ? items[i] : null)
-          .filter(Boolean)
-          // minimum doğrulama
-          .map(x=>({
-            name: x.name || '',
-            stcw: x.stcw || '',
-            issue: x.issue || '',
-            expiry: x.expiry || ''
-          }));
+        const selected = picks.map((cb,i)=> cb.checked ? items[i] : null).filter(Boolean);
         if (!selected.length) return;
         try{
-          const uid = (await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'))
-          // sadece mevcut userId üstünden yazıyoruz (userId globalden geliyor)
-          const base=collection(db, `seafarers/${userId}/cv/certificates/items`);
-          for (const d of selected){ await addDoc(base, d); }
-          await (async ()=>{
-            // listeyi yenile
-            const { getDocs, query, orderBy } =
-              await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-            list.innerHTML='';
-          })();
-          // sayfadaki mevcut render() fonksiyonu global scope'ta
-          if (typeof render === 'function') render();
+          const base = collection(db, `seafarers/${userId}/cv/certificates/items`);
+          for (const d of selected){ await addDoc(base, { name:d.name||'', stcw:d.stcw||'', issue:d.issue||'', expiry:d.expiry||'' }); }
+          await render();
           alert('Selected items added.');
         }catch(e){ console.error(e); alert('Bulk add failed.'); }
       };
-
       document.getElementById('clearDetectedBtn').onclick = ()=>{
-        list.innerHTML=''; document.getElementById('detectedBox').classList.add('d-none');
+        list.innerHTML=''; box.classList.add('d-none');
       };
     }
 
-    // --- Parsing helpers ---
-    function extractCertificates(raw){
-      // normalize whitespaces
-      const text = raw.replace(/\r/g,'').replace(/[|]+/g,' ').replace(/\s{2,}/g,' ');
-      // find all date pairs (dd.mm.yyyy / dd-mm-yyyy / yyyy.mm.dd)
-      const date = '(?:\\d{2}[./-]\\d{2}[./-]\\d{4}|\\d{4}[./-]\\d{2}[./-]\\d{2})';
-      const pairRe = new RegExp(`${date}\\s+${date}`, 'g');
-
-      // cut text into blocks between consecutive date pairs
-      const blocks = [];
-      let m, lastIndex = 0, starts = [];
-      while ((m = pairRe.exec(text)) !== null) { starts.push({i:m.index, s:m[0]}); }
-      for (let i=0;i<starts.length;i++){
-        const start = starts[i].i;
-        const end   = (i+1<starts.length) ? starts[i+1].i : text.length;
-        blocks.push(text.slice(start, end).trim());
-      }
-
-      const items = blocks.map(b => parseBlock(b)).filter(x=>x);
-      return items;
+    // === Canvas helpers ===
+    function loadImage(src){ return new Promise(r=>{ const i=new Image(); i.onload=()=>r(i); i.src=src; }); }
+    function imageToCanvas(img){ const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight; const x=c.getContext('2d'); x.drawImage(img,0,0); return c; }
+    function binarize(c){
+      const x=c.getContext('2d'), {width:w,height:h}=c; const d=x.getImageData(0,0,w,h); const a=d.data;
+      // grayscale + global threshold (mean-10)
+      let sum=0;
+      for(let i=0;i<a.length;i+=4){ const g=(a[i]*0.299+a[i+1]*0.587+a[i+2]*0.114)|0; a[i]=a[i+1]=a[i+2]=g; sum+=g; }
+      const mean=(sum/(a.length/4))|0, thr=Math.max(80, mean-10);
+      for(let i=0;i<a.length;i+=4){ const v=a[i]<thr?0:255; a[i]=a[i+1]=a[i+2]=v; }
+      x.putImageData(d,0,0); return c;
     }
-
-    function parseBlock(block){
-      // dates
-      const ds = findDates(block);
-      if (ds.length < 1) return null;
-      const issue = toISO(ds[0]) || '';
-      const expiry = ds[1] ? toISO(ds[1]) : '';
-
-      // stcw
-      const stcw = findSTCW(block);
-
-      // name: between second date and stcw text (or end)
-      let nameZone = block;
-      if (ds[1]) {
-        const afterSecondDate = block.indexOf(ds[1]);
-        nameZone = block.slice(afterSecondDate + ds[1].length);
-      } else if (ds[0]) {
-        const afterFirstDate = block.indexOf(ds[0]);
-        nameZone = block.slice(afterFirstDate + ds[0].length);
+    function segmentRows(c){
+      const x=c.getContext('2d'), {width:w,height:h}=c; const d=x.getImageData(0,0,w,h).data;
+      const proj=new Array(h).fill(0);
+      for(let y=0;y<h;y++){ let s=0; for(let x0=0;x0<w;x0++){ const i=(y*w+x0)*4; s += (d[i]===0)?1:0; } proj[y]=s; }
+      const rows=[]; const T=Math.max(...proj)*0.10; // satır aktivasyon eşiği
+      let inRow=false, start=0;
+      for(let y=0;y<h;y++){
+        if(proj[y]>T){ if(!inRow){start=y; inRow=true;} }
+        else if(inRow){ const end=y; if(end-start>35) rows.push({y1:start,y2:end}); inRow=false; }
       }
-      if (stcw){
-        const stIdx = nameZone.toUpperCase().indexOf(stcw.toUpperCase());
-        if (stIdx > 0) nameZone = nameZone.slice(0, stIdx);
+      if(inRow) rows.push({y1:start,y2:h-1});
+      return rows;
+    }
+    function crop(c,x,y,w,h){ const o=document.createElement('canvas'); o.width=w; o.height=h; o.getContext('2d').drawImage(c,x,y,w,h,0,0,w,h); return o; }
+
+    // === Parsing helpers ===
+    function findDates(s){
+      const re=/\b(\d{2}[./-]\d{2}[./-]\d{4}|\d{4}[./-]\d{2}[./-]\d{2})\b/g;
+      const out=[]; let m; while((m=re.exec(s))!==null) out.push(m[1]); return out.slice(0,3);
+    }
+    function toISO(d){
+      const p=d.split(/[./-]/).map(x=>parseInt(x,10)); let y,m,dd;
+      if(p[0]>1900){ y=p[0]; m=p[1]; dd=p[2]; } else { y=p[2]; m=p[1]; dd=p[0]; }
+      if(m<1||m>12||dd<1||dd>31) return ''; return `${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    }
+    function findSTCW(s){
+      const t=s.replace(/\s+/g,' ');
+      const rx1=/\bA-[IVX]{1,3}\/\d+(?:-\d+)?\b/i;
+      const rx2=/\bReg\.?\s*([IVX]{1,3}\/\d+(?:-\d+)?)/i;
+      const rx3=/\bTable\s*A-([IVX]{1,3}\/\d+(?:-\d+)?)/i;
+      const fix=t.replace(/V1/g,'VI').replace(/A- ?V1/g,'A-VI');
+      const m1=(t.match(rx1)||fix.match(rx1)); if(m1) return m1[0].toUpperCase();
+      const m2=t.match(rx2); if(m2) return ('A-'+m2[1]).toUpperCase();
+      const m3=t.match(rx3); if(m3) return ('A-'+m3[1]).toUpperCase();
+      return '';
+    }
+    function extractName(mid, stcw){
+      let zone=mid;
+      if(stcw){
+        const i=zone.toUpperCase().indexOf(stcw.toUpperCase());
+        if(i>0) zone=zone.slice(0,i);
       }
-      // try to take English half if bilingual like "…/PERSONAL SURVIVAL TECHNIQUES TRAINING CERTIFICATE"
-      let name = nameZone.split('/').pop().trim();
-      // drop register / numbers / certificate word
-      name = name.replace(/\(\d+\)/g,'')
+      // iki dilli ise / sağındaki İngilizce kısmı al
+      zone = zone.split('/').pop();
+      return zone.replace(/\(\d+\)/g,'')
                  .replace(/\b(CERTIFICATE|BELGESI)\b/ig,'')
                  .replace(/\s{2,}/g,' ')
                  .trim();
-      // upper-case tighten
-      if (name.length < 6) name = nameZone.trim();
-
-      return { name, stcw, issue, expiry };
-    }
-
-    function findDates(s){
-      const re = /\b(\d{2}[./-]\d{2}[./-]\d{4}|\d{4}[./-]\d{2}[./-]\d{2})\b/g;
-      const out = []; let m;
-      while ((m = re.exec(s)) !== null) out.push(m[1]);
-      return out.slice(0, 4); // safety
-    }
-    function toISO(d){
-      // dd.mm.yyyy or yyyy-mm-dd → ISO yyyy-mm-dd
-      const p = d.split(/[./-]/).map(x=>parseInt(x,10));
-      let y,m,dd;
-      if (p[0] > 1900) { y=p[0]; m=p[1]; dd=p[2]; }
-      else if (p[2] > 1900) { y=p[2]; m=p[1]; dd=p[0]; }
-      else return '';
-      if (m<1||m>12||dd<1||dd>31) return '';
-      return `${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
-      }
-
-    function findSTCW(s){
-      const t = s.replace(/\s+/g,' ');
-      // prefer A-VI/… or A-V/… ; also accept "Reg. VI/5", "Table A-V/5"
-      const rx1 = /\bA-[IVX]{1,3}\/\d+(?:-\d+)?\b/i;
-      const rx2 = /\bReg\.?\s*([IVX]{1,3}\/\d+(?:-\d+)?)/i;
-      const rx3 = /\bTable\s*A-([IVX]{1,3}\/\d+(?:-\d+)?)/i;
-
-      const m1 = t.match(rx1);
-      if (m1) return m1[0].toUpperCase();
-
-      const m2 = t.match(rx2);
-      if (m2) return ('A-'+m2[1]).toUpperCase();
-
-      const m3 = t.match(rx3);
-      if (m3) return ('A-'+m3[1]).toUpperCase();
-
-      // common OCR fixes: V1 → VI
-      const fixed = t.replace(/V1/g,'VI').replace(/A- ?V1/g,'A-VI');
-      const f1 = fixed.match(rx1);
-      if (f1) return f1[0].toUpperCase();
-
-      return '';
-    }
-
-    // Fill editor quickly
-    function applyFieldsToForm(f){
-      const form = document.getElementById('form');
-      if(f.name) form.name.value = f.name;
-      if(f.stcw) form.stcw.value = f.stcw;
-      if(f.issue) form.issue.value = f.issue;
-      const noExp = document.getElementById('noExpiry');
-      const expIn = document.getElementById('expiry');
-      if(f.expiry){
-        expIn.value = f.expiry;
-        noExp.checked=false; expIn.disabled=false;
-      } else {
-        noExp.checked=true; expIn.value=''; expIn.disabled=true;
-      }
     }
   </script>
 
