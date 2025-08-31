@@ -122,7 +122,7 @@
     </div>
   </div>
 
-  <!-- Firebase & App -->
+  <!-- Firebase + App (MODULE #1) -->
   <script type="module">
     if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
 
@@ -142,37 +142,20 @@
     const noExpiry=document.getElementById('noExpiry');
     const expiryInput=document.getElementById('expiry');
 
-    // OCR elements
+    // küçük yardımcı
+    function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    // diğer modülün kullanabilmesi için window’a ver
+    window.__esc = esc;
+    window.__db = db;
+
+    // OCR elemanları
     const scanBtn=document.getElementById('scanBtn');
-    const ocrInput=document.getElementById('ocrInput');
-    const ocrPane=document.getElementById('ocrPane');
-    const ocrCloseBtn=document.getElementById('ocrCloseBtn');
-    const retrySimpleBtn=document.getElementById('retrySimpleBtn');
-    const openEditorGuessBtn=document.getElementById('openEditorGuessBtn');
-    const ocrPreview=document.getElementById('ocrPreview');
-    const ocrText=document.getElementById('ocrText');
-    const ocrStatus=document.getElementById('ocrStatus');
-    const ocrProgress=document.getElementById('ocrProgress');
-    const detectedBox=document.getElementById('detectedBox');
-    const detectedList=document.getElementById('detectedList');
-    const addSelectedBtn=document.getElementById('addSelectedBtn');
-    const clearDetectedBtn=document.getElementById('clearDetectedBtn');
-    const foundMsg=document.getElementById('foundMsg');
+    scanBtn.addEventListener('click', ()=> document.getElementById('ocrInput').click());
 
-    // UX
     noExpiry.addEventListener('change',()=>{ expiryInput.disabled = noExpiry.checked; if(noExpiry.checked) expiryInput.value=''; });
+    cancelBtn.addEventListener('click', ()=> formBox.classList.remove('active'));
     addBtn.addEventListener('click', ()=> openForm());
-    cancelBtn.addEventListener('click', ()=> closeForm());
 
-    // OCR triggers
-    scanBtn.addEventListener('click', ()=> ocrInput.click());
-    ocrCloseBtn.addEventListener('click', ()=> ocrPane.classList.add('d-none'));
-    ocrInput.addEventListener('change', async (e)=>{
-      const file = e.target.files?.[0]; if(!file) return;
-      await runOCR(file);
-    });
-
-    // Save
     form.addEventListener('submit', async e=>{
       e.preventDefault();
       if(!form.checkValidity()){ form.reportValidity(); return; }
@@ -188,11 +171,10 @@
       const base=collection(db, `seafarers/${userId}/cv/certificates/items`);
       try{
         if(editId) await updateDoc(doc(base,editId),data); else await addDoc(base,data);
-        await render(); closeForm();
+        await render(); formBox.classList.remove('active'); editId=null;
       }catch(err){ console.error(err); alert('Save failed.'); }
     });
 
-    // Edit/Delete
     function bindRowActions(tr, id, data){
       tr.querySelector('[data-act="edit"]').addEventListener('click',()=>openForm(id,data));
       tr.querySelector('[data-act="del"]').addEventListener('click',()=>delItem(id));
@@ -203,10 +185,10 @@
       try{ await deleteDoc(doc(base,id)); await render(); }catch(err){ console.error(err); alert('Delete failed.'); }
     }
 
-    // Auth & render
     onAuthStateChanged(auth, async user=>{
       if(!user) return location.href='/index.html';
-      userId=user.uid; await render();
+      userId=user.uid; window.__uid = userId; window.render = render; // diğer modül erişsin
+      await render();
     });
 
     async function render(){
@@ -233,139 +215,111 @@
       });
     }
 
-    // Editor open/close
     function openForm(id=null,data=null){
       form.reset(); noExpiry.checked=false; expiryInput.disabled=false;
       submitBtn.textContent=id?'Save':'Add'; editId=id;
       if(data){ form.name.value=data.name||''; form.stcw.value=data.stcw||''; form.issue.value=data.issue||''; form.expiry.value=data.expiry||''; if(!data.expiry){ noExpiry.checked=true; expiryInput.disabled=true; } }
       formBox.classList.add('active'); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
     }
-    function closeForm(){ formBox.classList.remove('active'); editId=null; }
-
-    // Utils
-    function esc(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
   </script>
 
-  <!-- Tesseract (OCR) -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-  <script>
+  <!-- Tesseract + OCR (MODULE #2) -->
+  <script type="module">
+    import { collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    // globallardan al
+    const db = window.__db;
+    const esc = window.__esc;
+
     // === Main OCR pipeline ===
+    document.getElementById('ocrInput').addEventListener('change', async (e)=>{
+      const f=e.target.files?.[0]; if(!f) return; await runOCR(f);
+    });
+    document.getElementById('ocrCloseBtn').addEventListener('click', ()=> document.getElementById('ocrPane').classList.add('d-none'));
+
     async function runOCR(file){
       const url = URL.createObjectURL(file);
-      const ocrPane = document.getElementById('ocrPane');
-      const ocrPreview = document.getElementById('ocrPreview');
-      const ocrText = document.getElementById('ocrText');
-      const ocrStatus = document.getElementById('ocrStatus');
-      const ocrProgress = document.getElementById('ocrProgress');
-      const retrySimpleBtn = document.getElementById('retrySimpleBtn');
+      const pane = document.getElementById('ocrPane');
+      const prev = document.getElementById('ocrPreview');
+      const rawBox = document.getElementById('ocrText');
+      const status = document.getElementById('ocrStatus');
+      const bar = document.getElementById('ocrProgress');
+      const retryBtn = document.getElementById('retrySimpleBtn');
 
-      ocrPane.classList.remove('d-none'); ocrPane.classList.add('active');
-      ocrPreview.src = url; ocrStatus.textContent = 'Recognizing…'; ocrProgress.style.width = '0%';
-      retrySimpleBtn.disabled = true;
+      pane.classList.remove('d-none'); pane.classList.add('active');
+      prev.src = url; status.textContent='Recognizing…'; bar.style.width='0%'; retryBtn.disabled=true;
 
-      try {
-        const raw = await Tesseract.recognize(url,'eng+tur',{logger:m=>{
-          if(m.status && m.progress!=null){ ocrStatus.textContent=`${m.status}… ${(m.progress*100|0)}%`; ocrProgress.style.width=`${m.progress*100}%`; }
+      try{
+        const res = await Tesseract.recognize(url,'eng+tur',{logger:m=>{
+          if(m.status && m.progress!=null){ status.textContent=`${m.status}… ${(m.progress*100|0)}%`; bar.style.width=`${m.progress*100}%`; }
         }});
-        const rawText = raw.data.text || '';
-        ocrText.textContent = rawText;
-        ocrStatus.textContent = 'Parsing rows…';
+        const raw = res.data.text || '';
+        rawBox.textContent = raw;
+        status.textContent = 'Parsing rows…';
 
         const itemsByRows = await parseByRows(url);
         if (itemsByRows.length){
-          renderDetected(itemsByRows, 'Found ' + itemsByRows.length + ' item(s).');
-        } else {
-          // Fallback (simple mode) automatically
-          const simple = extractCertificates(rawText);
+          renderDetected(itemsByRows, 'Found '+itemsByRows.length+' item(s).');
+        }else{
+          const simple = extractCertificates(raw);
           if (simple.length){
-            renderDetected(simple, 'Row seg. failed • Simple mode found ' + simple.length + ' item(s).');
-          } else {
-            renderDetected([], 'No items found. You can try Simple mode manually or open editor with best guess.');
+            renderDetected(simple, 'Row seg. failed • Simple mode found '+simple.length+' item(s).');
+          }else{
+            renderDetected([], 'No items found. Try Simple mode or open editor.');
             document.getElementById('openEditorGuessBtn').classList.remove('d-none');
           }
-          retrySimpleBtn.disabled = false;
-          retrySimpleBtn.onclick = ()=> {
-            const again = extractCertificates(ocrText.textContent || '');
-            renderDetected(again, 'Simple mode found ' + again.length + ' item(s).');
-          };
+          retryBtn.disabled=false;
+          retryBtn.onclick=()=>{ const again=extractCertificates(rawBox.textContent||''); renderDetected(again,'Simple mode found '+again.length+' item(s).'); };
         }
-
-      } catch (err) {
-        console.error(err);
-        ocrStatus.textContent = 'OCR failed. Please try another photo.';
-      } finally {
-        document.getElementById('ocrInput').value='';
-        setTimeout(()=>URL.revokeObjectURL(url), 30000);
-      }
+      }catch(err){ console.error(err); status.textContent='OCR failed.'; }
+      finally{ document.getElementById('ocrInput').value=''; setTimeout(()=>URL.revokeObjectURL(url),30000); }
     }
 
-    // === Parse by row segmentation (canvas) ===
+    // === Parse by rows (canvas) ===
     async function parseByRows(url){
-      const img = await loadImage(url);
-      const base = imageToCanvas(img);
-      const bin = binarize(base);
-      const rows = segmentRows(bin);
-      const W = bin.width;
-      const Lw = Math.round(W*0.22), Rx = Math.round(W*0.74);
-      const items = [];
+      const img=await loadImage(url); const base=imageToCanvas(img); const bin=binarize(base); const rows=segmentRows(bin);
+      const W=bin.width, Lw=Math.round(W*0.22), Rx=Math.round(W*0.74);
+      const items=[];
       for(const r of rows){
-        if (r.y2 - r.y1 < 40) continue;
-        const left  = crop(bin, 0, r.y1, Lw, r.y2-r.y1);
-        const mid   = crop(bin, Lw, r.y1, Rx-Lw, r.y2-r.y1);
-        const right = crop(bin, Rx, r.y1, W-Rx, r.y2-r.y1);
-
-        const [tDates, tName, tStcw] = await Promise.all([
-          Tesseract.recognize(left,  'eng',    {}),
-          Tesseract.recognize(mid,   'eng+tur',{}),
-          Tesseract.recognize(right, 'eng',    {})
+        if(r.y2-r.y1<40) continue;
+        const left=crop(bin,0,r.y1,Lw,r.y2-r.y1);
+        const mid=crop(bin,Lw,r.y1,Rx-Lw,r.y2-r.y1);
+        const right=crop(bin,Rx,r.y1,W-Rx,r.y2-r.y1);
+        const [t1,t2,t3]=await Promise.all([
+          Tesseract.recognize(left,'eng',{}),
+          Tesseract.recognize(mid,'eng+tur',{}),
+          Tesseract.recognize(right,'eng',{})
         ]);
-
-        const dates = findDates(tDates.data.text||'');
-        const stcw  = findSTCW((tStcw.data.text||'') + ' ' + (tName.data.text||''));
-        const name  = extractName(tName.data.text||'', stcw);
-
-        if (dates.length){
-          const issue = toISO(dates[0]) || '';
-          const expiry = dates[1] ? toISO(dates[1]) : '';
-          items.push({name, stcw, issue, expiry});
-        }
+        const dates=findDates(t1.data.text||''); const stcw=findSTCW((t3.data.text||'')+' '+(t2.data.text||'')); const name=extractName(t2.data.text||'',stcw);
+        if(dates.length){ const issue=toISO(dates[0])||''; const expiry=dates[1]?toISO(dates[1]):''; items.push({name,stcw,issue,expiry}); }
       }
       return items;
     }
 
-    // === Detected list & actions ===
+    // === Detected list ===
     function renderDetected(items, message){
-      const box = document.getElementById('detectedBox');
-      const list = document.getElementById('detectedList');
-      const foundMsg = document.getElementById('foundMsg');
-      const addSelectedBtn=document.getElementById('addSelectedBtn');
-      const clearDetectedBtn=document.getElementById('clearDetectedBtn');
-      const openEditorGuessBtn=document.getElementById('openEditorGuessBtn');
-
+      const box=document.getElementById('detectedBox'); const list=document.getElementById('detectedList');
+      document.getElementById('foundMsg').textContent=message||'Detected items';
       list.innerHTML='';
-      foundMsg.textContent = message || 'Detected items';
-      openEditorGuessBtn.classList.add('d-none');
+      document.getElementById('openEditorGuessBtn').classList.add('d-none');
 
-      if (!items.length){
-        box.classList.remove('d-none');
-        addSelectedBtn.disabled = true;
-        return;
-      }
+      const addSelectedBtn=document.getElementById('addSelectedBtn');
+      addSelectedBtn.disabled = !items.length;
 
-      addSelectedBtn.disabled = false;
-      items.forEach((it, idx)=>{
-        const li=document.createElement('li'); const id='pick_'+idx;
+      if(!items.length){ box.classList.remove('d-none'); return; }
+
+      items.forEach((it,i)=>{
+        const li=document.createElement('li'); const id='pick_'+i;
         li.innerHTML=`
           <div class="d-flex justify-content-between align-items-start gap-2">
             <div>
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="${id}" checked>
                 <label for="${id}" class="form-check-label">
-                  <b>${esc(it.name || '(name?)')}</b>
+                  <b>${esc(it.name||'(name?)')}</b>
                   <div class="text-muted small mt-1">
-                    <code>${esc(it.stcw || '(stcw?)')}</code> •
-                    Issue: <code>${esc(it.issue || '—')}</code> •
-                    Expiry: <code>${esc(it.expiry || '—')}</code>
+                    <code>${esc(it.stcw||'(stcw?)')}</code> •
+                    Issue: <code>${esc(it.issue||'—')}</code> •
+                    Expiry: <code>${esc(it.expiry||'—')}</code>
                   </div>
                 </label>
               </div>
@@ -374,28 +328,26 @@
               <button class="btn btn-sm btn-outline-primary">Fill</button>
             </div>
           </div>`;
-        li.querySelector('button').addEventListener('click', ()=>{
-          applyFieldsToForm(it);
-          document.getElementById('addBtn').click();
+        li.querySelector('button').addEventListener('click',()=>{
+          applyFieldsToForm(it); document.getElementById('addBtn').click();
         });
         list.appendChild(li);
       });
       box.classList.remove('d-none');
 
-      addSelectedBtn.onclick = async ()=>{
-        const picks = [...list.querySelectorAll('input[type="checkbox"]')];
-        const selected = picks.map((cb,i)=> cb.checked ? items[i] : null).filter(Boolean);
-        if (!selected.length) return;
+      addSelectedBtn.onclick=async ()=>{
+        const picks=[...list.querySelectorAll('input[type="checkbox"]')];
+        const selected=picks.map((cb,i)=>cb.checked?items[i]:null).filter(Boolean);
+        if(!selected.length) return;
         try{
-          const base = collection(db, `seafarers/${userId}/cv/certificates/items`);
-          for (const d of selected){ await addDoc(base, { name:d.name||'', stcw:d.stcw||'', issue:d.issue||'', expiry:d.expiry||'' }); }
-          await render();
+          const uid = window.__uid; if(!uid) return alert('Not signed in.');
+          const base=collection(db,`seafarers/${uid}/cv/certificates/items`);
+          for(const d of selected){ await addDoc(base,{name:d.name||'',stcw:d.stcw||'',issue:d.issue||'',expiry:d.expiry||''}); }
+          if(typeof window.render==='function') await window.render();
           alert('Selected items added.');
         }catch(e){ console.error(e); alert('Bulk add failed.'); }
       };
-      clearDetectedBtn.onclick = ()=>{
-        list.innerHTML=''; box.classList.add('d-none');
-      };
+      document.getElementById('clearDetectedBtn').onclick=()=>{ list.innerHTML=''; box.classList.add('d-none'); };
     }
 
     // === Canvas helpers ===
@@ -423,76 +375,45 @@
     }
     function crop(c,x,y,w,h){ const o=document.createElement('canvas'); o.width=w; o.height=h; o.getContext('2d').drawImage(c,x,y,w,h,0,0,w,h); return o; }
 
-    // === Fallback (simple) parser from raw text ===
+    // === Fallback (simple) ===
     function extractCertificates(raw){
       const text = raw.replace(/\r/g,'').replace(/[|]+/g,' ').replace(/\s{2,}/g,' ');
-      const date = '(?:\\d{2}[./-]\\d{2}[./-]\\d{4}|\\d{4}[./-]\\d{2}[./-]\\d{2})';
-      const pairRe = new RegExp(`${date}\\s+${date}`, 'g');
-
-      const blocks = [];
-      let m, starts = [];
-      while ((m = pairRe.exec(text)) !== null) { starts.push({i:m.index, s:m[0]}); }
-      for (let i=0;i<starts.length;i++){
-        const start = starts[i].i;
-        const end   = (i+1<starts.length) ? starts[i+1].i : text.length;
-        blocks.push(text.slice(start, end).trim());
-      }
-      const items = blocks.map(b => parseBlock(b)).filter(Boolean);
-      return items;
+      const date='(?:\\d{2}[./-]\\d{2}[./-]\\d{4}|\\d{4}[./-]\\d{2}[./-]\\d{2})';
+      const pairRe=new RegExp(`${date}\\s+${date}`,'g');
+      const blocks=[]; let m,starts=[];
+      while((m=pairRe.exec(text))!==null){ starts.push({i:m.index}); }
+      for(let i=0;i<starts.length;i++){ const start=starts[i].i; const end=(i+1<starts.length)?starts[i+1].i:text.length; blocks.push(text.slice(start,end).trim()); }
+      return blocks.map(parseBlock).filter(Boolean);
     }
     function parseBlock(block){
-      const ds = findDates(block);
-      if (!ds.length) return null;
-      const issue = toISO(ds[0]) || '';
-      const expiry = ds[1] ? toISO(ds[1]) : '';
-      const stcw = findSTCW(block);
-      let zone = block;
-      if (ds[1]) zone = block.slice(block.indexOf(ds[1]) + ds[1].length);
-      else if (ds[0]) zone = block.slice(block.indexOf(ds[0]) + ds[0].length);
-      if (stcw){
-        const i = zone.toUpperCase().indexOf(stcw.toUpperCase());
-        if (i>0) zone = zone.slice(0,i);
-      }
-      let name = zone.split('/').pop().replace(/\(\d+\)/g,'').replace(/\b(CERTIFICATE|BELGESI)\b/ig,'').replace(/\s{2,}/g,' ').trim();
-      if (name.length<6) name = zone.trim();
-      return { name, stcw, issue, expiry };
+      const ds=findDates(block); if(!ds.length) return null;
+      const issue=toISO(ds[0])||''; const expiry=ds[1]?toISO(ds[1]):'';
+      const stcw=findSTCW(block);
+      let zone=block; if(ds[1]) zone=block.slice(block.indexOf(ds[1])+ds[1].length); else zone=block.slice(block.indexOf(ds[0])+ds[0].length);
+      if(stcw){ const i=zone.toUpperCase().indexOf(stcw.toUpperCase()); if(i>0) zone=zone.slice(0,i); }
+      let name=zone.split('/').pop().replace(/\(\d+\)/g,'').replace(/\b(CERTIFICATE|BELGESI)\b/ig,'').replace(/\s{2,}/g,' ').trim();
+      if(name.length<6) name=zone.trim(); return {name,stcw,issue,expiry};
     }
 
     // === small helpers ===
-    function findDates(s){
-      const re=/\b(\d{2}[./-]\d{2}[./-]\d{4}|\d{4}[./-]\d{2}[./-]\d{2})\b/g;
-      const out=[]; let m; while((m=re.exec(s))!==null) out.push(m[1]); return out.slice(0,3);
-    }
-    function toISO(d){
-      const p=d.split(/[./-]/).map(x=>parseInt(x,10)); let y,m,dd;
-      if(p[0]>1900){ y=p[0]; m=p[1]; dd=p[2]; } else { y=p[2]; m=p[1]; dd=p[0]; }
-      if(m<1||m>12||dd<1||dd>31) return ''; return `${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
-    }
+    function findDates(s){ const re=/\b(\d{2}[./-]\d{2}[./-]\d{4}|\d{4}[./-]\d{2}[./-]\d{2})\b/g; const out=[]; let m; while((m=re.exec(s))!==null) out.push(m[1]); return out.slice(0,3);}
+    function toISO(d){ const p=d.split(/[./-]/).map(x=>parseInt(x,10)); let y,m,dd; if(p[0]>1900){y=p[0];m=p[1];dd=p[2];} else {y=p[2];m=p[1];dd=p[0];} if(m<1||m>12||dd<1||dd>31)return''; return `${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;}
     function findSTCW(s){
-      const t=s.replace(/\s+/g,' ');
-      const rx1=/\bA-[IVX]{1,3}\/\d+(?:-\d+)?\b/i;
-      const rx2=/\bReg\.?\s*([IVX]{1,3}\/\d+(?:-\d+)?)/i;
-      const rx3=/\bTable\s*A-([IVX]{1,3}\/\d+(?:-\d+)?)/i;
-      const fix=t.replace(/V1/g,'VI').replace(/A- ?V1/g,'A-VI');
-      const m1=(t.match(rx1)||fix.match(rx1)); if(m1) return m1[0].toUpperCase();
-      const m2=t.match(rx2); if(m2) return ('A-'+m2[1]).toUpperCase();
-      const m3=t.match(rx3); if(m3) return ('A-'+m3[1]).toUpperCase();
-      return '';
+      const t=s.replace(/\s+/g,' '); const rx1=/\bA-[IVX]{1,3}\/\d+(?:-\d+)?\b/i; const rx2=/\bReg\.?\s*([IVX]{1,3}\/\d+(?:-\d+)?)/i; const rx3=/\bTable\s*A-([IVX]{1,3}\/\d+(?:-\d+)?)/i;
+      const fix=t.replace(/V1/g,'VI').replace(/A- ?V1/g,'A-VI'); const m1=(t.match(rx1)||fix.match(rx1)); if(m1) return m1[0].toUpperCase();
+      const m2=t.match(rx2); if(m2) return ('A-'+m2[1]).toUpperCase(); const m3=t.match(rx3); if(m3) return ('A-'+m3[1]).toUpperCase(); return '';
     }
-    function extractName(mid, stcw){
-      let zone=mid;
-      if(stcw){
-        const i=zone.toUpperCase().indexOf(stcw.toUpperCase());
-        if(i>0) zone=zone.slice(0,i);
-      }
-      zone = zone.split('/').pop();
-      return zone.replace(/\(\d+\)/g,'')
-                 .replace(/\b(CERTIFICATE|BELGESI)\b/ig,'')
-                 .replace(/\s{2,}/g,' ')
-                 .trim();
+    function extractName(mid,stcw){ let zone=mid; if(stcw){ const i=zone.toUpperCase().indexOf(stcw.toUpperCase()); if(i>0) zone=zone.slice(0,i);} zone=zone.split('/').pop(); return zone.replace(/\(\d+\)/g,'').replace(/\b(CERTIFICATE|BELGESI)\b/ig,'').replace(/\s{2,}/g,' ').trim(); }
+
+    // editor doldur
+    function applyFieldsToForm(f){
+      const form=document.getElementById('form'); const noExp=document.getElementById('noExpiry'); const expIn=document.getElementById('expiry');
+      if(f.name) form.name.value=f.name; if(f.stcw) form.stcw.value=f.stcw; if(f.issue) form.issue.value=f.issue;
+      if(f.expiry){ expIn.value=f.expiry; noExp.checked=false; expIn.disabled=false; } else { noExp.checked=true; expIn.value=''; expIn.disabled=true; }
     }
   </script>
 
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
