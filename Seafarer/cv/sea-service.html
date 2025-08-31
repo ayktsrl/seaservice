@@ -4,90 +4,283 @@
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Sea Service</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="../../style.css"/>
+  <link rel="stylesheet" href="/style.css"/>
   <style>
-    @media(max-width:768px){ .table{font-size:.85rem} .btn{font-size:.85rem;padding:4px 8px} }
-    .table th,.table td{vertical-align:middle;text-align:center}
-    .edit-row input{min-width:70px}
+    .form-slide{background:#fff;border-radius:12px;box-shadow:0 1px 12px rgba(0,0,0,.06);display:none;margin-top:12px}
+    .form-slide.active{display:block}
+    .add-btn{width:40px;height:40px}
+    @media (max-width: 992px){ .table{font-size:.9rem} }
   </style>
 </head>
-<body class="p-4 bg-light">
+<body class="bg-light p-4">
   <div class="container">
-    <h3 class="mb-3 text-center">Sea Service History</h3>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <h4 class="fw-bold">Sea Service History</h4>
+      <button class="btn btn-success rounded-circle add-btn" onclick="openForm()">+</button>
+    </div>
+
     <div class="table-responsive">
       <table class="table table-bordered table-striped align-middle">
         <thead class="table-primary text-center">
           <tr>
-            <th>Rank</th><th>Joined</th><th>Signed Off</th><th>Period</th><th>Vessel</th><th>IMO</th><th>Type</th>
-            <th>Engine</th><th>GRT</th><th>DWT</th><th>HP</th><th>KW</th><th>Owner/Manager</th><th>Area</th><th>Scope</th><th>Remarks</th><th>Verified</th><th>Actions</th>
+            <th style="width:110px">Actions</th>
+            <th>Rank</th>
+            <th>Joined</th>
+            <th>Signed Off</th>
+            <th>Period (days)</th>
+            <th>Vessel</th>
+            <th>IMO</th>
+            <th>Type</th>
+            <th>Flag</th>
+            <th>DWT</th>
+            <th>GRT</th>
+            <th>Engine (kW)</th>
           </tr>
         </thead>
-        <tbody id="serviceTable"></tbody>
+        <tbody id="rows"></tbody>
+        <tfoot><tr><td colspan="12" class="text-center text-muted small">Add your previous sea services.</td></tr></tfoot>
       </table>
     </div>
-    <button class="btn btn-success mt-3" onclick="addRow()">➕ Add</button>
+
+    <!-- Add/Edit panel -->
+    <div id="panel" class="form-slide">
+      <form id="form" class="p-3" novalidate>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Rank <span class="text-danger">*</span></label>
+            <select id="rank" class="form-select" required>
+              <option value="" disabled selected>- Select value -</option>
+              <!-- options-ranks.html yüklenecek -->
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Joined <span class="text-danger">*</span></label>
+            <input id="joined" type="date" class="form-control" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Signed Off <span class="text-danger">*</span></label>
+            <input id="signed" type="date" class="form-control" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Vessel name <span class="text-danger">*</span></label>
+            <input id="vessel" class="form-control" required placeholder="e.g., M/T Example">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">IMO number</label>
+            <input id="imo" class="form-control" inputmode="numeric" placeholder="e.g., 9234567">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Period (days)</label>
+            <input id="period" class="form-control" disabled>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Type</label>
+            <input id="type" class="form-control" list="dl-vtypes" placeholder="e.g., Oil/Chemical Tanker">
+            <datalist id="dl-vtypes"></datalist>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Flag</label>
+            <input id="flag" class="form-control" list="dl-flags" placeholder="e.g., Panama">
+            <datalist id="dl-flags"></datalist>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Engine (kW)</label>
+            <input id="kw" class="form-control" inputmode="numeric" placeholder="e.g., 9800">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">DWT</label>
+            <input id="dwt" class="form-control" inputmode="numeric" placeholder="e.g., 50000">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">GRT</label>
+            <input id="grt" class="form-control" inputmode="numeric" placeholder="e.g., 28000">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Remarks</label>
+            <textarea id="remarks" rows="2" class="form-control" placeholder="Notes (optional)"></textarea>
+          </div>
+        </div>
+
+        <div class="text-end mt-3">
+          <button class="btn btn-primary" id="submitBtn">Add</button>
+          <button type="button" class="btn btn-secondary" onclick="closeForm()">Cancel</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script type="module">
-    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='../../index.html';
+    // sadece seafarer
+    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
 
-    import { auth, db } from './../../firebase-config.js';
-    import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    let userId=null;
+    // DOM
+    const rows   = document.getElementById('rows');
+    const panel  = document.getElementById('panel');
+    const form   = document.getElementById('form');
+    const submit = document.getElementById('submitBtn');
 
-    function daysBetween(a,b){ if(!a||!b) return ''; const d=(new Date(b))-(new Date(a)); return isNaN(d)?'':`${Math.floor(d/86400000)} days`; }
+    const rank   = document.getElementById('rank');
+    const joined = document.getElementById('joined');
+    const signed = document.getElementById('signed');
+    const vessel = document.getElementById('vessel');
+    const imo    = document.getElementById('imo');
+    const type   = document.getElementById('type');
+    const flag   = document.getElementById('flag');
+    const dwt    = document.getElementById('dwt');
+    const grt    = document.getElementById('grt');
+    const kw     = document.getElementById('kw');
+    const period = document.getElementById('period');
+    const remarks= document.getElementById('remarks');
 
-    function addRow(data={}, id=null){
-      const tb=document.getElementById('serviceTable');
-      const row=document.createElement('tr'); row.dataset.id=id||''; row.dataset.original=JSON.stringify(data);
-      const fields=['rank','start','end','vessel','imo','type','engine','grt','dwt','hp','kw','owner','area','scope','remarks'];
+    function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    let userId=null, editId=null;
 
-      // normal view
-      row.innerHTML = fields.map(f=>`<td>${data[f]||''}</td>`).join('');
-      // period cell
-      const period = document.createElement('td'); period.textContent = daysBetween(data.start, data.end); row.insertBefore(period, row.children[3]);
-      // verified
-      const ver = document.createElement('td'); ver.textContent = data.isVerified ? '✅' : '❌'; row.appendChild(ver);
-      // actions
-      const act = document.createElement('td');
-      act.innerHTML = `<button class="btn btn-sm btn-outline-secondary me-1" onclick="enterEdit(this)">✏️ Edit</button>`;
-      row.appendChild(act);
-
-      tb.appendChild(row);
+    // --- Options loaders (PATH ÖNCE /options) ---
+    async function loadRankOptions(){
+      const paths=['/options/options-ranks.html','/options-ranks.html','/assets/options-ranks.html'];
+      for (const p of paths){
+        try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ rank.innerHTML = '<option value="" disabled selected>- Select value -</option>' + await r.text(); return; } }catch{}
+      }
+    }
+    async function loadFlagOptions(){
+      const paths=['/options/options-countries.html','/options-countries.html','/assets/options-countries.html'];
+      for (const p of paths){
+        try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ document.getElementById('dl-flags').innerHTML = await r.text(); return; } }catch{}
+      }
+    }
+    async function loadVesselTypeOptions(){
+      const paths=['/options/options-vessels.html','/options-vessels.html','/assets/options-vessels.html'];
+      for (const p of paths){
+        try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ document.getElementById('dl-vtypes').innerHTML = await r.text(); return; } }catch{}
+      }
     }
 
-    window.enterEdit = (btn)=>{
-      const row=btn.closest('tr'); const data=JSON.parse(row.dataset.original||'{}'); row.classList.add('edit-row'); row.innerHTML='';
-      const fields=['rank','start','end','vessel','imo','type','engine','grt','dwt','hp','kw','owner','area','scope','remarks'];
-      fields.forEach(f=>{ const td=document.createElement('td'); const type = (f==='start'||f==='end')?'date':'text'; td.innerHTML=`<input class="form-control" type="${type}" value="${data[f]||''}">`; row.appendChild(td); });
-      const period=document.createElement('td'); period.textContent=daysBetween(data.start,data.end); row.insertBefore(period,row.children[3]);
-      const ver=document.createElement('td'); ver.textContent=data.isVerified?'✅':'❌'; row.appendChild(ver);
-      const act=document.createElement('td'); act.innerHTML=`<button class="btn btn-sm btn-outline-success me-1" onclick="saveRow(this)">💾 Save</button><button class="btn btn-sm btn-outline-warning me-1" onclick="cancelEdit(this)">❌ Cancel</button><button class="btn btn-sm btn-outline-danger" onclick="deleteRow(this)">🗑️ Delete</button>`; row.appendChild(act);
+    // Period calc
+    function calcPeriod(){
+      if(!joined.value || !signed.value){ period.value=''; return; }
+      const j=new Date(joined.value), s=new Date(signed.value);
+      const diff = Math.round((s-j)/(1000*60*60*24)) + 1; // dahil
+      period.value = isFinite(diff) && diff>0 ? diff : '';
+    }
+    joined.addEventListener('change', calcPeriod);
+    signed.addEventListener('change', calcPeriod);
+
+    // Open/Close form
+    window.openForm = (id=null,data=null)=>{
+      form.reset(); editId=id; period.value='';
+      submit.textContent = id ? 'Save' : 'Add';
+      panel.classList.add('active');
+      if(data){
+        rank.value   = data.rank || '';
+        joined.value = data.joined || '';
+        signed.value = data.signed || '';
+        vessel.value = data.vessel || '';
+        imo.value    = data.imo || '';
+        type.value   = data.type || '';
+        flag.value   = data.flag || '';
+        dwt.value    = data.dwt || '';
+        grt.value    = data.grt || '';
+        kw.value     = data.kw || '';
+        remarks.value= data.remarks || '';
+        calcPeriod();
+      }
     };
+    window.closeForm = ()=>{ panel.classList.remove('active'); editId=null; };
 
-    window.saveRow = async (btn)=>{
-      const row=btn.closest('tr'); const inputs=row.querySelectorAll('input'); const v=Array.from(inputs).map(i=>i.value);
-      const data={ rank:v[0], start:v[1], end:v[2], vessel:v[3], imo:v[4], type:v[5], engine:v[6], grt:v[7], dwt:v[8], hp:v[9], kw:v[10], owner:v[11], area:v[12], scope:v[13], remarks:v[14], isVerified:false };
-      const id=row.dataset.id; const base=collection(db,`seafarers/${userId}/seaService`);
-      if(id) await updateDoc(doc(base,id),data); else { const r=await addDoc(base,data); row.dataset.id=r.id; }
-      row.dataset.original=JSON.stringify(data); row.innerHTML=''; addRow(data,row.dataset.id);
-    };
-
-    window.cancelEdit=(btn)=>{ const row=btn.closest('tr'); const d=JSON.parse(row.dataset.original||'{}'); row.innerHTML=''; addRow(d,row.dataset.id); };
-
-    window.deleteRow = async (btn)=>{ const row=btn.closest('tr'); const id=row.dataset.id; if(id) await deleteDoc(doc(db,`seafarers/${userId}/seaService/${id}`)); row.remove(); };
-
-    window.addRow = (data={}, id=null)=>addRow(data,id);
-
+    // Auth
     onAuthStateChanged(auth, async user=>{
-      if(!user) return window.location.href='../../index.html';
+      if(!user) return location.href='/index.html';
       userId=user.uid;
-      const snap=await getDocs(collection(db,`seafarers/${userId}/seaService`));
-      snap.forEach(s=>addRow(s.data(), s.id));
+      await Promise.all([loadRankOptions(), loadFlagOptions(), loadVesselTypeOptions()]);
+      await render();
     });
+
+    // Save
+    form.addEventListener('submit', async e=>{
+      e.preventDefault();
+      if(!form.checkValidity()){ form.reportValidity(); return; }
+      if(joined.value && signed.value && signed.value < joined.value){
+        alert('Signed Off, Joined tarihinden önce olamaz.'); return;
+      }
+      const payload={
+        rank:rank.value,
+        joined:joined.value,
+        signed:signed.value,
+        vessel:vessel.value.trim(),
+        imo:imo.value.trim(),
+        type:type.value.trim(),
+        flag:flag.value.trim(),
+        dwt:dwt.value.trim(),
+        grt:grt.value.trim(),
+        kw:kw.value.trim(),
+        period:period.value || '',
+        remarks:remarks.value.trim()
+      };
+      const base=collection(db,`seafarers/${userId}/cv/seaService/items`);
+      try{
+        if(editId) await updateDoc(doc(base,editId),payload);
+        else       await addDoc(base,payload);
+        await render(); closeForm();
+      }catch(err){ console.error(err); alert('Save failed.'); }
+    });
+
+    // Render
+    async function render(){
+      rows.innerHTML = '<tr><td colspan="12" class="text-center text-muted py-4">Loading…</td></tr>';
+      const base=collection(db,`seafarers/${userId}/cv/seaService/items`);
+      const snap=await getDocs(base);
+      const data=[]; snap.forEach(s=>data.push({id:s.id,...s.data()}));
+      if(!data.length){ rows.innerHTML='<tr><td colspan="12" class="text-center text-muted py-4">No sea service yet. Click <b>+</b> to add.</td></tr>'; return; }
+      data.sort((a,b)=> (b.joined||'').localeCompare(a.joined||''));
+      rows.innerHTML='';
+      for(const d of data){
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${d.id}", ${JSON.stringify(d).replace(/"/g,"&quot;")})'>Edit</button>
+            <button class="btn btn-sm btn-outline-danger" onclick='delItem("${d.id}")'>Delete</button>
+          </td>
+          <td>${esc(d.rank||'')}</td>
+          <td>${esc(d.joined||'')}</td>
+          <td>${esc(d.signed||'')}</td>
+          <td>${esc(d.period||'')}</td>
+          <td>${esc(d.vessel||'')}</td>
+          <td>${esc(d.imo||'')}</td>
+          <td>${esc(d.type||'')}</td>
+          <td>${esc(d.flag||'')}</td>
+          <td>${esc(d.dwt||'')}</td>
+          <td>${esc(d.grt||'')}</td>
+          <td>${esc(d.kw||'')}</td>
+        `;
+        rows.appendChild(tr);
+      }
+    }
+
+    // Delete
+    window.delItem = async id=>{
+      if(!confirm('Delete item?')) return;
+      try{
+        await deleteDoc(doc(db,`seafarers/${userId}/cv/seaService/items/${id}`));
+        await render();
+      }catch(err){ console.error(err); alert('Delete failed.'); }
+    };
   </script>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
