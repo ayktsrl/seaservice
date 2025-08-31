@@ -9,9 +9,11 @@
     .form-slide{background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.06);margin:18px 0;display:none}
     .form-slide.active{display:block}
     .required::after{content:" *";color:#dc3545}
-    .ocr-box{background:#0b5ed7; color:#fff}
+    .ocr-box{background:#0b5ed7;color:#fff}
     .ocr-progress{height:6px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; max-height: 200px; overflow:auto; background:#f2f4f8; padding:.75rem; border-radius:8px;}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; max-height: 220px; overflow:auto; background:#f2f4f8; padding:.75rem; border-radius:8px;}
+    .detected li{border:1px solid #e7ebf3;border-radius:10px;padding:.6rem .75rem;margin:.5rem 0;background:#fff}
+    .detected code{background:#eef2ff;padding:.1rem .35rem;border-radius:.4rem}
   </style>
 </head>
 <body class="p-4">
@@ -37,7 +39,7 @@
           </tr>
         </thead>
         <tbody id="certList">
-          <tr><td colspan="5" class="text-center text-muted py-4">List all valid National/STCW and non-STCW certificates.</td></tr>
+          <tr><td colspan="5" class="text-center text-muted py-4">No certificates added yet.</td></tr>
         </tbody>
       </table>
     </div>
@@ -48,11 +50,11 @@
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label required">Certificate Name</label>
-            <input id="name" class="form-control" placeholder="e.g., Basic Safety Training" required>
+            <input id="name" class="form-control" placeholder="e.g., Personal Survival Techniques" required>
           </div>
           <div class="col-md-6">
             <label class="form-label required">STCW Code / Reference</label>
-            <input id="stcw" class="form-control" placeholder="e.g., STCW A-VI/1-1" required>
+            <input id="stcw" class="form-control" placeholder="e.g., A-VI/1-1" required>
           </div>
           <div class="col-md-6">
             <label class="form-label required">Issue Date</label>
@@ -95,18 +97,29 @@
         <div class="col-md-6">
           <label class="form-label">Extracted text (for verification)</label>
           <div id="ocrText" class="mono small">—</div>
-          <div class="alert alert-info mt-2 py-2 small">
-            Tip: We filled the form with our best guess. Please review and correct if needed, then click <b>Add</b>.
+        </div>
+      </div>
+
+      <div id="detectedBox" class="mt-3 d-none">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-2">Detected items</h6>
+          <div class="d-flex gap-2">
+            <button id="addSelectedBtn" class="btn btn-sm btn-primary">Add selected</button>
+            <button id="clearDetectedBtn" class="btn btn-sm btn-outline-secondary">Clear</button>
           </div>
         </div>
+        <ul id="detectedList" class="list-unstyled detected"></ul>
+        <div class="text-muted small">Tip: “Fill” ile forma atıp düzenleyebilir veya birden fazla satırı seçip “Add selected” ile toplu kaydedebilirsin.</div>
       </div>
     </div>
 
+    <div class="alert alert-light border small mt-3">
+      <b>Scan tips:</b> good light, flat document, fill the frame, avoid blur. If the code is misread (<code>A-VI/1</code> → <code>A-V1/1</code> gibi), formda düzeltip kaydedebilirsin.
+    </div>
   </div>
 
   <!-- Firebase & App -->
   <script type="module">
-    // Role guard
     if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
 
     import { auth, db } from '/firebase-config.js';
@@ -122,7 +135,6 @@
     const submitBtn=document.getElementById('submitBtn');
     const cancelBtn=document.getElementById('cancelBtn');
     const addBtn=document.getElementById('addBtn');
-
     const noExpiry=document.getElementById('noExpiry');
     const expiryInput=document.getElementById('expiry');
 
@@ -135,6 +147,10 @@
     const ocrText=document.getElementById('ocrText');
     const ocrStatus=document.getElementById('ocrStatus');
     const ocrProgress=document.getElementById('ocrProgress');
+    const detectedBox=document.getElementById('detectedBox');
+    const detectedList=document.getElementById('detectedList');
+    const addSelectedBtn=document.getElementById('addSelectedBtn');
+    const clearDetectedBtn=document.getElementById('clearDetectedBtn');
 
     // UX
     noExpiry.addEventListener('change',()=>{ expiryInput.disabled = noExpiry.checked; if(noExpiry.checked) expiryInput.value=''; });
@@ -226,8 +242,10 @@
   <!-- Tesseract (OCR) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
   <script>
-    // --- FIXED OCR runner (blob URL + Tesseract.recognize) ---
+    // --- OCR runner (blob URL + recognize) ---
     async function runOCR(file){
+      const url = URL.createObjectURL(file);
+
       const ocrPane = document.getElementById('ocrPane');
       const ocrPreview = document.getElementById('ocrPreview');
       const ocrText = document.getElementById('ocrText');
@@ -237,18 +255,17 @@
       ocrPane.classList.remove('d-none');
       ocrPane.classList.add('active');
 
-      // Blob URL: hem önizleme hem OCR için
-      const url = URL.createObjectURL(file);
       ocrPreview.src = url;
-
       ocrStatus.textContent = 'Recognizing…';
       ocrProgress.style.width = '0%';
 
       try {
         const { data:{ text } } = await Tesseract.recognize(
           url,
-          'eng',
-          { logger: m => {
+          // Türkçe + İngilizce
+          'eng+tur',
+          {
+            logger: m => {
               if (m.status && m.progress != null) {
                 ocrStatus.textContent = `${m.status}… ${(m.progress*100|0)}%`;
                 ocrProgress.style.width = `${m.progress*100}%`;
@@ -256,28 +273,200 @@
             }
           }
         );
-
         ocrText.textContent = text || '—';
-        ocrStatus.textContent = 'Done. Parsed fields were applied to the form. Please review.';
+        ocrStatus.textContent = 'Done. Parsed fields were applied below.';
 
-        // Parse → fill form
-        const fields = parseCertificate(text||'');
-        applyFieldsToForm(fields);
-
-        // Editor’ü aç
-        document.getElementById('addBtn').click();
+        // Çoklu satır çıkar
+        const rows = extractCertificates(text || '');
+        renderDetected(rows);
 
       } catch (err) {
         console.error(err);
         ocrStatus.textContent = 'OCR failed. Please try another photo.';
       } finally {
-        // Aynı dosyayı tekrar seçebilmek için input’u sıfırla
         document.getElementById('ocrInput').value = '';
-        // Belleği serbest bırak
         setTimeout(()=>URL.revokeObjectURL(url), 30000);
       }
     }
 
+    // --- Detected list UI & actions ---
+    function renderDetected(items){
+      const box = document.getElementById('detectedBox');
+      const list = document.getElementById('detectedList');
+      list.innerHTML = '';
+      if (!items.length){
+        box.classList.add('d-none');
+        return;
+      }
+      items.forEach((it, idx)=>{
+        const li = document.createElement('li');
+        const id = 'pick_' + idx;
+        li.innerHTML = `
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="${id}" checked>
+                <label for="${id}" class="form-check-label">
+                  <b>${esc(it.name || '(name?)')}</b>
+                  <div class="text-muted small mt-1">
+                    <code>${esc(it.stcw || '(stcw?)')}</code> •
+                    Issue: <code>${esc(it.issue || '—')}</code> •
+                    Expiry: <code>${esc(it.expiry || '—')}</code>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-primary">Fill</button>
+            </div>
+          </div>
+        `;
+        li.querySelector('button').addEventListener('click', ()=>{
+          // Forma at
+          applyFieldsToForm(it);
+          document.getElementById('addBtn').click();
+        });
+        list.appendChild(li);
+      });
+
+      box.classList.remove('d-none');
+
+      // Add selected
+      document.getElementById('addSelectedBtn').onclick = async ()=>{
+        const picks = [...list.querySelectorAll('input[type="checkbox"]')];
+        const selected = picks
+          .map((cb,i)=> cb.checked ? items[i] : null)
+          .filter(Boolean)
+          // minimum doğrulama
+          .map(x=>({
+            name: x.name || '',
+            stcw: x.stcw || '',
+            issue: x.issue || '',
+            expiry: x.expiry || ''
+          }));
+        if (!selected.length) return;
+        try{
+          const uid = (await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'))
+          // sadece mevcut userId üstünden yazıyoruz (userId globalden geliyor)
+          const base=collection(db, `seafarers/${userId}/cv/certificates/items`);
+          for (const d of selected){ await addDoc(base, d); }
+          await (async ()=>{
+            // listeyi yenile
+            const { getDocs, query, orderBy } =
+              await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+            list.innerHTML='';
+          })();
+          // sayfadaki mevcut render() fonksiyonu global scope'ta
+          if (typeof render === 'function') render();
+          alert('Selected items added.');
+        }catch(e){ console.error(e); alert('Bulk add failed.'); }
+      };
+
+      document.getElementById('clearDetectedBtn').onclick = ()=>{
+        list.innerHTML=''; document.getElementById('detectedBox').classList.add('d-none');
+      };
+    }
+
+    // --- Parsing helpers ---
+    function extractCertificates(raw){
+      // normalize whitespaces
+      const text = raw.replace(/\r/g,'').replace(/[|]+/g,' ').replace(/\s{2,}/g,' ');
+      // find all date pairs (dd.mm.yyyy / dd-mm-yyyy / yyyy.mm.dd)
+      const date = '(?:\\d{2}[./-]\\d{2}[./-]\\d{4}|\\d{4}[./-]\\d{2}[./-]\\d{2})';
+      const pairRe = new RegExp(`${date}\\s+${date}`, 'g');
+
+      // cut text into blocks between consecutive date pairs
+      const blocks = [];
+      let m, lastIndex = 0, starts = [];
+      while ((m = pairRe.exec(text)) !== null) { starts.push({i:m.index, s:m[0]}); }
+      for (let i=0;i<starts.length;i++){
+        const start = starts[i].i;
+        const end   = (i+1<starts.length) ? starts[i+1].i : text.length;
+        blocks.push(text.slice(start, end).trim());
+      }
+
+      const items = blocks.map(b => parseBlock(b)).filter(x=>x);
+      return items;
+    }
+
+    function parseBlock(block){
+      // dates
+      const ds = findDates(block);
+      if (ds.length < 1) return null;
+      const issue = toISO(ds[0]) || '';
+      const expiry = ds[1] ? toISO(ds[1]) : '';
+
+      // stcw
+      const stcw = findSTCW(block);
+
+      // name: between second date and stcw text (or end)
+      let nameZone = block;
+      if (ds[1]) {
+        const afterSecondDate = block.indexOf(ds[1]);
+        nameZone = block.slice(afterSecondDate + ds[1].length);
+      } else if (ds[0]) {
+        const afterFirstDate = block.indexOf(ds[0]);
+        nameZone = block.slice(afterFirstDate + ds[0].length);
+      }
+      if (stcw){
+        const stIdx = nameZone.toUpperCase().indexOf(stcw.toUpperCase());
+        if (stIdx > 0) nameZone = nameZone.slice(0, stIdx);
+      }
+      // try to take English half if bilingual like "…/PERSONAL SURVIVAL TECHNIQUES TRAINING CERTIFICATE"
+      let name = nameZone.split('/').pop().trim();
+      // drop register / numbers / certificate word
+      name = name.replace(/\(\d+\)/g,'')
+                 .replace(/\b(CERTIFICATE|BELGESI)\b/ig,'')
+                 .replace(/\s{2,}/g,' ')
+                 .trim();
+      // upper-case tighten
+      if (name.length < 6) name = nameZone.trim();
+
+      return { name, stcw, issue, expiry };
+    }
+
+    function findDates(s){
+      const re = /\b(\d{2}[./-]\d{2}[./-]\d{4}|\d{4}[./-]\d{2}[./-]\d{2})\b/g;
+      const out = []; let m;
+      while ((m = re.exec(s)) !== null) out.push(m[1]);
+      return out.slice(0, 4); // safety
+    }
+    function toISO(d){
+      // dd.mm.yyyy or yyyy-mm-dd → ISO yyyy-mm-dd
+      const p = d.split(/[./-]/).map(x=>parseInt(x,10));
+      let y,m,dd;
+      if (p[0] > 1900) { y=p[0]; m=p[1]; dd=p[2]; }
+      else if (p[2] > 1900) { y=p[2]; m=p[1]; dd=p[0]; }
+      else return '';
+      if (m<1||m>12||dd<1||dd>31) return '';
+      return `${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+      }
+
+    function findSTCW(s){
+      const t = s.replace(/\s+/g,' ');
+      // prefer A-VI/… or A-V/… ; also accept "Reg. VI/5", "Table A-V/5"
+      const rx1 = /\bA-[IVX]{1,3}\/\d+(?:-\d+)?\b/i;
+      const rx2 = /\bReg\.?\s*([IVX]{1,3}\/\d+(?:-\d+)?)/i;
+      const rx3 = /\bTable\s*A-([IVX]{1,3}\/\d+(?:-\d+)?)/i;
+
+      const m1 = t.match(rx1);
+      if (m1) return m1[0].toUpperCase();
+
+      const m2 = t.match(rx2);
+      if (m2) return ('A-'+m2[1]).toUpperCase();
+
+      const m3 = t.match(rx3);
+      if (m3) return ('A-'+m3[1]).toUpperCase();
+
+      // common OCR fixes: V1 → VI
+      const fixed = t.replace(/V1/g,'VI').replace(/A- ?V1/g,'A-VI');
+      const f1 = fixed.match(rx1);
+      if (f1) return f1[0].toUpperCase();
+
+      return '';
+    }
+
+    // Fill editor quickly
     function applyFieldsToForm(f){
       const form = document.getElementById('form');
       if(f.name) form.name.value = f.name;
@@ -288,71 +477,12 @@
       if(f.expiry){
         expIn.value = f.expiry;
         noExp.checked=false; expIn.disabled=false;
-      } else if (f.noExpiry){
+      } else {
         noExp.checked=true; expIn.value=''; expIn.disabled=true;
       }
-    }
-
-    // --- Parsers (aynen) ---
-    function parseCertificate(text){
-      const t = text.replace(/\s+/g,' ').trim();
-
-      // STCW pattern like A-VI/1-1, A-VI/2, A-V/1-2…
-      const stcwRegex = /\b(?:STCW\s*(?:CODE)?[:\s]*)?([AB]-[IVX]{1,3}(?:\/\d{1,2}(?:-\d{1,2})?)?)\b/i;
-      const stcw = (t.match(stcwRegex)||[])[1] || '';
-
-      // Dates (dd/mm/yyyy, mm-dd-yyyy, yyyy.mm.dd etc.)
-      const allDates = [];
-      const dateRegex = /\b(\d{1,4})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\b/g; // flexible
-      let m;
-      while((m = dateRegex.exec(t))){
-        const parts = [m[1], m[2], m[3]].map(n=>parseInt(n,10));
-        const norm = normalizeToISO(parts[0], parts[1], parts[2]);
-        if(norm) allDates.push({iso:norm, ts:+new Date(norm)});
-      }
-      // Heuristics: earliest → issue, latest → expiry
-      allDates.sort((a,b)=>a.ts-b.ts);
-      const issue = allDates[0]?.iso || '';
-      const expiry = allDates.length>1 ? allDates[allDates.length-1].iso : '';
-
-      // Name heuristics
-      const lines = (text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-      let name = '';
-      const nameHints = /certificate|proficiency|training|competence|endorsement/i;
-      const candidates = lines.filter(l=>nameHints.test(l)).sort((a,b)=>b.length-a.length);
-      if(candidates[0]) name = cleanupTitle(candidates[0]);
-      if(!name){
-        const caps = lines.filter(l=>/[A-Z]{3,}/.test(l)).sort((a,b)=>b.length-a.length);
-        if(caps[0]) name = cleanupTitle(caps[0]);
-      }
-
-      const noExpiry = /\bno\s+expiry|no\s+expiration|unlimited|lifetime\b/i.test(t);
-
-      return { name, stcw, issue, expiry, noExpiry };
-    }
-    function normalizeToISO(a,b,c){
-      let y, m, d;
-      if(a>1900){ y=a; m=b; d=c; }
-      else if(c>1900){ if(a>12){ d=a; m=b; y=c; } else { m=a; d=b; y=c; } }
-      else { return ''; }
-      if(m<1||m>12||d<1||d>31) return '';
-      const mm=String(m).padStart(2,'0'), dd=String(d).padStart(2,'0');
-      return `${y}-${mm}-${dd}`;
-    }
-    function cleanupTitle(s){
-      return s.replace(/\s{2,}/g,' ')
-              .replace(/\bcertificate\b\s*:?\s*/ig,'')
-              .trim();
     }
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-  <div class="container mt-4">
-    <div class="alert alert-light border small">
-      <b>Scan tips:</b> good light, flat document, fill the frame, avoid blur. If the code is misread (`A-VI/1` → `A-V1/1` gibi),
-      formda düzeltip kaydedebilirsin.
-    </div>
-  </div>
 </body>
 </html>
