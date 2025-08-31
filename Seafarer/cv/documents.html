@@ -238,7 +238,38 @@
       docList.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Loading…</td></tr>';
       try{
         const base = collection(db, `seafarers/${uid}/cv/documents/items`);
-        const snap = await getDocs(query(base, orderBy('type'), orderBy('issueDate','desc')));
+        // YENİ: Firestore'da tek orderBy -> index gerekmez
+const snap = await getDocs(query(base, orderBy('issueDate','desc')));
+
+// İsteğe bağlı: listede önce type’a göre, sonra issueDate’e göre sırala
+const rows = [];
+snap.forEach(s => rows.push({ id: s.id, ...s.data() }));
+
+rows.sort((a,b) =>
+  (a.type || '').localeCompare(b.type || '') ||                // type A→Z
+  (b.issueDate || '').localeCompare(a.issueDate || '')         // aynı type'da issueDate yeni→eski
+);
+
+// render
+docList.innerHTML='';
+rows.forEach(d => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="text-center">
+      <button class="btn btn-sm btn-outline-secondary me-1" data-act="edit">Edit</button>
+      <button class="btn btn-sm btn-outline-danger" data-act="del">Delete</button>
+    </td>
+    <td>${(d.type||'')}</td>
+    <td>${(d.number||'')}</td>
+    <td>${(d.issueCountry||'')}</td>
+    <td>${(d.issueDate||'')}</td>
+    <td>${d.expiryDate ? d.expiryDate : '—'}</td>
+  `;
+  tr.querySelector('[data-act="edit"]').addEventListener('click',()=>openModal(d, d.id));
+  tr.querySelector('[data-act="del"]').addEventListener('click',()=>delItem(d.id));
+  docList.appendChild(tr);
+});
+
         if(snap.empty){
           docList.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No documents added yet. Click <b>+ Add</b> to create one.</td></tr>';
           return;
