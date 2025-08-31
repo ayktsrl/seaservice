@@ -226,7 +226,7 @@
   <!-- Tesseract (OCR) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
   <script>
-    // OCR runner
+    // --- FIXED OCR runner (blob URL + Tesseract.recognize) ---
     async function runOCR(file){
       const ocrPane = document.getElementById('ocrPane');
       const ocrPreview = document.getElementById('ocrPreview');
@@ -237,30 +237,45 @@
       ocrPane.classList.remove('d-none');
       ocrPane.classList.add('active');
 
-      // preview
-      ocrPreview.src = URL.createObjectURL(file);
+      // Blob URL: hem önizleme hem OCR için
+      const url = URL.createObjectURL(file);
+      ocrPreview.src = url;
 
       ocrStatus.textContent = 'Recognizing…';
       ocrProgress.style.width = '0%';
 
-      const worker = await Tesseract.createWorker('eng', 1, { logger: m=>{
-        if(m.status && m.progress!=null){
-          ocrStatus.textContent = `${m.status}… ${(m.progress*100).toFixed(0)}%`;
-          ocrProgress.style.width = `${m.progress*100}%`;
-        }
-      }});
+      try {
+        const { data:{ text } } = await Tesseract.recognize(
+          url,
+          'eng',
+          { logger: m => {
+              if (m.status && m.progress != null) {
+                ocrStatus.textContent = `${m.status}… ${(m.progress*100|0)}%`;
+                ocrProgress.style.width = `${m.progress*100}%`;
+              }
+            }
+          }
+        );
 
-      const { data:{ text } } = await worker.recognize(file);
-      await worker.terminate();
+        ocrText.textContent = text || '—';
+        ocrStatus.textContent = 'Done. Parsed fields were applied to the form. Please review.';
 
-      ocrText.textContent = text || '—';
-      ocrStatus.textContent = 'Done. Parsed fields were applied to the form. Please review.';
+        // Parse → fill form
+        const fields = parseCertificate(text||'');
+        applyFieldsToForm(fields);
 
-      // Parse → fill form
-      const fields = parseCertificate(text||'');
-      applyFieldsToForm(fields);
-      // Open editor so user can save
-      document.getElementById('addBtn').click();
+        // Editor’ü aç
+        document.getElementById('addBtn').click();
+
+      } catch (err) {
+        console.error(err);
+        ocrStatus.textContent = 'OCR failed. Please try another photo.';
+      } finally {
+        // Aynı dosyayı tekrar seçebilmek için input’u sıfırla
+        document.getElementById('ocrInput').value = '';
+        // Belleği serbest bırak
+        setTimeout(()=>URL.revokeObjectURL(url), 30000);
+      }
     }
 
     function applyFieldsToForm(f){
@@ -273,13 +288,12 @@
       if(f.expiry){
         expIn.value = f.expiry;
         noExp.checked=false; expIn.disabled=false;
-      } else {
-        // if explicitly no expiry
-        if(f.noExpiry){ noExp.checked=true; expIn.value=''; expIn.disabled=true; }
+      } else if (f.noExpiry){
+        noExp.checked=true; expIn.value=''; expIn.disabled=true;
       }
     }
 
-    // --- Parsers ---
+    // --- Parsers (aynen) ---
     function parseCertificate(text){
       const t = text.replace(/\s+/g,' ').trim();
 
@@ -301,43 +315,34 @@
       const issue = allDates[0]?.iso || '';
       const expiry = allDates.length>1 ? allDates[allDates.length-1].iso : '';
 
-      // Name heuristics: pick the longest phrase near words "Certificate", "Proficiency", "Training", etc.
+      // Name heuristics
       const lines = (text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
       let name = '';
       const nameHints = /certificate|proficiency|training|competence|endorsement/i;
       const candidates = lines.filter(l=>nameHints.test(l)).sort((a,b)=>b.length-a.length);
       if(candidates[0]) name = cleanupTitle(candidates[0]);
       if(!name){
-        // fallback: longest ALL CAPS-ish line
         const caps = lines.filter(l=>/[A-Z]{3,}/.test(l)).sort((a,b)=>b.length-a.length);
         if(caps[0]) name = cleanupTitle(caps[0]);
       }
 
-      // detect "no expiry" phrasing
       const noExpiry = /\bno\s+expiry|no\s+expiration|unlimited|lifetime\b/i.test(t);
 
       return { name, stcw, issue, expiry, noExpiry };
     }
-
-    // Normalize messy date tokens to YYYY-MM-DD
     function normalizeToISO(a,b,c){
-      // inputs can be (yyyy,mm,dd) or (dd,mm,yyyy) or (mm,dd,yyyy)
       let y, m, d;
-      if(a>1900){ // yyyy-* -*
-        y=a; m=b; d=c;
-      } else if(c>1900){
-        // guess day-first if a>12
-        if(a>12){ d=a; m=b; y=c; }
-        else { m=a; d=b; y=c; }
-      } else {
-        return ''; // ambiguous
-      }
+      if(a>1900){ y=a; m=b; d=c; }
+      else if(c>1900){ if(a>12){ d=a; m=b; y=c; } else { m=a; d=b; y=c; } }
+      else { return ''; }
       if(m<1||m>12||d<1||d>31) return '';
       const mm=String(m).padStart(2,'0'), dd=String(d).padStart(2,'0');
       return `${y}-${mm}-${dd}`;
     }
     function cleanupTitle(s){
-      return s.replace(/\s{2,}/g,' ').replace(/\bcertificate\b\s*:?\s*/ig,'').trim();
+      return s.replace(/\s{2,}/g,' ')
+              .replace(/\bcertificate\b\s*:?\s*/ig,'')
+              .trim();
     }
   </script>
 
