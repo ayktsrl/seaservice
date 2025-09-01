@@ -19,10 +19,10 @@
   .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   .kv{display:grid;grid-template-columns:220px 1fr;gap:8px;margin:2px 0}
   .card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff}
-  table{width:100%;border-collapse:collapse;margin-top:6px}
-  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
+  table{width:100%;border-collapse:collapse;margin-top:6px;table-layout:fixed}
+  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;overflow-wrap:anywhere}
   th{background:#f3f4f6;text-align:left;font-weight:600}
-  .nowrap{white-space:nowrap}
+  .nowrap{white-space:nowrap;overflow-wrap:normal}
   .center{text-align:center}
   .right{text-align:right}
   .btn-print{all:unset;background:#111827;color:#fff;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600}
@@ -119,12 +119,16 @@
     </table>
   </section>
 
-  <!-- Certificates -->
+  <!-- Certificates (3-col simplified) -->
   <h2>Certificates</h2>
   <section class="card">
     <table>
-      <thead><tr><th>Certificate</th><th>Issue</th><th>Expiry</th></tr></thead>
-      <tbody id="tbody-certificates"><tr><td colspan="3" class="center empty">—</td></tr></tbody>
+      <thead>
+        <tr><th>Certificate</th><th>Issue</th><th>Expiry</th></tr>
+      </thead>
+      <tbody id="tbody-certificates">
+        <tr><td colspan="3" class="center empty">—</td></tr>
+      </tbody>
     </table>
   </section>
 
@@ -138,7 +142,9 @@
           <th>Issuing Authority</th><th>Issued</th><th>Expiry</th><th>Number</th><th>Place of issue</th>
         </tr>
       </thead>
-      <tbody id="tbody-licences"><tr><td colspan="9" class="center empty">—</td></tr></tbody>
+      <tbody id="tbody-licences">
+        <tr><td colspan="9" class="center empty">—</td></tr>
+      </tbody>
     </table>
   </section>
 
@@ -146,8 +152,14 @@
   <h2>Visas</h2>
   <section class="card">
     <table>
-      <thead><tr><th>Country</th><th>Number</th><th>Type</th><th>Issued</th><th>Expiry</th><th>Place of issue</th></tr></thead>
-      <tbody id="tbody-visas"><tr><td colspan="6" class="center empty">—</td></tr></tbody>
+      <thead>
+        <tr>
+          <th>Country</th><th>Number</th><th>Type</th><th>Issued</th><th>Expiry</th><th>Place of issue</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-visas">
+        <tr><td colspan="6" class="center empty">—</td></tr>
+      </tbody>
     </table>
   </section>
 
@@ -155,8 +167,14 @@
   <h2>Vaccinations</h2>
   <section class="card">
     <table>
-      <thead><tr><th>Number</th><th>Type</th><th>Issued</th><th>Expires</th><th>Place of issue</th></tr></thead>
-      <tbody id="tbody-vaccinations"><tr><td colspan="5" class="center empty">—</td></tr></tbody>
+      <thead>
+        <tr>
+          <th>Number</th><th>Type</th><th>Issued</th><th>Expires</th><th>Place of issue</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-vaccinations">
+        <tr><td colspan="5" class="center empty">—</td></tr>
+      </tbody>
     </table>
   </section>
 
@@ -164,8 +182,14 @@
   <h2>Special Skills</h2>
   <section class="card">
     <table>
-      <thead><tr><th>Skill Type</th><th>Vessel</th><th>Rank</th><th>Period</th><th>Charterer / Voyage Info.</th><th>Cargo</th><th>Equipment</th><th>Remarks</th></tr></thead>
-      <tbody id="tbody-skills"><tr><td colspan="8" class="center empty">—</td></tr></tbody>
+      <thead>
+        <tr>
+          <th>Skill Type</th><th>Vessel</th><th>Rank</th><th>Period</th><th>Charterer / Voyage Info.</th><th>Cargo</th><th>Equipment</th><th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-skills">
+        <tr><td colspan="8" class="center empty">—</td></tr>
+      </tbody>
     </table>
   </section>
 
@@ -181,14 +205,10 @@
           <th>Owner / Manager</th>
         </tr>
       </thead>
-      <tbody id="tbody-sea"><tr><td colspan="12" class="center empty">—</td></tr></tbody>
+      <tbody id="tbody-sea">
+        <tr><td colspan="12" class="center empty">—</td></tr>
+      </tbody>
     </table>
-  </section>
-
-  <!-- Pre-Employment Checks -->
-  <h2>Pre-Employment Checks</h2>
-  <section class="card">
-    <div id="preemployment" class="small" style="color:#64748b">No record found</div>
   </section>
 
   <!-- Experience -->
@@ -241,8 +261,8 @@
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getFirestore, doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-  // Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
     authDomain: "crewapplication-c37a8.firebaseapp.com",
@@ -252,209 +272,264 @@
     appId: "1:23423243284:web:67e22f6ed057c74f4b4301",
     measurementId: "G-DSSJMESQ7Z"
   };
+
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
-
-  // ====== SABİT UID ======
-  // Gerekirse URL'de ?uid=<başka_uid> geçersen onu kullanır.
-  const DEFAULT_UID = 'HI8zzyxowwOiFrTrzY9Q1Vc9CLK2';
-  const url = new URL(window.location.href);
-  const uid = url.searchParams.get('uid') || (location.hash ? new URLSearchParams(location.hash.slice(1)).get('uid') : null) || (url.pathname.match(/cv-print\.html\/([^/?#]+)/i)||[])[1] || DEFAULT_UID;
+  const auth = getAuth(app);
 
   const $  = (s)=>document.querySelector(s);
-  const fmtDate = (v)=>!v ? "—" : (typeof v==="string" ? v : (v.seconds? new Date(v.seconds*1000).toISOString().slice(0,10) : (v instanceof Date? v.toISOString().slice(0,10) : v)));
+  const showWarn = (msg)=>{ const b=$('#warn'); b.textContent=msg; b.style.display='block'; };
+  const hideWarn = ()=>{ const b=$('#warn'); b.textContent=''; b.style.display='none'; };
+
+  const fmtDate = (v)=>{
+    if(!v) return "—";
+    if (typeof v === "string") return v;
+    if (v.seconds) return new Date(v.seconds*1000).toISOString().slice(0,10);
+    if (v instanceof Date) return v.toISOString().slice(0,10);
+    return v;
+  };
   const safe = (v)=> (v===undefined || v===null || v==="" ? "—" : v);
 
-  // uyarıyı tamamen gizle (sabit mod)
-  const hideWarn=()=>{ const b=$('#warn'); b.textContent=''; b.style.display='none'; };
-  hideWarn();
-  $('#decl-date').textContent = new Date().toISOString().slice(0,10);
+  // ---- UID çözümü: query/hash/path → Auth.currentUser → onAuthStateChanged
+  const resolveUid = async ()=>{
+    try{
+      const u = new URL(window.location.href);
+      let id = u.searchParams.get('uid') || null;
+      if(!id && u.hash && u.hash.length>1){
+        const hs = new URLSearchParams(u.hash.slice(1));
+        id = hs.get('uid') || id;
+      }
+      if(!id){
+        const m = u.pathname.match(/cv-print\.html\/([^/?#]+)/i);
+        if(m && m[1]) id = m[1];
+      }
+      if(id) return id;
 
-  // helpers
-  const loadItems = async (section)=> {
-    const snap = await getDocs(collection(doc(db,'seafarers',uid,'cv',section),'items'));
-    return snap.docs.map(d=>({id:d.id, ...d.data()}));
+      // Auth: sen giriş yaptıysan otomatik al
+      if (auth.currentUser) return auth.currentUser.uid;
+      const fromAuth = await new Promise((res)=>onAuthStateChanged(auth, u=>res(u?u.uid:null)));
+      return fromAuth;
+    }catch(e){ return null; }
   };
-  const fillTable = (sel, cols, rows)=>{
-    const tb = document.querySelector(sel);
-    tb.innerHTML = rows.length? rows.join('') : `<tr><td colspan="${cols}" class="center empty">—</td></tr>`;
-  };
 
-  // qualifications → üst blok
-  try{
-    const qSnap = await getDoc(doc(db,'seafarers',uid,'cv','qualifications'));
-    if(qSnap.exists()){
-      const q = qSnap.data();
-      $('#pos-applied').textContent = safe(q.rankApplied || q.appliedRank);
-      $('#pos-lowest').textContent  = safe(q.lowestRank);
-      $('#pos-vessel').textContent  = safe(q.vesselType);
-      $('#pos-ready').textContent   = safe(fmtDate(q.readiness));
-    }
-  }catch(e){ console.warn('qualifications', e); }
+  // -------- main ----------
+  (async ()=>{
+    $('#decl-date').textContent = new Date().toISOString().slice(0,10);
 
-  // personalDetails
-  try{
-    const pdSnap = await getDoc(doc(db,'seafarers',uid,'cv','personalDetails'));
-    if(pdSnap.exists()){
-      const pd = pdSnap.data();
-      $('#pd-last').textContent   = safe(pd.lastName);
-      $('#pd-first').textContent  = safe(pd.firstName);
-      $('#pd-middle').textContent = safe(pd.middleName);
-      $('#pd-gender').textContent = safe(pd.gender);
-      $('#pd-dob').textContent    = safe(fmtDate(pd.dateOfBirth || pd.dob));
-      $('#pd-nationality').textContent = safe(pd.nationality);
-      $('#pd-pob').textContent    = safe(pd.placeOfBirth || pd.birthPlace);
-      $('#pd-cor').textContent    = safe(pd.countryOfResidence || pd.country);
-      $('#pd-city').textContent   = safe(pd.cityOfResidence || pd.city);
-      $('#pd-phone').textContent  = safe(pd.phone);
-      $('#pd-mobile').textContent = safe(pd.mobile || pd.phone);
-      $('#pd-zip').textContent    = safe(pd.zip || pd.postalCode);
-      $('#pd-email').textContent  = safe(pd.email);
-      $('#pd-address').textContent= safe(pd.address);
+    const uid = await resolveUid();
+    if(!uid){ showWarn("Tip: Sign in or add ?uid=<USER_UID> to the URL."); return; }
+    hideWarn();
 
-      const rankName = `${$('#pos-applied').textContent} ${safe(pd.lastName ? (pd.lastName + ', ' + (pd.firstName||'')) : '')}`.trim();
-      if(rankName && rankName!=='—') $('#decl-rankname').textContent = rankName;
-    }
-  }catch(e){ console.warn('personalDetails', e); }
+    const loadItems = async (section)=> {
+      const snap = await getDocs(collection(doc(db,'seafarers',uid,'cv',section),'items'));
+      return snap.docs.map(d=>({id:d.id, ...d.data()}));
+    };
+    const fillTable = (sel, cols, rows)=>{
+      const tb = document.querySelector(sel);
+      tb.innerHTML = rows.length? rows.join('') : `<tr><td colspan="${cols}" class="center empty">—</td></tr>`;
+    };
 
-  // documents
-  try{
-    const list = await loadItems('documents');
-    const rows = list.map(x=>`
-      <tr>
-        <td>${safe(x.type)}</td>
-        <td class="nowrap">${safe(x.number)}</td>
-        <td class="nowrap">${safe(fmtDate(x.issueDate || x.issued))}</td>
-        <td class="nowrap">${safe(fmtDate(x.expiryDate || x.expiry))}</td>
-        <td>${safe(x.issueCountry || x.country)}</td>
-      </tr>`);
-    fillTable('#tbody-ids',5,rows);
-  }catch(e){ console.warn('documents', e); }
+    // QUALIFICATIONS → header block
+    try{
+      const qSnap = await getDoc(doc(db,'seafarers',uid,'cv','qualifications'));
+      if(qSnap.exists()){
+        const q = qSnap.data();
+        $('#pos-applied').textContent = safe(q.rankApplied || q.appliedRank);
+        $('#pos-lowest').textContent  = safe(q.lowestRank);
+        $('#pos-vessel').textContent  = safe(q.vesselType);
+        $('#pos-ready').textContent   = safe(fmtDate(q.readiness));
+      }
+    }catch(e){ console.warn('qualifications', e); }
 
-  // education
-  try{
-    const list = await loadItems('education');
-    const rows = list.map(x=>`
-      <tr>
-        <td>${safe(x.type || 'University')}</td>
-        <td>${safe(x.name || x.university)}</td>
-        <td class="nowrap">${safe(x.fromYear || x.from)}</td>
-        <td class="nowrap">${safe(x.toYear || x.to)}</td>
-        <td>${safe(x.qualification || x.department)}</td>
-      </tr>`);
-    fillTable('#tbody-education',5,rows);
-  }catch(e){ console.warn('education', e); }
+    // PERSONAL DETAILS
+    try{
+      const pdSnap = await getDoc(doc(db,'seafarers',uid,'cv','personalDetails'));
+      if(pdSnap.exists()){
+        const pd = pdSnap.data();
+        $('#pd-last').textContent   = safe(pd.lastName);
+        $('#pd-first').textContent  = safe(pd.firstName);
+        $('#pd-middle').textContent = safe(pd.middleName);
+        $('#pd-gender').textContent = safe(pd.gender);
+        $('#pd-dob').textContent    = safe(fmtDate(pd.dateOfBirth || pd.dob));
+        $('#pd-nationality').textContent = safe(pd.nationality);
+        $('#pd-pob').textContent    = safe(pd.placeOfBirth || pd.birthPlace);
+        $('#pd-cor').textContent    = safe(pd.countryOfResidence || pd.country);
+        $('#pd-city').textContent   = safe(pd.cityOfResidence || pd.city);
+        $('#pd-phone').textContent  = safe(pd.phone);
+        $('#pd-mobile').textContent = safe(pd.mobile || pd.phone);
+        $('#pd-zip').textContent    = safe(pd.zip || pd.postalCode);
+        $('#pd-email').textContent  = safe(pd.email);
+        $('#pd-address').textContent= safe(pd.address);
 
-  // certificates (3-col)
-  try{
-    const list = await loadItems('certificates');
-    const rows = list.map(x=>`
-      <tr>
-        <td>${safe(x.name)}</td>
-        <td class="nowrap">${safe(fmtDate(x.issue))}</td>
-        <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
-      </tr>`);
-    fillTable('#tbody-certificates',3,rows);
-  }catch(e){ console.warn('certificates', e); }
+        const rankName = `${$('#pos-applied').textContent} ${safe(pd.lastName ? (pd.lastName + ', ' + (pd.firstName||'')) : '')}`.trim();
+        if(rankName && rankName!=='—') $('#decl-rankname').textContent = rankName;
+      }
+    }catch(e){ console.warn('personalDetails', e); }
 
-  // licenses
-  try{
-    const list = await loadItems('licenses');
-    const rows = list.map(x=>`
-      <tr>
-        <td>${safe(x.licence || x.license || 'CERTIFICATE OF COMPETENCY')}</td>
-        <td>${safe(x.capacity)}</td>
-        <td>${safe(x.rank)}</td>
-        <td>${safe(x.limitation)}</td>
-        <td>${safe(x.authority)}</td>
-        <td class="nowrap">${safe(fmtDate(x.issued))}</td>
-        <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
-        <td>${safe(x.number)}</td>
-        <td>${safe(x.place)}</td>
-      </tr>`);
-    fillTable('#tbody-licences',9,rows);
-  }catch(e){ console.warn('licenses', e); }
-
-  // visas
-  try{
-    const list = await loadItems('visas');
-    const rows = list.map(x=>`
-      <tr>
-        <td>${safe(x.country)}</td>
-        <td>${safe(x.number)}</td>
-        <td>${safe(x.type)}</td>
-        <td class="nowrap">${safe(fmtDate(x.issued || x.issueDate))}</td>
-        <td class="nowrap">${safe(fmtDate(x.expiry || x.expiryDate))}</td>
-        <td>${safe(x.place || x.placeOfIssue)}</td>
-      </tr>`);
-    fillTable('#tbody-visas',6,rows);
-  }catch(e){ console.warn('visas', e); }
-
-  // vaccinations
-  try{
-    const list = await loadItems('vaccinations');
-    const rows = list.map(x=>`
-      <tr>
-        <td>${safe(x.number || '')}</td>
-        <td>${safe(x.type)}</td>
-        <td class="nowrap">${safe(fmtDate(x.issued))}</td>
-        <td class="nowrap">${safe(fmtDate(x.expires))}</td>
-        <td>${safe(x.place)}</td>
-      </tr>`);
-    fillTable('#tbody-vaccinations',5,rows);
-  }catch(e){ console.warn('vaccinations', e); }
-
-  // sea service + experience
-  const parseDays=(s,e)=>{const S=new Date(s),E=new Date(e);if(isNaN(+S)||isNaN(+E))return 0;return Math.max(0,Math.round((E-S)/86400000));};
-  const daysToYMD=(d)=>{const y=Math.floor(d/365),m=Math.floor(d%365/30),dd=Math.floor(d%365%30);return `${y}Y ${m}M ${dd}D`;};
-
-  try{
-    const list = await loadItems('seaService');
-    let expByVessel=new Map(), expByRank=new Map();
-    let totalDays=0, totalVoy=0;
-
-    const rows = list.map(x=>{
-      const joined = fmtDate(x.joined || x.start);
-      const signed = fmtDate(x.signedOff || x.end);
-      const rank   = safe(x.rank);
-      const type   = safe(x.type || x.vesselType);
-      const dcount = parseDays(joined, signed);
-      totalDays += dcount; totalVoy += 1;
-
-      if(!expByVessel.has(type)) expByVessel.set(type,{days:0,voyages:0});
-      expByVessel.get(type).days += dcount; expByVessel.get(type).voyages += 1;
-
-      if(!expByRank.has(rank)) expByRank.set(rank,{days:0,voyages:0});
-      expByRank.get(rank).days += dcount; expByRank.get(rank).voyages += 1;
-
-      return `
+    // DOCUMENTS
+    try{
+      const list = await loadItems('documents');
+      const rows = list.map(x=>`
         <tr>
-          <td>${rank}</td>
-          <td class="nowrap">${joined}</td>
-          <td class="nowrap">${signed}</td>
-          <td class="nowrap">${daysToYMD(dcount)}</td>
-          <td>${safe(x.vessel)}</td>
-          <td>${type}</td>
-          <td>${safe(x.engine)}</td>
-          <td class="right">${safe(x.grt || x.GRT || '')}</td>
-          <td class="right">${safe(x.dwt || x.DWT || '')}</td>
-          <td class="right">${safe(x.hp  || x.HP  || '')}</td>
-          <td class="right">${safe(x.kw  || x.KW  || '')}</td>
-          <td>${safe(x.owner || x.manager || x['owner/manager'])}</td>
-        </tr>`;
-    });
-    fillTable('#tbody-sea',12,rows);
+          <td>${safe(x.type)}</td>
+          <td class="nowrap">${safe(x.number)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issueDate || x.issued))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expiryDate || x.expiry))}</td>
+          <td>${safe(x.issueCountry || x.country)}</td>
+        </tr>`);
+      fillTable('#tbody-ids',5,rows);
+    }catch(e){ console.warn('documents', e); }
 
-    const vRows=[], rRows=[];
-    expByVessel.forEach((v,k)=>vRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
-    expByRank.forEach((v,k)=>rRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
-    document.querySelector('#tbody-exp-vessel').innerHTML = vRows.length? vRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
-    document.querySelector('#tbody-exp-rank').innerHTML   = rRows.length? rRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
-    document.querySelector('#exp-vessel-total-period').textContent = daysToYMD(totalDays);
-    document.querySelector('#exp-vessel-total-voy').textContent    = String(totalVoy);
-    document.querySelector('#exp-rank-total-period').textContent   = daysToYMD(totalDays);
-    document.querySelector('#exp-rank-total-voy').textContent      = String(totalVoy);
-  }catch(e){ console.warn('seaService/experience', e); }
+    // EDUCATION
+    try{
+      const list = await loadItems('education');
+      const rows = list.map(x=>`
+        <tr>
+          <td>${safe(x.type || 'University')}</td>
+          <td>${safe(x.name || x.university)}</td>
+          <td class="nowrap">${safe(x.fromYear || x.from)}</td>
+          <td class="nowrap">${safe(x.toYear || x.to)}</td>
+          <td>${safe(x.qualification || x.department)}</td>
+        </tr>`);
+      fillTable('#tbody-education',5,rows);
+    }catch(e){ console.warn('education', e); }
+
+    // CERTIFICATES (3-col)
+    try{
+      const list = await loadItems('certificates');
+      const rows = list.map(x=>`
+        <tr>
+          <td>${safe(x.name)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issue))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
+        </tr>`);
+      fillTable('#tbody-certificates',3,rows);
+    }catch(e){ console.warn('certificates', e); }
+
+    // LICENSES
+    try{
+      const list = await loadItems('licenses');
+      const rows = list.map(x=>`
+        <tr>
+          <td>${safe(x.licence || x.license || 'CERTIFICATE OF COMPETENCY')}</td>
+          <td>${safe(x.capacity)}</td>
+          <td>${safe(x.rank)}</td>
+          <td>${safe(x.limitation)}</td>
+          <td>${safe(x.authority)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issued))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
+          <td>${safe(x.number)}</td>
+          <td>${safe(x.place)}</td>
+        </tr>`);
+      fillTable('#tbody-licences',9,rows);
+    }catch(e){ console.warn('licenses', e); }
+
+    // VISAS (type mapping genişletildi)
+    try{
+      const list = await loadItems('visas');
+      const rows = list.map(x=>{
+        const visaType = x.type || x.visaType || x.category || x.kind || x.class || x.classification;
+        return `
+        <tr>
+          <td>${safe(x.country)}</td>
+          <td>${safe(x.number)}</td>
+          <td>${safe(visaType)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issued || x.issueDate))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expiry || x.expiryDate))}</td>
+          <td>${safe(x.place || x.placeOfIssue)}</td>
+        </tr>`;
+      });
+      fillTable('#tbody-visas',6,rows);
+    }catch(e){ console.warn('visas', e); }
+
+    // VACCINATIONS
+    try{
+      const list = await loadItems('vaccinations');
+      const rows = list.map(x=>`
+        <tr>
+          <td>${safe(x.number || '')}</td>
+          <td>${safe(x.type)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issued))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expires))}</td>
+          <td>${safe(x.place)}</td>
+        </tr>`);
+      fillTable('#tbody-vaccinations',5,rows);
+    }catch(e){ console.warn('vaccinations', e); }
+
+    // SPECIAL SKILLS (alan eşlemesi genişletildi)
+    try{
+      const list = await loadItems('specialSkills');
+      const rows = list.map(x=>{
+        const period = x.period || ((x.from||x.start||x.fromYear||x.yearFrom) || (x.to||x.end||x.toYear||x.yearTo)
+          ? `${fmtDate(x.from||x.start||x.fromYear||x.yearFrom)} - ${fmtDate(x.to||x.end||x.toYear||x.yearTo)}`
+          : "");
+        return `
+        <tr>
+          <td>${safe(x.skillType || x.type)}</td>
+          <td>${safe(x.vessel || x.vesselName)}</td>
+          <td>${safe(x.rank)}</td>
+          <td class="nowrap">${safe(period)}</td>
+          <td>${safe(x.charterer || x.charter || x.voyageInfo || x.voyageInformation)}</td>
+          <td>${safe(x.cargo || x.cargoType)}</td>
+          <td>${safe(x.equipment || x.equipments || x.equipmentType)}</td>
+          <td>${safe(x.remarks || x.note || x.notes)}</td>
+        </tr>`;
+      });
+      fillTable('#tbody-skills',8,rows);
+    }catch(e){ console.warn('specialSkills', e); }
+
+    // SEA SERVICE + EXPERIENCE
+    const parseDays = (s,e)=>{ const S=new Date(s), E=new Date(e); if(isNaN(+S)||isNaN(+E)) return 0; return Math.max(0, Math.round((E-S)/86400000)); };
+    const daysToYMD = (d)=>{ const y=Math.floor(d/365), m=Math.floor(d%365/30), dd=Math.floor(d%365%30); return `${y}Y ${m}M ${dd}D`; };
+
+    try{
+      const list = await loadItems('seaService');
+      let expByVessel = new Map(), expByRank = new Map();
+      let totalDays=0, totalVoy=0;
+
+      const rows = list.map(x=>{
+        const joined = fmtDate(x.joined || x.start);
+        const signed = fmtDate(x.signedOff || x.end);
+        const rank   = safe(x.rank);
+        const type   = safe(x.type || x.vesselType);
+        const dcount = parseDays(joined, signed);
+        totalDays += dcount; totalVoy += 1;
+
+        if(!expByVessel.has(type)) expByVessel.set(type,{days:0,voyages:0});
+        expByVessel.get(type).days += dcount; expByVessel.get(type).voyages += 1;
+
+        if(!expByRank.has(rank)) expByRank.set(rank,{days:0,voyages:0});
+        expByRank.get(rank).days += dcount; expByRank.get(rank).voyages += 1;
+
+        return `
+          <tr>
+            <td>${rank}</td>
+            <td class="nowrap">${joined}</td>
+            <td class="nowrap">${signed}</td>
+            <td class="nowrap">${daysToYMD(dcount)}</td>
+            <td>${safe(x.vessel)}</td>
+            <td>${type}</td>
+            <td>${safe(x.engine)}</td>
+            <td class="right">${safe(x.grt || x.GRT || '')}</td>
+            <td class="right">${safe(x.dwt || x.DWT || '')}</td>
+            <td class="right">${safe(x.hp  || x.HP  || '')}</td>
+            <td class="right">${safe(x.kw  || x.KW  || '')}</td>
+            <td>${safe(x.owner || x.manager || x['owner/manager'])}</td>
+          </tr>`;
+      });
+      document.querySelector('#tbody-sea').innerHTML = rows.length? rows.join('') : `<tr><td colspan="12" class="center empty">—</td></tr>`;
+
+      const vRows=[], rRows=[];
+      expByVessel.forEach((v,k)=>vRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
+      expByRank.forEach((v,k)=>rRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
+      document.querySelector('#tbody-exp-vessel').innerHTML = vRows.length? vRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
+      document.querySelector('#tbody-exp-rank').innerHTML   = rRows.length? rRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
+      document.querySelector('#exp-vessel-total-period').textContent = daysToYMD(totalDays);
+      document.querySelector('#exp-vessel-total-voy').textContent    = String(totalVoy);
+      document.querySelector('#exp-rank-total-period').textContent   = daysToYMD(totalDays);
+      document.querySelector('#exp-rank-total-voy').textContent      = String(totalVoy);
+    }catch(e){ console.warn('seaService/experience', e); }
+  })();
 </script>
 </body>
 </html>
