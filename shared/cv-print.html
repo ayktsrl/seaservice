@@ -122,17 +122,15 @@
     </table>
   </section>
 
-  <!-- Certificates -->
+  <!-- Certificates (3-col simplified) -->
   <h2>Certificates</h2>
   <section class="card">
     <table>
       <thead>
-        <tr>
-          <th>Category</th><th class="nowrap">Certificate Number</th><th>Issuing Authority</th><th>Issued</th><th>Expiry</th><th>Place of issue</th>
-        </tr>
+        <tr><th>Certificate</th><th>Issue</th><th>Expiry</th></tr>
       </thead>
       <tbody id="tbody-certificates">
-        <tr><td colspan="6" class="center empty">—</td></tr>
+        <tr><td colspan="3" class="center empty">—</td></tr>
       </tbody>
     </table>
   </section>
@@ -311,13 +309,11 @@
       const u = new URL(window.location.href);
       let id = u.searchParams.get('cvid') || u.searchParams.get('id');
       if (id) return id;
-      // hash like #cvid=...
       if (u.hash && u.hash.length>1){
         const hs = new URLSearchParams(u.hash.replace(/^#/, ''));
         id = hs.get('cvid') || hs.get('id');
         if (id) return id;
       }
-      // path like .../cv-print.html/<id>
       const m = u.pathname.match(/cv-print\.html\/([^/?#]+)/i);
       if (m && m[1]) return m[1];
     }catch(e){}
@@ -330,16 +326,11 @@
     showWarn("Tip: Add ?cvid=<CV_ID> to the URL (preview mode shown).");
   }
 
-  // If still no id, stay in preview mode (no throws). We can optionally
-  // fill declaration date with today and leave the rest as dashes.
   const fillDeclDate = ()=> { $('#decl-date').textContent = new Date().toISOString().slice(0,10); };
   fillDeclDate();
 
-  // If no cvId, stop fetching but keep the page usable
   if(!cvId){
-    // Optional: put a preview name/rank if istersen burayı silebiliriz
-    // $('#pos-applied').textContent = "MASTER";
-    // $('#pd-first').textContent = "Aykut"; $('#pd-last').textContent="Saral";
+    // preview mode; keep blanks
   } else {
     hideWarn();
 
@@ -348,7 +339,6 @@
     const cvIdxSnap = await getDoc(cvIdxRef);
     if(!cvIdxSnap.exists()){
       showWarn("CV not found for ID: "+cvId);
-      // continue in empty mode
     }
     const cvIdx = cvIdxSnap.exists()? cvIdxSnap.data() : {};
     const ownerUid = cvIdx.ownerUid;
@@ -432,20 +422,17 @@
       fillTable('#tbody-education',5,rows);
     }catch(e){ console.warn('education', e); }
 
-    // Certificates
+    // Certificates (3-col simplified: name, issue, expiry)
     try{
       const list = await loadItems('certificates');
       const rows = list.map(x=>`
         <tr>
-          <td>${safe(x.category || x.name)}</td>
-          <td>${safe(x.number)}</td>
-          <td>${safe(x.authority || x.issuingAuthority)}</td>
-          <td class="nowrap">${safe(fmtDate(x.issue || x.issued))}</td>
+          <td>${safe(x.name)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issue))}</td>
           <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
-          <td>${safe(x.place || x.placeOfIssue)}</td>
         </tr>
       `);
-      fillTable('#tbody-certificates',6,rows);
+      fillTable('#tbody-certificates',3,rows);
     }catch(e){ console.warn('certificates', e); }
 
     // Licences
