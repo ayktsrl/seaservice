@@ -8,20 +8,18 @@
 <style>
   :root{
     --ink:#0f172a; --muted:#475569; --line:#e2e8f0; --bg:#ffffff;
-    --h:#111827; --accent:#0ea5e9;
+    --h:#111827;
   }
   *{box-sizing:border-box}
   html,body{background:#f7fafc;margin:0;color:var(--ink);font:14px/1.45 "Inter",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
   main{max-width:1020px;margin:28px auto;background:var(--bg);padding:28px 28px 36px;border:1px solid #e5e7eb;border-radius:10px}
-  h1,h2,h3{margin:0 0 .6rem;color:var(--h)}
+  h1,h2{margin:0 0 .6rem;color:var(--h)}
   h1{font-size:22px;letter-spacing:.2px}
   h2{font-size:16px;border-bottom:2px solid var(--ink);padding-bottom:4px;margin-top:18px}
   .topbar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
   .avatar{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e2e8f0;font-weight:700}
-  .muted{color:var(--muted)}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .row{display:flex;gap:16px;flex-wrap:wrap}
   .kv{display:grid;grid-template-columns:220px 1fr;gap:8px;margin:2px 0}
   .card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff}
   table{width:100%;border-collapse:collapse;margin-top:6px}
@@ -37,10 +35,11 @@
   .small{font-size:12px}
   .signature{height:64px;border:1px solid var(--line);border-radius:6px}
   .empty{color:#9ca3af}
+  .banner{background:#fff3cd;border:1px solid #ffe69c;color:#594c00;padding:8px 12px;border-radius:6px;margin-bottom:10px;display:none}
   @media print{
     body{background:#fff}
     main{border:none;margin:0;max-width:100%;padding:0}
-    .btn-print{display:none}
+    .btn-print,.banner{display:none!important}
     a[href]:after{content:""}
     @page { size: A4; margin: 14mm; }
   }
@@ -48,6 +47,8 @@
 </head>
 <body>
 <main>
+  <div id="warn" class="banner"></div>
+
   <div class="header-actions">
     <div class="topbar">
       <div class="avatar"></div>
@@ -218,13 +219,13 @@
   <!-- Pre-Employment Checks -->
   <h2>Pre-Employment Checks</h2>
   <section class="card">
-    <div id="preemployment" class="small muted">No record found</div>
+    <div id="preemployment" class="small" style="color:#64748b">No record found</div>
   </section>
 
   <!-- Experience -->
   <h2>Experience</h2>
   <section class="card">
-    <div class="row">
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
       <div style="flex:1;min-width:320px">
         <div class="subhead">Vessel Type</div>
         <table>
@@ -277,7 +278,7 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getFirestore, doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-  // ---- Your Firebase config (unchanged) ----
+  // ---- Config ----
   const firebaseConfig = {
     apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
     authDomain: "crewapplication-c37a8.firebaseapp.com",
@@ -291,7 +292,10 @@
   // ---- Utils ----
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  const $ = (s)=>document.querySelector(s);
+  const $  = (s)=>document.querySelector(s);
+  const showWarn = (msg)=>{ const b = $('#warn'); b.textContent = msg; b.style.display='block'; };
+  const hideWarn = ()=>{ const b=$('#warn'); b.textContent=''; b.style.display='none'; };
+
   const fmtDate = (v)=>{
     if(!v) return "—";
     if (typeof v === "string") return v;
@@ -301,57 +305,107 @@
   };
   const safe = (v)=> (v===undefined || v===null || v==="" ? "—" : v);
 
-  const urlp = new URLSearchParams(location.search);
-  const cvId = urlp.get('cvid');
-  if(!cvId){ alert('Missing ?cvid='); throw new Error('Missing cvid'); }
+  // ---- Robust cvid resolver ----
+  const resolveCvId = ()=>{
+    try{
+      const u = new URL(window.location.href);
+      let id = u.searchParams.get('cvid') || u.searchParams.get('id');
+      if (id) return id;
+      // hash like #cvid=...
+      if (u.hash && u.hash.length>1){
+        const hs = new URLSearchParams(u.hash.replace(/^#/, ''));
+        id = hs.get('cvid') || hs.get('id');
+        if (id) return id;
+      }
+      // path like .../cv-print.html/<id>
+      const m = u.pathname.match(/cv-print\.html\/([^/?#]+)/i);
+      if (m && m[1]) return m[1];
+    }catch(e){}
+    return null;
+  };
 
-  // Load CV index (owner + top fields)
-  const cvIdxRef = doc(db, 'cvs', cvId);
-  const cvIdxSnap = await getDoc(cvIdxRef);
-  if(!cvIdxSnap.exists()){ alert('CV not found'); throw new Error('CV not found'); }
-  const cvIdx = cvIdxSnap.data();
-  const ownerUid = cvIdx.ownerUid;
+  let cvId = resolveCvId();
 
-  const base = doc(db, 'seafarers', ownerUid, 'cv', cvId);
+  if(!cvId){
+    showWarn("Tip: Add ?cvid=<CV_ID> to the URL (preview mode shown).");
+  }
 
-  // ---- Fill Position block ----
-  $('#pos-applied').textContent = safe(cvIdx.position || cvIdx.appliedRank);
-  $('#pos-lowest').textContent = safe(cvIdx.lowestRank || cvIdx.lowestAcceptableRank);
-  $('#pos-vessel').textContent = safe(cvIdx.preferredVesselType || cvIdx.vesselType);
-  $('#pos-ready').textContent  = safe(fmtDate(cvIdx.readinessDate || cvIdx.readyDate));
+  // If still no id, stay in preview mode (no throws). We can optionally
+  // fill declaration date with today and leave the rest as dashes.
+  const fillDeclDate = ()=> { $('#decl-date').textContent = new Date().toISOString().slice(0,10); };
+  fillDeclDate();
 
-  // ---- Personal Details (document: personalDetails) ----
-  try{
-    const pdSnap = await getDoc(doc(base,'personalDetails'));
-    if(pdSnap.exists()){
-      const pd = pdSnap.data();
-      $('#pd-last').textContent  = safe(pd.lastName || cvIdx.lastName);
-      $('#pd-first').textContent = safe(pd.firstName || cvIdx.firstName);
-      $('#pd-middle').textContent= safe(pd.middleName);
-      $('#pd-gender').textContent= safe(pd.gender);
-      $('#pd-dob').textContent   = safe(fmtDate(pd.dateOfBirth || pd.dob));
-      $('#pd-nationality').textContent = safe(pd.nationality);
-      $('#pd-pob').textContent   = safe(pd.placeOfBirth || pd.birthPlace);
-      $('#pd-cor').textContent   = safe(pd.countryOfResidence || pd.country);
-      $('#pd-city').textContent  = safe(pd.cityOfResidence || pd.city);
-      $('#pd-phone').textContent = safe(pd.phone);
-      $('#pd-mobile').textContent= safe(pd.mobile || pd.phone);
-      $('#pd-zip').textContent   = safe(pd.zip || pd.postalCode);
-      $('#pd-email').textContent = safe(pd.email);
-      $('#pd-address').textContent = safe(pd.address);
-      // Declaration block helpers:
-      const rankName = `${safe(cvIdx.appliedRank || cvIdx.position || '—')} ${safe(pd.lastName ? (pd.lastName + ', ' + (pd.firstName||'')) : (cvIdx.name||''))}`.trim();
-      $('#decl-rankname').textContent = rankName!=="—" ? rankName : '—';
+  // If no cvId, stop fetching but keep the page usable
+  if(!cvId){
+    // Optional: put a preview name/rank if istersen burayı silebiliriz
+    // $('#pos-applied').textContent = "MASTER";
+    // $('#pd-first').textContent = "Aykut"; $('#pd-last').textContent="Saral";
+  } else {
+    hideWarn();
+
+    // Load CV index
+    const cvIdxRef = doc(db, 'cvs', cvId);
+    const cvIdxSnap = await getDoc(cvIdxRef);
+    if(!cvIdxSnap.exists()){
+      showWarn("CV not found for ID: "+cvId);
+      // continue in empty mode
     }
-  }catch(e){ console.warn('personalDetails', e); }
+    const cvIdx = cvIdxSnap.exists()? cvIdxSnap.data() : {};
+    const ownerUid = cvIdx.ownerUid;
 
-  // ---- Identity Documents from documents/items (filter passports, seaman book, etc.) ----
-  try{
-    const docSnap = await getDocs(collection(doc(base,'documents'),'items'));
-    const rows = [];
-    docSnap.forEach(d=>{
-      const x = d.data();
-      rows.push(`
+    // ---- Top / Position
+    $('#pos-applied').textContent = safe(cvIdx.position || cvIdx.appliedRank);
+    $('#pos-lowest').textContent  = safe(cvIdx.lowestRank || cvIdx.lowestAcceptableRank);
+    $('#pos-vessel').textContent  = safe(cvIdx.preferredVesselType || cvIdx.vesselType);
+    $('#pos-ready').textContent   = safe(fmtDate(cvIdx.readinessDate || cvIdx.readyDate));
+
+    // Rank/Name for declaration
+    const rankName = `${safe(cvIdx.appliedRank || cvIdx.position || '—')} ${safe(cvIdx.lastName ? (cvIdx.lastName + ', ' + (cvIdx.firstName||'')) : (cvIdx.name||''))}`.trim();
+    $('#decl-rankname').textContent = rankName!=="—" ? rankName : '—';
+
+    // Base doc ref
+    const base = ownerUid ? doc(db, 'seafarers', ownerUid, 'cv', cvId) : null;
+
+    // --- Loaders ---
+    const fillTable = (tbodySel, cols, rows)=>{
+      const tb = $(tbodySel);
+      tb.innerHTML = rows.length? rows.join('') : `<tr><td colspan="${cols}" class="center empty">—</td></tr>`;
+    };
+
+    // Personal Details
+    try{
+      if(base){
+        const pdSnap = await getDoc(doc(base,'personalDetails'));
+        if(pdSnap.exists()){
+          const pd = pdSnap.data();
+          $('#pd-last').textContent   = safe(pd.lastName || cvIdx.lastName);
+          $('#pd-first').textContent  = safe(pd.firstName || cvIdx.firstName);
+          $('#pd-middle').textContent = safe(pd.middleName);
+          $('#pd-gender').textContent = safe(pd.gender);
+          $('#pd-dob').textContent    = safe(fmtDate(pd.dateOfBirth || pd.dob));
+          $('#pd-nationality').textContent = safe(pd.nationality);
+          $('#pd-pob').textContent    = safe(pd.placeOfBirth || pd.birthPlace);
+          $('#pd-cor').textContent    = safe(pd.countryOfResidence || pd.country);
+          $('#pd-city').textContent   = safe(pd.cityOfResidence || pd.city);
+          $('#pd-phone').textContent  = safe(pd.phone);
+          $('#pd-mobile').textContent = safe(pd.mobile || pd.phone);
+          $('#pd-zip').textContent    = safe(pd.zip || pd.postalCode);
+          $('#pd-email').textContent  = safe(pd.email);
+          $('#pd-address').textContent= safe(pd.address);
+        }
+      }
+    }catch(e){ console.warn('personalDetails', e); }
+
+    const loadItems = async (section)=> {
+      if(!base) return [];
+      const snap = await getDocs(collection(doc(base,section),'items'));
+      return snap.docs.map(d=>({id:d.id, ...d.data()}));
+    };
+
+    // Identity docs (documents)
+    try{
+      const list = await loadItems('documents');
+      const rows = list.map(x=>`
         <tr>
           <td>${safe(x.type)}</td>
           <td class="nowrap">${safe(x.number)}</td>
@@ -360,17 +414,13 @@
           <td>${safe(x.issueCountry || x.country)}</td>
         </tr>
       `);
-    });
-    $('#tbody-ids').innerHTML = rows.length? rows.join('') : `<tr><td colspan="5" class="center empty">—</td></tr>`;
-  }catch(e){ console.warn('documents', e); }
+      fillTable('#tbody-ids',5,rows);
+    }catch(e){ console.warn('documents', e); }
 
-  // ---- Education ----
-  try{
-    const edSnap = await getDocs(collection(doc(base,'education'),'items'));
-    const rows = [];
-    edSnap.forEach(d=>{
-      const x = d.data();
-      rows.push(`
+    // Education
+    try{
+      const list = await loadItems('education');
+      const rows = list.map(x=>`
         <tr>
           <td>${safe(x.type || 'University')}</td>
           <td>${safe(x.name || x.university)}</td>
@@ -379,17 +429,13 @@
           <td>${safe(x.qualification || x.department)}</td>
         </tr>
       `);
-    });
-    $('#tbody-education').innerHTML = rows.length? rows.join('') : `<tr><td colspan="5" class="center empty">—</td></tr>`;
-  }catch(e){ console.warn('education', e); }
+      fillTable('#tbody-education',5,rows);
+    }catch(e){ console.warn('education', e); }
 
-  // ---- Certificates ----
-  try{
-    const cSnap = await getDocs(collection(doc(base,'certificates'),'items'));
-    const rows = [];
-    cSnap.forEach(d=>{
-      const x = d.data();
-      rows.push(`
+    // Certificates
+    try{
+      const list = await loadItems('certificates');
+      const rows = list.map(x=>`
         <tr>
           <td>${safe(x.category || x.name)}</td>
           <td>${safe(x.number)}</td>
@@ -399,17 +445,13 @@
           <td>${safe(x.place || x.placeOfIssue)}</td>
         </tr>
       `);
-    });
-    $('#tbody-certificates').innerHTML = rows.length? rows.join('') : `<tr><td colspan="6" class="center empty">—</td></tr>`;
-  }catch(e){ console.warn('certificates', e); }
+      fillTable('#tbody-certificates',6,rows);
+    }catch(e){ console.warn('certificates', e); }
 
-  // ---- Licences ----
-  try{
-    const lSnap = await getDocs(collection(doc(base,'licenses'),'items'));
-    const rows = [];
-    lSnap.forEach(d=>{
-      const x = d.data();
-      rows.push(`
+    // Licences
+    try{
+      const list = await loadItems('licenses');
+      const rows = list.map(x=>`
         <tr>
           <td>${safe(x.licence || x.license || 'CERTIFICATE OF COMPETENCY')}</td>
           <td>${safe(x.capacity)}</td>
@@ -422,17 +464,13 @@
           <td>${safe(x.place)}</td>
         </tr>
       `);
-    });
-    $('#tbody-licences').innerHTML = rows.length? rows.join('') : `<tr><td colspan="9" class="center empty">—</td></tr>`;
-  }catch(e){ console.warn('licenses', e); }
+      fillTable('#tbody-licences',9,rows);
+    }catch(e){ console.warn('licenses', e); }
 
-  // ---- Visas ----
-  try{
-    const vSnap = await getDocs(collection(doc(base,'visas'),'items'));
-    const rows = [];
-    vSnap.forEach(d=>{
-      const x = d.data();
-      rows.push(`
+    // Visas
+    try{
+      const list = await loadItems('visas');
+      const rows = list.map(x=>`
         <tr>
           <td>${safe(x.country)}</td>
           <td>${safe(x.number)}</td>
@@ -442,17 +480,13 @@
           <td>${safe(x.place || x.placeOfIssue)}</td>
         </tr>
       `);
-    });
-    $('#tbody-visas').innerHTML = rows.length? rows.join('') : `<tr><td colspan="6" class="center empty">—</td></tr>`;
-  }catch(e){ console.warn('visas', e); }
+      fillTable('#tbody-visas',6,rows);
+    }catch(e){ console.warn('visas', e); }
 
-  // ---- Vaccinations ----
-  try{
-    const vacSnap = await getDocs(collection(doc(base,'vaccinations'),'items'));
-    const rows = [];
-    vacSnap.forEach(d=>{
-      const x = d.data();
-      rows.push(`
+    // Vaccinations
+    try{
+      const list = await loadItems('vaccinations');
+      const rows = list.map(x=>`
         <tr>
           <td>${safe(x.number || '')}</td>
           <td>${safe(x.type)}</td>
@@ -461,17 +495,13 @@
           <td>${safe(x.place)}</td>
         </tr>
       `);
-    });
-    $('#tbody-vaccinations').innerHTML = rows.length? rows.join('') : `<tr><td colspan="5" class="center empty">—</td></tr>`;
-  }catch(e){ console.warn('vaccinations', e); }
+      fillTable('#tbody-vaccinations',5,rows);
+    }catch(e){ console.warn('vaccinations', e); }
 
-  // ---- Special Skills ----
-  try{
-    const sSnap = await getDocs(collection(doc(base,'specialSkills'),'items'));
-    const rows = [];
-    sSnap.forEach(d=>{
-      const x = d.data();
-      rows.push(`
+    // Special Skills
+    try{
+      const list = await loadItems('specialSkills');
+      const rows = list.map(x=>`
         <tr>
           <td>${safe(x.skillType || x.type)}</td>
           <td>${safe(x.vessel)}</td>
@@ -483,93 +513,72 @@
           <td>${safe(x.remarks)}</td>
         </tr>
       `);
-    });
-    $('#tbody-skills').innerHTML = rows.length? rows.join('') : `<tr><td colspan="8" class="center empty">—</td></tr>`;
-  }catch(e){ console.warn('specialSkills', e); }
+      fillTable('#tbody-skills',8,rows);
+    }catch(e){ console.warn('specialSkills', e); }
 
-  // ---- Sea Services + Experience aggregation ----
-  const parseDays = (start, end)=>{
-    const s = new Date(start), e = new Date(end);
-    if(isNaN(+s) || isNaN(+e)) return 0;
-    return Math.max(0, Math.round((e - s)/(1000*60*60*24)));
-  };
-  const daysToYMD = (days)=>{
-    const y = Math.floor(days/365);
-    const m = Math.floor((days%365)/30);
-    const d = Math.floor((days%365)%30);
-    return `${y}Y ${m}M ${d}D`;
-  };
+    // Sea Services + Experience
+    const parseDays = (s,e)=>{
+      const S = new Date(s), E = new Date(e);
+      if(isNaN(+S)||isNaN(+E)) return 0;
+      return Math.max(0, Math.round((E-S)/86400000));
+    };
+    const daysToYMD = (d)=>{
+      const y=Math.floor(d/365), m=Math.floor(d%365/30), dd=Math.floor(d%365%30);
+      return `${y}Y ${m}M ${dd}D`;
+    };
 
-  let expByVessel = new Map(); // type -> {days, voyages}
-  let expByRank = new Map();   // rank -> {days, voyages}
-  let totalDays = 0, totalVoy = 0;
+    let expByVessel = new Map(), expByRank = new Map();
+    let totalDays=0, totalVoy=0;
 
-  try{
-    const seaSnap = await getDocs(collection(doc(base,'seaService'),'items'));
-    const rows = [];
-    seaSnap.forEach(d=>{
-      const x = d.data();
-      const joined = fmtDate(x.joined || x.start);
-      const signed = fmtDate(x.signedOff || x.end);
-      const rank = safe(x.rank);
-      const type = safe(x.type || x.vesselType);
-      const dcount = parseDays(joined, signed);
-      totalDays += dcount;
-      totalVoy += 1;
+    try{
+      const list = await loadItems('seaService');
+      const rows = list.map(x=>{
+        const joined = fmtDate(x.joined || x.start);
+        const signed = fmtDate(x.signedOff || x.end);
+        const rank   = safe(x.rank);
+        const type   = safe(x.type || x.vesselType);
+        const dcount = parseDays(joined, signed);
+        totalDays += dcount; totalVoy += 1;
 
-      // Vessel type agg
-      if(!expByVessel.has(type)) expByVessel.set(type,{days:0,voyages:0});
-      expByVessel.get(type).days += dcount;
-      expByVessel.get(type).voyages += 1;
+        if(!expByVessel.has(type)) expByVessel.set(type,{days:0,voyages:0});
+        expByVessel.get(type).days += dcount; expByVessel.get(type).voyages += 1;
 
-      // Rank agg
-      if(!expByRank.has(rank)) expByRank.set(rank,{days:0,voyages:0});
-      expByRank.get(rank).days += dcount;
-      expByRank.get(rank).voyages += 1;
+        if(!expByRank.has(rank)) expByRank.set(rank,{days:0,voyages:0});
+        expByRank.get(rank).days += dcount; expByRank.get(rank).voyages += 1;
 
-      rows.push(`
-        <tr>
-          <td>${rank}</td>
-          <td class="nowrap">${joined}</td>
-          <td class="nowrap">${signed}</td>
-          <td class="nowrap">${daysToYMD(dcount)}</td>
-          <td>${safe(x.vessel)}</td>
-          <td>${type}</td>
-          <td>${safe(x.engine)}</td>
-          <td class="right">${safe(x.grt || x.GRT || '')}</td>
-          <td class="right">${safe(x.dwt || x.DWT || '')}</td>
-          <td class="right">${safe(x.hp || x.HP || '')}</td>
-          <td class="right">${safe(x.kw || x.KW || '')}</td>
-          <td>${safe(x.owner || x.manager || x['owner/manager'])}</td>
-        </tr>
-      `);
-    });
-    $('#tbody-sea').innerHTML = rows.length? rows.join('') : `<tr><td colspan="12" class="center empty">—</td></tr>`;
+        return `
+          <tr>
+            <td>${rank}</td>
+            <td class="nowrap">${joined}</td>
+            <td class="nowrap">${signed}</td>
+            <td class="nowrap">${daysToYMD(dcount)}</td>
+            <td>${safe(x.vessel)}</td>
+            <td>${type}</td>
+            <td>${safe(x.engine)}</td>
+            <td class="right">${safe(x.grt || x.GRT || '')}</td>
+            <td class="right">${safe(x.dwt || x.DWT || '')}</td>
+            <td class="right">${safe(x.hp  || x.HP  || '')}</td>
+            <td class="right">${safe(x.kw  || x.KW  || '')}</td>
+            <td>${safe(x.owner || x.manager || x['owner/manager'])}</td>
+          </tr>
+        `;
+      });
+      fillTable('#tbody-sea',12,rows);
 
-    // Experience tables
-    const vRows = [];
-    expByVessel.forEach((val,key)=>{
-      vRows.push(`<tr><td>${key}</td><td class="nowrap">${daysToYMD(val.days)}</td><td class="right">${val.voyages}</td></tr>`);
-    });
-    $('#tbody-exp-vessel').innerHTML = vRows.length? vRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
-    $('#exp-vessel-total-period').textContent = daysToYMD(totalDays);
-    $('#exp-vessel-total-voy').textContent = String(totalVoy);
+      const vRows=[]; expByVessel.forEach((v,k)=>vRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
+      const rRows=[]; expByRank.forEach((v,k)=>rRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
+      $('#tbody-exp-vessel').innerHTML = vRows.length? vRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
+      $('#tbody-exp-rank').innerHTML   = rRows.length? rRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
+      $('#exp-vessel-total-period').textContent = daysToYMD(totalDays);
+      $('#exp-vessel-total-voy').textContent    = String(totalVoy);
+      $('#exp-rank-total-period').textContent   = daysToYMD(totalDays);
+      $('#exp-rank-total-voy').textContent      = String(totalVoy);
+    }catch(e){ console.warn('seaService/experience', e); }
 
-    const rRows = [];
-    expByRank.forEach((val,key)=>{
-      rRows.push(`<tr><td>${key}</td><td class="nowrap">${daysToYMD(val.days)}</td><td class="right">${val.voyages}</td></tr>`);
-    });
-    $('#tbody-exp-rank').innerHTML = rRows.length? rRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
-    // totals by rank are same overall totals here
-    $('#exp-rank-total-period').textContent = daysToYMD(totalDays);
-    $('#exp-rank-total-voy').textContent = String(totalVoy);
-
-  }catch(e){ console.warn('seaService / experience', e); }
-
-  // Declaration date default (today) if available from cvIdx
-  const declDate = cvIdx.declarationDate ? fmtDate(cvIdx.declarationDate) : new Date().toISOString().slice(0,10);
-  $('#decl-date').textContent = declDate;
-
+    // Declaration date
+    const declDate = cvIdx.declarationDate ? fmtDate(cvIdx.declarationDate) : new Date().toISOString().slice(0,10);
+    $('#decl-date').textContent = declDate;
+  }
 </script>
 </body>
 </html>
