@@ -303,66 +303,80 @@
   };
   const safe = (v)=> (v===undefined || v===null || v==="" ? "—" : v);
 
-  // ---- Robust cvid resolver ----
-  const resolveCvId = ()=>{
+  // ---- Robust param resolver ----
+  const resolveIds = ()=>{
+    const out = { cvid:null, uid:null };
     try{
       const u = new URL(window.location.href);
-      let id = u.searchParams.get('cvid') || u.searchParams.get('id');
-      if (id) return id;
-      if (u.hash && u.hash.length>1){
+      out.cvid = u.searchParams.get('cvid') || u.searchParams.get('id') || null;
+      out.uid  = u.searchParams.get('uid')  || null;
+      const cv2 = u.searchParams.get('cv'); if(cv2) out.cvid = cv2;
+
+      if (!out.cvid && u.hash && u.hash.length>1){
         const hs = new URLSearchParams(u.hash.replace(/^#/, ''));
-        id = hs.get('cvid') || hs.get('id');
-        if (id) return id;
+        out.cvid = hs.get('cvid') || hs.get('id') || out.cvid;
+        out.uid  = hs.get('uid')  || out.uid;
       }
-      const m = u.pathname.match(/cv-print\.html\/([^/?#]+)/i);
-      if (m && m[1]) return m[1];
+      if (!out.cvid){
+        const m = u.pathname.match(/cv-print\.html\/([^/?#]+)/i);
+        if (m && m[1]) out.cvid = m[1];
+      }
     }catch(e){}
-    return null;
+    return out;
   };
 
-  let cvId = resolveCvId();
+  const ids = resolveIds();
+  let cvId = ids.cvid;
+  let ownerUid = ids.uid; // optional shortcut
 
   if(!cvId){
     showWarn("Tip: Add ?cvid=<CV_ID> to the URL (preview mode shown).");
   }
 
-  const fillDeclDate = ()=> { $('#decl-date').textContent = new Date().toISOString().slice(0,10); };
-  fillDeclDate();
+  // Declaration date default
+  $('#decl-date').textContent = new Date().toISOString().slice(0,10);
 
-  if(!cvId){
-    // preview mode; keep blanks
-  } else {
+  if(cvId){
     hideWarn();
 
-    // Load CV index
-    const cvIdxRef = doc(db, 'cvs', cvId);
-    const cvIdxSnap = await getDoc(cvIdxRef);
-    if(!cvIdxSnap.exists()){
-      showWarn("CV not found for ID: "+cvId);
-    }
-    const cvIdx = cvIdxSnap.exists()? cvIdxSnap.data() : {};
-    const ownerUid = cvIdx.ownerUid;
+    // Load CV index (to discover ownerUid & some fallbacks)
+    let cvIdx = {};
+    try{
+      const cvIdxRef = doc(db, 'cvs', cvId);
+      const cvIdxSnap = await getDoc(cvIdxRef);
+      if(cvIdxSnap.exists()){
+        cvIdx = cvIdxSnap.data();
+        ownerUid = ownerUid || cvIdx.ownerUid || null;
+      }
+    }catch(e){ console.warn('cvs index', e); }
 
-    // ---- Top / Position
+    // If ownerUid still yoksa, sadece indexsiz modda çalışır (kişisel detaylar/tablolar için uid gerekir)
+    const base = ownerUid ? doc(db, 'seafarers', ownerUid, 'cv', cvId) : null;
+
+    // ---- Position block (first use index fallbacks, then override from qualifications) ----
     $('#pos-applied').textContent = safe(cvIdx.position || cvIdx.appliedRank);
     $('#pos-lowest').textContent  = safe(cvIdx.lowestRank || cvIdx.lowestAcceptableRank);
     $('#pos-vessel').textContent  = safe(cvIdx.preferredVesselType || cvIdx.vesselType);
     $('#pos-ready').textContent   = safe(fmtDate(cvIdx.readinessDate || cvIdx.readyDate));
 
-    // Rank/Name for declaration
-    const rankName = `${safe(cvIdx.appliedRank || cvIdx.position || '—')} ${safe(cvIdx.lastName ? (cvIdx.lastName + ', ' + (cvIdx.firstName||'')) : (cvIdx.name||''))}`.trim();
-    $('#decl-rankname').textContent = rankName!=="—" ? rankName : '—';
+    try{
+      if(base){
+        const qSnap = await getDoc(doc(base,'qualifications'));
+        if(qSnap.exists()){
+          const q = qSnap.data();
+          // override with qualifications
+          $('#pos-applied').textContent = safe(q.rankApplied || q.appliedRank || $('#pos-applied').textContent);
+          $('#pos-lowest').textContent  = safe(q.lowestRank  || $('#pos-lowest').textContent);
+          $('#pos-vessel').textContent  = safe(q.vesselType  || $('#pos-vessel').textContent);
+          $('#pos-ready').textContent   = safe(fmtDate(q.readiness)) || $('#pos-ready').textContent;
+          // Declaration Rank / Name (better guess)
+          const rankName = `${safe(q.rankApplied || q.appliedRank || cvIdx.appliedRank || cvIdx.position || '—')} ${safe(cvIdx.lastName ? (cvIdx.lastName + ', ' + (cvIdx.firstName||'')) : (cvIdx.name||''))}`.trim();
+          if(rankName && rankName!=='—') $('#decl-rankname').textContent = rankName;
+        }
+      }
+    }catch(e){ console.warn('qualifications', e); }
 
-    // Base doc ref
-    const base = ownerUid ? doc(db, 'seafarers', ownerUid, 'cv', cvId) : null;
-
-    // --- Loaders ---
-    const fillTable = (tbodySel, cols, rows)=>{
-      const tb = $(tbodySel);
-      tb.innerHTML = rows.length? rows.join('') : `<tr><td colspan="${cols}" class="center empty">—</td></tr>`;
-    };
-
-    // Personal Details
+    // ---- Personal Details
     try{
       if(base){
         const pdSnap = await getDoc(doc(base,'personalDetails'));
@@ -386,13 +400,18 @@
       }
     }catch(e){ console.warn('personalDetails', e); }
 
+    // helpers
+    const fillTable = (tbodySel, cols, rows)=>{
+      const tb = $(tbodySel);
+      tb.innerHTML = rows.length? rows.join('') : `<tr><td colspan="${cols}" class="center empty">—</td></tr>`;
+    };
     const loadItems = async (section)=> {
       if(!base) return [];
       const snap = await getDocs(collection(doc(base,section),'items'));
       return snap.docs.map(d=>({id:d.id, ...d.data()}));
     };
 
-    // Identity docs (documents)
+    // Identity Documents
     try{
       const list = await loadItems('documents');
       const rows = list.map(x=>`
@@ -422,7 +441,7 @@
       fillTable('#tbody-education',5,rows);
     }catch(e){ console.warn('education', e); }
 
-    // Certificates (3-col simplified: name, issue, expiry)
+    // Certificates (3-col)
     try{
       const list = await loadItems('certificates');
       const rows = list.map(x=>`
@@ -514,10 +533,10 @@
       return `${y}Y ${m}M ${dd}D`;
     };
 
-    let expByVessel = new Map(), expByRank = new Map();
-    let totalDays=0, totalVoy=0;
-
     try{
+      let expByVessel = new Map(), expByRank = new Map();
+      let totalDays=0, totalVoy=0;
+
       const list = await loadItems('seaService');
       const rows = list.map(x=>{
         const joined = fmtDate(x.joined || x.start);
@@ -561,10 +580,6 @@
       $('#exp-rank-total-period').textContent   = daysToYMD(totalDays);
       $('#exp-rank-total-voy').textContent      = String(totalVoy);
     }catch(e){ console.warn('seaService/experience', e); }
-
-    // Declaration date
-    const declDate = cvIdx.declarationDate ? fmtDate(cvIdx.declarationDate) : new Date().toISOString().slice(0,10);
-    $('#decl-date').textContent = declDate;
   }
 </script>
 </body>
