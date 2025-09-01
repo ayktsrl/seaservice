@@ -281,16 +281,40 @@
   const showWarn = (msg)=>{ const b=$('#warn'); b.textContent=msg; b.style.display='block'; };
   const hideWarn = ()=>{ const b=$('#warn'); b.textContent=''; b.style.display='none'; };
 
+  // ---- helpers ----
+  const toDate = (v)=>{
+    if(!v) return null;
+    if (v instanceof Date) return v;
+    if (typeof v === 'object' && 'seconds' in v) return new Date(v.seconds*1000);
+    if (typeof v === 'number') return new Date(v);
+    if (typeof v === 'string'){
+      if (v.trim() === '—') return null;
+      // try YYYY-MM-DD, DD.MM.YYYY, generic
+      const dmy = v.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+      if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
+      return new Date(v);
+    }
+    return null;
+  };
   const fmtDate = (v)=>{
-    if(!v) return "—";
-    if (typeof v === "string") return v;
-    if (v.seconds) return new Date(v.seconds*1000).toISOString().slice(0,10);
-    if (v instanceof Date) return v.toISOString().slice(0,10);
-    return v;
+    const d = toDate(v);
+    return d ? d.toISOString().slice(0,10) : "—";
   };
   const safe = (v)=> (v===undefined || v===null || v==="" ? "—" : v);
+  const diffDays = (s,e)=>{
+    const S = toDate(s);
+    let E = toDate(e);
+    if (!S) return 0;
+    if (!E) E = new Date(); // still on board → today
+    // normalize to noon to avoid DST edge cases
+    S.setHours(12,0,0,0);
+    E.setHours(12,0,0,0);
+    const d = Math.round((E - S) / 86400000);
+    return Math.max(0, d);
+  };
+  const daysToYMD = (d)=>{ const y=Math.floor(d/365), m=Math.floor((d%365)/30), dd=Math.floor(d%365%30); return `${y}Y ${m}M ${dd}D`; };
 
-  // ---- UID çözümü: query/hash/path → Auth.currentUser → onAuthStateChanged
+  // ---- UID: query/hash/path → Auth.currentUser → onAuthStateChanged
   const resolveUid = async ()=>{
     try{
       const u = new URL(window.location.href);
@@ -304,11 +328,8 @@
         if(m && m[1]) id = m[1];
       }
       if(id) return id;
-
-      // Auth: sen giriş yaptıysan otomatik al
       if (auth.currentUser) return auth.currentUser.uid;
-      const fromAuth = await new Promise((res)=>onAuthStateChanged(auth, u=>res(u?u.uid:null)));
-      return fromAuth;
+      return await new Promise((res)=>onAuthStateChanged(auth, u=>res(u?u.uid:null)));
     }catch(e){ return null; }
   };
 
@@ -424,7 +445,7 @@
       fillTable('#tbody-licences',9,rows);
     }catch(e){ console.warn('licenses', e); }
 
-    // VISAS (type mapping genişletildi)
+    // VISAS
     try{
       const list = await loadItems('visas');
       const rows = list.map(x=>{
@@ -456,7 +477,7 @@
       fillTable('#tbody-vaccinations',5,rows);
     }catch(e){ console.warn('vaccinations', e); }
 
-    // SPECIAL SKILLS (alan eşlemesi genişletildi)
+    // SPECIAL SKILLS
     try{
       const list = await loadItems('specialSkills');
       const rows = list.map(x=>{
@@ -478,28 +499,30 @@
       fillTable('#tbody-skills',8,rows);
     }catch(e){ console.warn('specialSkills', e); }
 
-    // SEA SERVICE + EXPERIENCE
-    const parseDays = (s,e)=>{ const S=new Date(s), E=new Date(e); if(isNaN(+S)||isNaN(+E)) return 0; return Math.max(0, Math.round((E-S)/86400000)); };
-    const daysToYMD = (d)=>{ const y=Math.floor(d/365), m=Math.floor(d%365/30), dd=Math.floor(d%365%30); return `${y}Y ${m}M ${dd}D`; };
-
+    // SEA SERVICE + EXPERIENCE (güncel sayım)
     try{
       const list = await loadItems('seaService');
       let expByVessel = new Map(), expByRank = new Map();
       let totalDays=0, totalVoy=0;
 
       const rows = list.map(x=>{
-        const joined = fmtDate(x.joined || x.start);
-        const signed = fmtDate(x.signedOff || x.end);
+        const startRaw = x.joined || x.start;
+        const endRaw   = x.signedOff || x.end;
+        const joined = fmtDate(startRaw);
+        const signed = fmtDate(endRaw);
         const rank   = safe(x.rank);
         const type   = safe(x.type || x.vesselType);
-        const dcount = parseDays(joined, signed);
+        const dcount = diffDays(startRaw, endRaw);
+
         totalDays += dcount; totalVoy += 1;
 
-        if(!expByVessel.has(type)) expByVessel.set(type,{days:0,voyages:0});
-        expByVessel.get(type).days += dcount; expByVessel.get(type).voyages += 1;
+        const vKey = type || 'Unknown';
+        const rKey = rank || 'Unknown';
+        if(!expByVessel.has(vKey)) expByVessel.set(vKey,{days:0,voyages:0});
+        expByVessel.get(vKey).days += dcount; expByVessel.get(vKey).voyages += 1;
 
-        if(!expByRank.has(rank)) expByRank.set(rank,{days:0,voyages:0});
-        expByRank.get(rank).days += dcount; expByRank.get(rank).voyages += 1;
+        if(!expByRank.has(rKey)) expByRank.set(rKey,{days:0,voyages:0});
+        expByRank.get(rKey).days += dcount; expByRank.get(rKey).voyages += 1;
 
         return `
           <tr>
