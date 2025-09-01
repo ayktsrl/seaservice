@@ -281,7 +281,7 @@
   const showWarn = (msg)=>{ const b=$('#warn'); b.textContent=msg; b.style.display='block'; };
   const hideWarn = ()=>{ const b=$('#warn'); b.textContent=''; b.style.display='none'; };
 
-  // ---- helpers ----
+  // ---------- DATE HELPERS (MM-DD-YYYY) ----------
   const toDate = (v)=>{
     if(!v) return null;
     if (v instanceof Date) return v;
@@ -289,8 +289,7 @@
     if (typeof v === 'number') return new Date(v);
     if (typeof v === 'string'){
       if (v.trim() === '—') return null;
-      // try YYYY-MM-DD, DD.MM.YYYY, generic
-      const dmy = v.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+      const dmy = v.match(/^(\d{2})\.(\d{2})\.(\d{4})$/); // DD.MM.YYYY
       if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
       return new Date(v);
     }
@@ -298,19 +297,20 @@
   };
   const fmtDate = (v)=>{
     const d = toDate(v);
-    return d ? d.toISOString().slice(0,10) : "—";
+    if(!d) return "—";
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const yyyy = d.getFullYear();
+    return `${mm}-${dd}-${yyyy}`;
   };
   const safe = (v)=> (v===undefined || v===null || v==="" ? "—" : v);
   const diffDays = (s,e)=>{
     const S = toDate(s);
     let E = toDate(e);
     if (!S) return 0;
-    if (!E) E = new Date(); // still on board → today
-    // normalize to noon to avoid DST edge cases
-    S.setHours(12,0,0,0);
-    E.setHours(12,0,0,0);
-    const d = Math.round((E - S) / 86400000);
-    return Math.max(0, d);
+    if (!E) E = new Date(); // still on board
+    S.setHours(12,0,0,0); E.setHours(12,0,0,0);
+    return Math.max(0, Math.round((E - S) / 86400000));
   };
   const daysToYMD = (d)=>{ const y=Math.floor(d/365), m=Math.floor((d%365)/30), dd=Math.floor(d%365%30); return `${y}Y ${m}M ${dd}D`; };
 
@@ -335,7 +335,8 @@
 
   // -------- main ----------
   (async ()=>{
-    $('#decl-date').textContent = new Date().toISOString().slice(0,10);
+    // Declaration date in MM-DD-YYYY
+    $('#decl-date').textContent = fmtDate(new Date());
 
     const uid = await resolveUid();
     if(!uid){ showWarn("Tip: Sign in or add ?uid=<USER_UID> to the URL."); return; }
@@ -499,7 +500,7 @@
       fillTable('#tbody-skills',8,rows);
     }catch(e){ console.warn('specialSkills', e); }
 
-    // SEA SERVICE + EXPERIENCE (güncel sayım)
+    // SEA SERVICE + EXPERIENCE
     try{
       const list = await loadItems('seaService');
       let expByVessel = new Map(), expByRank = new Map();
