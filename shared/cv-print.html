@@ -6,10 +6,7 @@
 <title>Application Form (CV)</title>
 
 <style>
-  :root{
-    --ink:#0f172a; --muted:#475569; --line:#e2e8f0; --bg:#ffffff;
-    --h:#111827;
-  }
+  :root{--ink:#0f172a;--muted:#475569;--line:#e2e8f0;--bg:#ffffff;--h:#111827}
   *{box-sizing:border-box}
   html,body{background:#f7fafc;margin:0;color:var(--ink);font:14px/1.45 "Inter",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
   main{max-width:1020px;margin:28px auto;background:var(--bg);padding:28px 28px 36px;border:1px solid #e5e7eb;border-radius:10px}
@@ -229,9 +226,7 @@
         <table>
           <thead><tr><th>Vessel Type</th><th>Period</th><th>Voyages</th></tr></thead>
           <tbody id="tbody-exp-vessel"><tr><td colspan="3" class="center empty">—</td></tr></tbody>
-          <tfoot>
-            <tr><th>Total</th><th id="exp-vessel-total-period">—</th><th id="exp-vessel-total-voy">—</th></tr>
-          </tfoot>
+          <tfoot><tr><th>Total</th><th id="exp-vessel-total-period">—</th><th id="exp-vessel-total-voy">—</th></tr></tfoot>
         </table>
       </div>
       <div style="flex:1;min-width:320px">
@@ -239,9 +234,7 @@
         <table>
           <thead><tr><th>Rank</th><th>Period</th><th>Voyages</th></tr></thead>
           <tbody id="tbody-exp-rank"><tr><td colspan="3" class="center empty">—</td></tr></tbody>
-          <tfoot>
-            <tr><th>Total</th><th id="exp-rank-total-period">—</th><th id="exp-rank-total-voy">—</th></tr>
-          </tfoot>
+          <tfoot><tr><th>Total</th><th id="exp-rank-total-period">—</th><th id="exp-rank-total-voy">—</th></tr></tfoot>
         </table>
       </div>
     </div>
@@ -272,11 +265,9 @@
 </main>
 
 <script type="module">
-  // Firebase (CDN)
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getFirestore, doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-  // ---- Config ----
   const firebaseConfig = {
     apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
     authDomain: "crewapplication-c37a8.firebaseapp.com",
@@ -287,9 +278,9 @@
     measurementId: "G-DSSJMESQ7Z"
   };
 
-  // ---- Utils ----
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
   const $  = (s)=>document.querySelector(s);
   const showWarn = (msg)=>{ const b = $('#warn'); b.textContent = msg; b.style.display='block'; };
   const hideWarn = ()=>{ const b=$('#warn'); b.textContent=''; b.style.display='none'; };
@@ -303,113 +294,76 @@
   };
   const safe = (v)=> (v===undefined || v===null || v==="" ? "—" : v);
 
-  // ---- Robust param resolver ----
-  const resolveIds = ()=>{
-    const out = { cvid:null, uid:null };
+  // ---- UID resolver (query + hash + path) ----
+  const resolveUid = ()=>{
     try{
       const u = new URL(window.location.href);
-      out.cvid = u.searchParams.get('cvid') || u.searchParams.get('id') || null;
-      out.uid  = u.searchParams.get('uid')  || null;
-      const cv2 = u.searchParams.get('cv'); if(cv2) out.cvid = cv2;
-
-      if (!out.cvid && u.hash && u.hash.length>1){
+      let uid = u.searchParams.get('uid');
+      if (!uid && u.hash && u.hash.length>1){
         const hs = new URLSearchParams(u.hash.replace(/^#/, ''));
-        out.cvid = hs.get('cvid') || hs.get('id') || out.cvid;
-        out.uid  = hs.get('uid')  || out.uid;
+        uid = hs.get('uid') || uid;
       }
-      if (!out.cvid){
+      if (!uid){
         const m = u.pathname.match(/cv-print\.html\/([^/?#]+)/i);
-        if (m && m[1]) out.cvid = m[1];
+        if (m && m[1]) uid = m[1];
       }
-    }catch(e){}
-    return out;
+      return uid;
+    }catch(e){ return null; }
   };
 
-  const ids = resolveIds();
-  let cvId = ids.cvid;
-  let ownerUid = ids.uid; // optional shortcut
+  const uid = resolveUid();
 
-  if(!cvId){
-    showWarn("Tip: Add ?cvid=<CV_ID> to the URL (preview mode shown).");
-  }
-
-  // Declaration date default
+  // Default declaration date
   $('#decl-date').textContent = new Date().toISOString().slice(0,10);
 
-  if(cvId){
+  if(!uid){
+    showWarn("Tip: Add ?uid=<USER_UID> to the URL (preview mode shown).");
+  }else{
     hideWarn();
 
-    // Load CV index (to discover ownerUid & some fallbacks)
-    let cvIdx = {};
+    // Helper to load <section>/items under seafarers/{uid}/cv
+    const loadItems = async (section)=> {
+      const snap = await getDocs(collection(doc(db,'seafarers',uid,'cv',section),'items'));
+      return snap.docs.map(d=>({id:d.id, ...d.data()}));
+    };
+
+    // Qualifications → Top block
     try{
-      const cvIdxRef = doc(db, 'cvs', cvId);
-      const cvIdxSnap = await getDoc(cvIdxRef);
-      if(cvIdxSnap.exists()){
-        cvIdx = cvIdxSnap.data();
-        ownerUid = ownerUid || cvIdx.ownerUid || null;
-      }
-    }catch(e){ console.warn('cvs index', e); }
-
-    // If ownerUid still yoksa, sadece indexsiz modda çalışır (kişisel detaylar/tablolar için uid gerekir)
-    const base = ownerUid ? doc(db, 'seafarers', ownerUid, 'cv', cvId) : null;
-
-    // ---- Position block (first use index fallbacks, then override from qualifications) ----
-    $('#pos-applied').textContent = safe(cvIdx.position || cvIdx.appliedRank);
-    $('#pos-lowest').textContent  = safe(cvIdx.lowestRank || cvIdx.lowestAcceptableRank);
-    $('#pos-vessel').textContent  = safe(cvIdx.preferredVesselType || cvIdx.vesselType);
-    $('#pos-ready').textContent   = safe(fmtDate(cvIdx.readinessDate || cvIdx.readyDate));
-
-    try{
-      if(base){
-        const qSnap = await getDoc(doc(base,'qualifications'));
-        if(qSnap.exists()){
-          const q = qSnap.data();
-          // override with qualifications
-          $('#pos-applied').textContent = safe(q.rankApplied || q.appliedRank || $('#pos-applied').textContent);
-          $('#pos-lowest').textContent  = safe(q.lowestRank  || $('#pos-lowest').textContent);
-          $('#pos-vessel').textContent  = safe(q.vesselType  || $('#pos-vessel').textContent);
-          $('#pos-ready').textContent   = safe(fmtDate(q.readiness)) || $('#pos-ready').textContent;
-          // Declaration Rank / Name (better guess)
-          const rankName = `${safe(q.rankApplied || q.appliedRank || cvIdx.appliedRank || cvIdx.position || '—')} ${safe(cvIdx.lastName ? (cvIdx.lastName + ', ' + (cvIdx.firstName||'')) : (cvIdx.name||''))}`.trim();
-          if(rankName && rankName!=='—') $('#decl-rankname').textContent = rankName;
-        }
+      const qSnap = await getDoc(doc(db,'seafarers',uid,'cv','qualifications'));
+      if(qSnap.exists()){
+        const q = qSnap.data();
+        $('#pos-applied').textContent = safe(q.rankApplied || q.appliedRank);
+        $('#pos-lowest').textContent  = safe(q.lowestRank);
+        $('#pos-vessel').textContent  = safe(q.vesselType);
+        $('#pos-ready').textContent   = safe(fmtDate(q.readiness));
       }
     }catch(e){ console.warn('qualifications', e); }
 
-    // ---- Personal Details
+    // Personal Details
     try{
-      if(base){
-        const pdSnap = await getDoc(doc(base,'personalDetails'));
-        if(pdSnap.exists()){
-          const pd = pdSnap.data();
-          $('#pd-last').textContent   = safe(pd.lastName || cvIdx.lastName);
-          $('#pd-first').textContent  = safe(pd.firstName || cvIdx.firstName);
-          $('#pd-middle').textContent = safe(pd.middleName);
-          $('#pd-gender').textContent = safe(pd.gender);
-          $('#pd-dob').textContent    = safe(fmtDate(pd.dateOfBirth || pd.dob));
-          $('#pd-nationality').textContent = safe(pd.nationality);
-          $('#pd-pob').textContent    = safe(pd.placeOfBirth || pd.birthPlace);
-          $('#pd-cor').textContent    = safe(pd.countryOfResidence || pd.country);
-          $('#pd-city').textContent   = safe(pd.cityOfResidence || pd.city);
-          $('#pd-phone').textContent  = safe(pd.phone);
-          $('#pd-mobile').textContent = safe(pd.mobile || pd.phone);
-          $('#pd-zip').textContent    = safe(pd.zip || pd.postalCode);
-          $('#pd-email').textContent  = safe(pd.email);
-          $('#pd-address').textContent= safe(pd.address);
-        }
+      const pdSnap = await getDoc(doc(db,'seafarers',uid,'cv','personalDetails'));
+      if(pdSnap.exists()){
+        const pd = pdSnap.data();
+        $('#pd-last').textContent   = safe(pd.lastName);
+        $('#pd-first').textContent  = safe(pd.firstName);
+        $('#pd-middle').textContent = safe(pd.middleName);
+        $('#pd-gender').textContent = safe(pd.gender);
+        $('#pd-dob').textContent    = safe(fmtDate(pd.dateOfBirth || pd.dob));
+        $('#pd-nationality').textContent = safe(pd.nationality);
+        $('#pd-pob').textContent    = safe(pd.placeOfBirth || pd.birthPlace);
+        $('#pd-cor').textContent    = safe(pd.countryOfResidence || pd.country);
+        $('#pd-city').textContent   = safe(pd.cityOfResidence || pd.city);
+        $('#pd-phone').textContent  = safe(pd.phone);
+        $('#pd-mobile').textContent = safe(pd.mobile || pd.phone);
+        $('#pd-zip').textContent    = safe(pd.zip || pd.postalCode);
+        $('#pd-email').textContent  = safe(pd.email);
+        $('#pd-address').textContent= safe(pd.address);
+
+        // Declaration Rank / Name (opsiyonel)
+        const rankName = `${$('#pos-applied').textContent} ${safe(pd.lastName ? (pd.lastName + ', ' + (pd.firstName||'')) : '')}`.trim();
+        if(rankName && rankName !== '—') $('#decl-rankname').textContent = rankName;
       }
     }catch(e){ console.warn('personalDetails', e); }
-
-    // helpers
-    const fillTable = (tbodySel, cols, rows)=>{
-      const tb = $(tbodySel);
-      tb.innerHTML = rows.length? rows.join('') : `<tr><td colspan="${cols}" class="center empty">—</td></tr>`;
-    };
-    const loadItems = async (section)=> {
-      if(!base) return [];
-      const snap = await getDocs(collection(doc(base,section),'items'));
-      return snap.docs.map(d=>({id:d.id, ...d.data()}));
-    };
 
     // Identity Documents
     try{
@@ -421,9 +375,8 @@
           <td class="nowrap">${safe(fmtDate(x.issueDate || x.issued))}</td>
           <td class="nowrap">${safe(fmtDate(x.expiryDate || x.expiry))}</td>
           <td>${safe(x.issueCountry || x.country)}</td>
-        </tr>
-      `);
-      fillTable('#tbody-ids',5,rows);
+        </tr>`);
+      document.querySelector('#tbody-ids').innerHTML = rows.length? rows.join('') : `<tr><td colspan="5" class="center empty">—</td></tr>`;
     }catch(e){ console.warn('documents', e); }
 
     // Education
@@ -436,9 +389,8 @@
           <td class="nowrap">${safe(x.fromYear || x.from)}</td>
           <td class="nowrap">${safe(x.toYear || x.to)}</td>
           <td>${safe(x.qualification || x.department)}</td>
-        </tr>
-      `);
-      fillTable('#tbody-education',5,rows);
+        </tr>`);
+      document.querySelector('#tbody-education').innerHTML = rows.length? rows.join('') : `<tr><td colspan="5" class="center empty">—</td></tr>`;
     }catch(e){ console.warn('education', e); }
 
     // Certificates (3-col)
@@ -449,9 +401,8 @@
           <td>${safe(x.name)}</td>
           <td class="nowrap">${safe(fmtDate(x.issue))}</td>
           <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
-        </tr>
-      `);
-      fillTable('#tbody-certificates',3,rows);
+        </tr>`);
+      document.querySelector('#tbody-certificates').innerHTML = rows.length? rows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
     }catch(e){ console.warn('certificates', e); }
 
     // Licences
@@ -468,9 +419,8 @@
           <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
           <td>${safe(x.number)}</td>
           <td>${safe(x.place)}</td>
-        </tr>
-      `);
-      fillTable('#tbody-licences',9,rows);
+        </tr>`);
+      document.querySelector('#tbody-licences').innerHTML = rows.length? rows.join('') : `<tr><td colspan="9" class="center empty">—</td></tr>`;
     }catch(e){ console.warn('licenses', e); }
 
     // Visas
@@ -484,9 +434,8 @@
           <td class="nowrap">${safe(fmtDate(x.issued || x.issueDate))}</td>
           <td class="nowrap">${safe(fmtDate(x.expiry || x.expiryDate))}</td>
           <td>${safe(x.place || x.placeOfIssue)}</td>
-        </tr>
-      `);
-      fillTable('#tbody-visas',6,rows);
+        </tr>`);
+      document.querySelector('#tbody-visas').innerHTML = rows.length? rows.join('') : `<tr><td colspan="6" class="center empty">—</td></tr>`;
     }catch(e){ console.warn('visas', e); }
 
     // Vaccinations
@@ -499,9 +448,8 @@
           <td class="nowrap">${safe(fmtDate(x.issued))}</td>
           <td class="nowrap">${safe(fmtDate(x.expires))}</td>
           <td>${safe(x.place)}</td>
-        </tr>
-      `);
-      fillTable('#tbody-vaccinations',5,rows);
+        </tr>`);
+      document.querySelector('#tbody-vaccinations').innerHTML = rows.length? rows.join('') : `<tr><td colspan="5" class="center empty">—</td></tr>`;
     }catch(e){ console.warn('vaccinations', e); }
 
     // Special Skills
@@ -517,27 +465,19 @@
           <td>${safe(x.cargo)}</td>
           <td>${safe(x.equipment)}</td>
           <td>${safe(x.remarks)}</td>
-        </tr>
-      `);
-      fillTable('#tbody-skills',8,rows);
+        </tr>`);
+      document.querySelector('#tbody-skills').innerHTML = rows.length? rows.join('') : `<tr><td colspan="8" class="center empty">—</td></tr>`;
     }catch(e){ console.warn('specialSkills', e); }
 
-    // Sea Services + Experience
-    const parseDays = (s,e)=>{
-      const S = new Date(s), E = new Date(e);
-      if(isNaN(+S)||isNaN(+E)) return 0;
-      return Math.max(0, Math.round((E-S)/86400000));
-    };
-    const daysToYMD = (d)=>{
-      const y=Math.floor(d/365), m=Math.floor(d%365/30), dd=Math.floor(d%365%30);
-      return `${y}Y ${m}M ${dd}D`;
-    };
+    // Sea Services + Experience totals
+    const parseDays = (s,e)=>{ const S=new Date(s),E=new Date(e); if(isNaN(+S)||isNaN(+E))return 0; return Math.max(0,Math.round((E-S)/86400000)); };
+    const daysToYMD = (d)=>{ const y=Math.floor(d/365), m=Math.floor(d%365/30), dd=Math.floor(d%365%30); return `${y}Y ${m}M ${dd}D`; };
 
     try{
+      const list = await loadItems('seaService');
       let expByVessel = new Map(), expByRank = new Map();
       let totalDays=0, totalVoy=0;
 
-      const list = await loadItems('seaService');
       const rows = list.map(x=>{
         const joined = fmtDate(x.joined || x.start);
         const signed = fmtDate(x.signedOff || x.end);
@@ -566,19 +506,19 @@
             <td class="right">${safe(x.hp  || x.HP  || '')}</td>
             <td class="right">${safe(x.kw  || x.KW  || '')}</td>
             <td>${safe(x.owner || x.manager || x['owner/manager'])}</td>
-          </tr>
-        `;
+          </tr>`;
       });
-      fillTable('#tbody-sea',12,rows);
+      document.querySelector('#tbody-sea').innerHTML = rows.length? rows.join('') : `<tr><td colspan="12" class="center empty">—</td></tr>`;
 
-      const vRows=[]; expByVessel.forEach((v,k)=>vRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
-      const rRows=[]; expByRank.forEach((v,k)=>rRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
-      $('#tbody-exp-vessel').innerHTML = vRows.length? vRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
-      $('#tbody-exp-rank').innerHTML   = rRows.length? rRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
-      $('#exp-vessel-total-period').textContent = daysToYMD(totalDays);
-      $('#exp-vessel-total-voy').textContent    = String(totalVoy);
-      $('#exp-rank-total-period').textContent   = daysToYMD(totalDays);
-      $('#exp-rank-total-voy').textContent      = String(totalVoy);
+      const vRows=[], rRows=[];
+      expByVessel.forEach((v,k)=>vRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
+      expByRank.forEach((v,k)=>rRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
+      document.querySelector('#tbody-exp-vessel').innerHTML = vRows.length? vRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
+      document.querySelector('#tbody-exp-rank').innerHTML   = rRows.length? rRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
+      document.querySelector('#exp-vessel-total-period').textContent = daysToYMD(totalDays);
+      document.querySelector('#exp-vessel-total-voy').textContent    = String(totalVoy);
+      document.querySelector('#exp-rank-total-period').textContent   = daysToYMD(totalDays);
+      document.querySelector('#exp-rank-total-voy').textContent      = String(totalVoy);
     }catch(e){ console.warn('seaService/experience', e); }
   }
 </script>
