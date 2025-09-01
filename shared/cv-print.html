@@ -1,159 +1,283 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Seafarer CV</title>
-  <link href="https://unpkg.com/@picocss/pico@2/css/pico.min.css" rel="stylesheet">
-  <style>
-    body{background:#f7f9fc}
-    main{max-width:1080px;margin:32px auto}
-    .card{background:#fff;border-radius:12px;padding:18px 18px 10px;border:1px solid #e8eef5;box-shadow:0 6px 18px rgba(17,38,146,.06)}
-    .section-title{font-weight:700;letter-spacing:.02em;margin:0 0 .5rem}
-    .muted{color:#667085}
-    .kpi small{display:block;color:#98a2b3;margin-top:.1rem}
-    table{--pico-border-color:#edf2f7}
-    thead th{font-size:.76rem;color:#6b7280}
-    td,th{white-space:nowrap}
-    .empty{color:#98a2b3}
-    .header{display:flex;justify-content:space-between;align-items:center;margin:12px 0 24px}
-    .name{font-size:1.8rem;font-weight:800;margin:0}
-    .rank{font-weight:700;color:#64748b;margin-top:-4px}
-    @media print{.btn-print{display:none}}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Application Form (CV)</title>
+
+<style>
+  :root{
+    --ink:#0f172a; --muted:#475569; --line:#e2e8f0; --bg:#ffffff;
+    --h:#111827; --accent:#0ea5e9;
+  }
+  *{box-sizing:border-box}
+  html,body{background:#f7fafc;margin:0;color:var(--ink);font:14px/1.45 "Inter",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+  main{max-width:1020px;margin:28px auto;background:var(--bg);padding:28px 28px 36px;border:1px solid #e5e7eb;border-radius:10px}
+  h1,h2,h3{margin:0 0 .6rem;color:var(--h)}
+  h1{font-size:22px;letter-spacing:.2px}
+  h2{font-size:16px;border-bottom:2px solid var(--ink);padding-bottom:4px;margin-top:18px}
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .avatar{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e2e8f0;font-weight:700}
+  .muted{color:var(--muted)}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .kv{display:grid;grid-template-columns:220px 1fr;gap:8px;margin:2px 0}
+  .card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
+  th{background:#f3f4f6;text-align:left;font-weight:600}
+  .nowrap{white-space:nowrap}
+  .center{text-align:center}
+  .right{text-align:right}
+  .btn-print{all:unset;background:#111827;color:#fff;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600}
+  .btn-print:hover{background:#0f172a}
+  .header-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .subhead{font-weight:700}
+  .small{font-size:12px}
+  .signature{height:64px;border:1px solid var(--line);border-radius:6px}
+  .empty{color:#9ca3af}
+  @media print{
+    body{background:#fff}
+    main{border:none;margin:0;max-width:100%;padding:0}
+    .btn-print{display:none}
+    a[href]:after{content:""}
+    @page { size: A4; margin: 14mm; }
+  }
+</style>
 </head>
 <body>
 <main>
-
-  <div class="header">
-    <div>
-      <h1 class="name" id="fullName">Full Name</h1>
-      <div class="rank" id="appliedRank">—</div>
+  <div class="header-actions">
+    <div class="topbar">
+      <div class="avatar"></div>
+      <h1>APPLICATION FORM</h1>
     </div>
-    <button class="btn-print" onclick="window.print()">Download PDF</button>
+    <button class="btn-print" onclick="window.print()">Download / Print PDF</button>
   </div>
 
-  <!-- Profile -->
+  <!-- Position Block -->
   <section class="card">
-    <h3 class="section-title">Profile</h3>
-    <div class="grid">
-      <article>
-        <strong>Summary</strong>
-        <div id="summary" class="muted">Experienced seafarer...</div>
-      </article>
-      <article class="kpi">
-        <strong>Key metrics</strong>
-        <small>
-          Total verified: <span id="kpi-total">—</span> &nbsp;—&nbsp;
-          Last contract: <span id="kpi-last">—</span> &nbsp;—&nbsp;
-          Flags served: <span id="kpi-flags">—</span>
-        </small>
-      </article>
-      <article>
-        <strong>Special skills</strong>
-        <div id="skills" class="muted">—</div>
-      </article>
+    <div class="grid-2">
+      <div class="kv"><div class="subhead">Position applied for</div><div id="pos-applied">—</div></div>
+      <div class="kv"><div class="subhead">Lowest rank acceptable</div><div id="pos-lowest">—</div></div>
+      <div class="kv"><div class="subhead">Preferred vessel type</div><div id="pos-vessel">—</div></div>
+      <div class="kv"><div class="subhead">Readiness date</div><div id="pos-ready">—</div></div>
     </div>
   </section>
 
-  <!-- Sea service -->
+  <!-- Personal Details -->
+  <h2>Personal Details</h2>
   <section class="card">
-    <h3 class="section-title">Sea Service History</h3>
-    <div class="overflow-auto">
-      <table>
-        <thead>
-          <tr>
-            <th>Vessel</th><th>IMO</th><th>Type</th><th>GRT/DWT</th>
-            <th>Flag</th><th>Rank</th><th>Start</th><th>End</th><th>Days</th>
-          </tr>
-        </thead>
-        <tbody id="tbody-seaService"><tr><td colspan="9" class="empty">—</td></tr></tbody>
-      </table>
+    <div class="grid-3">
+      <div class="kv"><div class="subhead">Last name</div><div id="pd-last">—</div></div>
+      <div class="kv"><div class="subhead">First name</div><div id="pd-first">—</div></div>
+      <div class="kv"><div class="subhead">Middle name</div><div id="pd-middle">—</div></div>
+
+      <div class="kv"><div class="subhead">Gender</div><div id="pd-gender">—</div></div>
+      <div class="kv"><div class="subhead">Date of birth</div><div id="pd-dob">—</div></div>
+      <div class="kv"><div class="subhead">Nationality</div><div id="pd-nationality">—</div></div>
+
+      <div class="kv"><div class="subhead">Place of birth</div><div id="pd-pob">—</div></div>
+      <div class="kv"><div class="subhead">Country of Residence</div><div id="pd-cor">—</div></div>
+      <div class="kv"><div class="subhead">City of Residence</div><div id="pd-city">—</div></div>
+
+      <div class="kv"><div class="subhead">Phone</div><div id="pd-phone">—</div></div>
+      <div class="kv"><div class="subhead">Mobile</div><div id="pd-mobile">—</div></div>
+      <div class="kv"><div class="subhead">Zip code</div><div id="pd-zip">—</div></div>
+
+      <div class="kv"><div class="subhead">E-mail</div><div id="pd-email">—</div></div>
+      <div class="kv" style="grid-column: span 2;"><div class="subhead">Address</div><div id="pd-address">—</div></div>
     </div>
   </section>
 
-  <div class="grid">
-    <!-- Licenses -->
-    <section class="card">
-      <h3 class="section-title">Licenses</h3>
-      <div class="overflow-auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Type</th><th>Rank</th><th>Number</th><th>Issued</th>
-              <th>Expiry</th><th>Place</th><th>Authority</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-licenses"><tr><td colspan="7" class="empty">—</td></tr></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Certificates -->
-    <section class="card">
-      <h3 class="section-title">Certificates</h3>
-      <div class="overflow-auto">
-        <table>
-          <thead>
-            <tr><th>Certificate</th><th>Issue</th><th>Expiry</th></tr>
-          </thead>
-          <tbody id="tbody-certificates"><tr><td colspan="3" class="empty">—</td></tr></tbody>
-        </table>
-      </div>
-    </section>
-  </div>
+  <!-- Identity Documents -->
+  <h2>Identity Documents</h2>
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th><th class="nowrap">Number</th><th>Issue date</th><th>Expiry date</th><th>Issue country</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-ids">
+        <tr><td colspan="5" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
 
   <!-- Education -->
+  <h2>Education</h2>
   <section class="card">
-    <h3 class="section-title">Education</h3>
-    <div class="overflow-auto">
-      <table>
-        <thead>
-          <tr><th>University</th><th>Department</th><th>City</th><th>From</th><th>To</th><th>GPA</th></tr>
-        </thead>
-        <tbody id="tbody-education"><tr><td colspan="6" class="empty">—</td></tr></tbody>
-      </table>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th><th>Name</th><th class="nowrap">From year</th><th class="nowrap">To year</th><th>Qualification attained</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-education">
+        <tr><td colspan="5" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Certificates -->
+  <h2>Certificates</h2>
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th><th class="nowrap">Certificate Number</th><th>Issuing Authority</th><th>Issued</th><th>Expiry</th><th>Place of issue</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-certificates">
+        <tr><td colspan="6" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Licences -->
+  <h2>Licences</h2>
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Licence</th><th>Capacity</th><th>Rank</th><th>Limitation</th>
+          <th>Issuing Authority</th><th>Issued</th><th>Expiry</th><th>Number</th><th>Place of issue</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-licences">
+        <tr><td colspan="9" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Visas -->
+  <h2>Visas</h2>
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Country</th><th>Number</th><th>Type</th><th>Issued</th><th>Expiry</th><th>Place of issue</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-visas">
+        <tr><td colspan="6" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Vaccinations -->
+  <h2>Vaccinations</h2>
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Number</th><th>Type</th><th>Issued</th><th>Expires</th><th>Place of issue</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-vaccinations">
+        <tr><td colspan="5" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Special Skills -->
+  <h2>Special Skills</h2>
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Skill Type</th><th>Vessel</th><th>Rank</th><th>Period</th><th>Charterer / Voyage Info.</th><th>Cargo</th><th>Equipment</th><th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-skills">
+        <tr><td colspan="8" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Sea Services -->
+  <h2>Sea Services</h2>
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th><th>Joined</th><th>Signed off</th><th>Period</th>
+          <th>Vessel</th><th>Type</th><th>Engine</th>
+          <th class="nowrap">GRT</th><th class="nowrap">DWT</th><th class="nowrap">HP</th><th class="nowrap">KW</th>
+          <th>Owner / Manager</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-sea">
+        <tr><td colspan="12" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Pre-Employment Checks -->
+  <h2>Pre-Employment Checks</h2>
+  <section class="card">
+    <div id="preemployment" class="small muted">No record found</div>
+  </section>
+
+  <!-- Experience -->
+  <h2>Experience</h2>
+  <section class="card">
+    <div class="row">
+      <div style="flex:1;min-width:320px">
+        <div class="subhead">Vessel Type</div>
+        <table>
+          <thead><tr><th>Vessel Type</th><th>Period</th><th>Voyages</th></tr></thead>
+          <tbody id="tbody-exp-vessel"><tr><td colspan="3" class="center empty">—</td></tr></tbody>
+          <tfoot>
+            <tr><th>Total</th><th id="exp-vessel-total-period">—</th><th id="exp-vessel-total-voy">—</th></tr>
+          </tfoot>
+        </table>
+      </div>
+      <div style="flex:1;min-width:320px">
+        <div class="subhead">Rank</div>
+        <table>
+          <thead><tr><th>Rank</th><th>Period</th><th>Voyages</th></tr></thead>
+          <tbody id="tbody-exp-rank"><tr><td colspan="3" class="center empty">—</td></tr></tbody>
+          <tfoot>
+            <tr><th>Total</th><th id="exp-rank-total-period">—</th><th id="exp-rank-total-voy">—</th></tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   </section>
 
-  <div class="grid">
-    <!-- Travel docs -->
-    <section class="card">
-      <h3 class="section-title">Travel Documents</h3>
-      <div class="overflow-auto">
-        <table>
-          <thead>
-            <tr><th>Type</th><th>Number</th><th>Issue Country</th><th>Issued</th><th>Expiry</th></tr>
-          </thead>
-          <tbody id="tbody-documents"><tr><td colspan="5" class="empty">—</td></tr></tbody>
-        </table>
+  <!-- Declaration -->
+  <h2>Declaration</h2>
+  <section class="card">
+    <p class="small">
+      I hereby certify that the information given above is true and correct to the best of my knowledge and belief.
+      Any false declaration may constitute grounds for disqualification.
+    </p>
+    <div class="grid-3">
+      <div>
+        <div class="subhead small">Signature:</div>
+        <div class="signature"></div>
       </div>
-    </section>
-
-    <!-- Visas -->
-    <section class="card">
-      <h3 class="section-title">Visas</h3>
-      <div class="overflow-auto">
-        <table>
-          <thead>
-            <tr><th>Country</th><th>Type</th><th>Number</th><th>Issued</th><th>Expiry</th><th>Place</th></tr>
-          </thead>
-          <tbody id="tbody-visas"><tr><td colspan="6" class="empty">—</td></tr></tbody>
-        </table>
+      <div>
+        <div class="subhead small">Date:</div>
+        <div id="decl-date" class="signature"></div>
       </div>
-    </section>
-  </div>
-
+      <div>
+        <div class="subhead small">Rank / Name:</div>
+        <div id="decl-rankname" class="signature"></div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <script type="module">
   // Firebase (CDN)
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import {
-    getFirestore, doc, getDoc, collection, getDocs
-  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  import { getFirestore, doc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-  // ---- Config (senin projenden) ----
+  // ---- Your Firebase config (unchanged) ----
   const firebaseConfig = {
     apiKey: "AIzaSyDuF_HlZYG0v7SUaSzILV584J8b5ybnBUU",
     authDomain: "crewapplication-c37a8.firebaseapp.com",
@@ -164,153 +288,287 @@
     measurementId: "G-DSSJMESQ7Z"
   };
 
-  initializeApp(firebaseConfig);
-  const db = getFirestore();
-
-  // ---- Helpers ----
-  const $ = s => document.querySelector(s);
-  const fmt = v => {
-    if (!v) return '—';
-    if (v.seconds) return new Date(v.seconds * 1000).toISOString().slice(0, 10);
-    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v;
+  // ---- Utils ----
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const $ = (s)=>document.querySelector(s);
+  const fmtDate = (v)=>{
+    if(!v) return "—";
+    if (typeof v === "string") return v;
+    if (v.seconds) return new Date(v.seconds*1000).toISOString().slice(0,10);
+    if (v instanceof Date) return v.toISOString().slice(0,10);
     return v;
   };
-  const setName = (full, rank) => {
-    $('#fullName').textContent = full || '—';
-    $('#appliedRank').textContent = rank || '—';
-  };
-  const fillRows = (tbodyId, rows, cols) => {
-    const tb = document.getElementById(tbodyId);
-    if (!rows || rows.length === 0) { tb.innerHTML = `<tr><td colspan="${cols}" class="empty">—</td></tr>`; return; }
-    tb.innerHTML = rows.join('');
-  };
+  const safe = (v)=> (v===undefined || v===null || v==="" ? "—" : v);
 
-  // ---- Read params ----
-  const params = new URLSearchParams(location.search);
-  const cvId = params.get('cvid');
-  if (!cvId) {
-    alert('Missing ?cvid=');
-    throw new Error('Missing cvid');
-  }
+  const urlp = new URLSearchParams(location.search);
+  const cvId = urlp.get('cvid');
+  if(!cvId){ alert('Missing ?cvid='); throw new Error('Missing cvid'); }
 
-  // 1) cv index dokümanı (ownerUid, ad / rank vs)
-  const cvIdxSnap = await getDoc(doc(db, 'cvs', cvId));
-  if (!cvIdxSnap.exists()) { alert('CV not found'); throw new Error('cv not found'); }
+  // Load CV index (owner + top fields)
+  const cvIdxRef = doc(db, 'cvs', cvId);
+  const cvIdxSnap = await getDoc(cvIdxRef);
+  if(!cvIdxSnap.exists()){ alert('CV not found'); throw new Error('CV not found'); }
   const cvIdx = cvIdxSnap.data();
   const ownerUid = cvIdx.ownerUid;
-  setName(cvIdx.name || (cvIdx.firstName ? `${cvIdx.firstName} ${cvIdx.lastName}` : '—'), cvIdx.position || cvIdx.appliedRank || '—');
 
-  // Base: seafarers/{uid}/cv/{cvId}
   const base = doc(db, 'seafarers', ownerUid, 'cv', cvId);
 
-  // ---- Section loaders ----
-  const loadList = async (sectionDocName) => {
-    const secDoc = doc(base, sectionDocName);            // <-- DİKKAT: önce doküman
-    const itemsCol = collection(secDoc, 'items');         // <-- altındaki items koleksiyonu
-    const snap = await getDocs(itemsCol);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // ---- Fill Position block ----
+  $('#pos-applied').textContent = safe(cvIdx.position || cvIdx.appliedRank);
+  $('#pos-lowest').textContent = safe(cvIdx.lowestRank || cvIdx.lowestAcceptableRank);
+  $('#pos-vessel').textContent = safe(cvIdx.preferredVesselType || cvIdx.vesselType);
+  $('#pos-ready').textContent  = safe(fmtDate(cvIdx.readinessDate || cvIdx.readyDate));
+
+  // ---- Personal Details (document: personalDetails) ----
+  try{
+    const pdSnap = await getDoc(doc(base,'personalDetails'));
+    if(pdSnap.exists()){
+      const pd = pdSnap.data();
+      $('#pd-last').textContent  = safe(pd.lastName || cvIdx.lastName);
+      $('#pd-first').textContent = safe(pd.firstName || cvIdx.firstName);
+      $('#pd-middle').textContent= safe(pd.middleName);
+      $('#pd-gender').textContent= safe(pd.gender);
+      $('#pd-dob').textContent   = safe(fmtDate(pd.dateOfBirth || pd.dob));
+      $('#pd-nationality').textContent = safe(pd.nationality);
+      $('#pd-pob').textContent   = safe(pd.placeOfBirth || pd.birthPlace);
+      $('#pd-cor').textContent   = safe(pd.countryOfResidence || pd.country);
+      $('#pd-city').textContent  = safe(pd.cityOfResidence || pd.city);
+      $('#pd-phone').textContent = safe(pd.phone);
+      $('#pd-mobile').textContent= safe(pd.mobile || pd.phone);
+      $('#pd-zip').textContent   = safe(pd.zip || pd.postalCode);
+      $('#pd-email').textContent = safe(pd.email);
+      $('#pd-address').textContent = safe(pd.address);
+      // Declaration block helpers:
+      const rankName = `${safe(cvIdx.appliedRank || cvIdx.position || '—')} ${safe(pd.lastName ? (pd.lastName + ', ' + (pd.firstName||'')) : (cvIdx.name||''))}`.trim();
+      $('#decl-rankname').textContent = rankName!=="—" ? rankName : '—';
+    }
+  }catch(e){ console.warn('personalDetails', e); }
+
+  // ---- Identity Documents from documents/items (filter passports, seaman book, etc.) ----
+  try{
+    const docSnap = await getDocs(collection(doc(base,'documents'),'items'));
+    const rows = [];
+    docSnap.forEach(d=>{
+      const x = d.data();
+      rows.push(`
+        <tr>
+          <td>${safe(x.type)}</td>
+          <td class="nowrap">${safe(x.number)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issueDate || x.issued))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expiryDate || x.expiry))}</td>
+          <td>${safe(x.issueCountry || x.country)}</td>
+        </tr>
+      `);
+    });
+    $('#tbody-ids').innerHTML = rows.length? rows.join('') : `<tr><td colspan="5" class="center empty">—</td></tr>`;
+  }catch(e){ console.warn('documents', e); }
+
+  // ---- Education ----
+  try{
+    const edSnap = await getDocs(collection(doc(base,'education'),'items'));
+    const rows = [];
+    edSnap.forEach(d=>{
+      const x = d.data();
+      rows.push(`
+        <tr>
+          <td>${safe(x.type || 'University')}</td>
+          <td>${safe(x.name || x.university)}</td>
+          <td class="nowrap">${safe(x.fromYear || x.from)}</td>
+          <td class="nowrap">${safe(x.toYear || x.to)}</td>
+          <td>${safe(x.qualification || x.department)}</td>
+        </tr>
+      `);
+    });
+    $('#tbody-education').innerHTML = rows.length? rows.join('') : `<tr><td colspan="5" class="center empty">—</td></tr>`;
+  }catch(e){ console.warn('education', e); }
+
+  // ---- Certificates ----
+  try{
+    const cSnap = await getDocs(collection(doc(base,'certificates'),'items'));
+    const rows = [];
+    cSnap.forEach(d=>{
+      const x = d.data();
+      rows.push(`
+        <tr>
+          <td>${safe(x.category || x.name)}</td>
+          <td>${safe(x.number)}</td>
+          <td>${safe(x.authority || x.issuingAuthority)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issue || x.issued))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
+          <td>${safe(x.place || x.placeOfIssue)}</td>
+        </tr>
+      `);
+    });
+    $('#tbody-certificates').innerHTML = rows.length? rows.join('') : `<tr><td colspan="6" class="center empty">—</td></tr>`;
+  }catch(e){ console.warn('certificates', e); }
+
+  // ---- Licences ----
+  try{
+    const lSnap = await getDocs(collection(doc(base,'licenses'),'items'));
+    const rows = [];
+    lSnap.forEach(d=>{
+      const x = d.data();
+      rows.push(`
+        <tr>
+          <td>${safe(x.licence || x.license || 'CERTIFICATE OF COMPETENCY')}</td>
+          <td>${safe(x.capacity)}</td>
+          <td>${safe(x.rank)}</td>
+          <td>${safe(x.limitation)}</td>
+          <td>${safe(x.authority)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issued))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
+          <td>${safe(x.number)}</td>
+          <td>${safe(x.place)}</td>
+        </tr>
+      `);
+    });
+    $('#tbody-licences').innerHTML = rows.length? rows.join('') : `<tr><td colspan="9" class="center empty">—</td></tr>`;
+  }catch(e){ console.warn('licenses', e); }
+
+  // ---- Visas ----
+  try{
+    const vSnap = await getDocs(collection(doc(base,'visas'),'items'));
+    const rows = [];
+    vSnap.forEach(d=>{
+      const x = d.data();
+      rows.push(`
+        <tr>
+          <td>${safe(x.country)}</td>
+          <td>${safe(x.number)}</td>
+          <td>${safe(x.type)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issued || x.issueDate))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expiry || x.expiryDate))}</td>
+          <td>${safe(x.place || x.placeOfIssue)}</td>
+        </tr>
+      `);
+    });
+    $('#tbody-visas').innerHTML = rows.length? rows.join('') : `<tr><td colspan="6" class="center empty">—</td></tr>`;
+  }catch(e){ console.warn('visas', e); }
+
+  // ---- Vaccinations ----
+  try{
+    const vacSnap = await getDocs(collection(doc(base,'vaccinations'),'items'));
+    const rows = [];
+    vacSnap.forEach(d=>{
+      const x = d.data();
+      rows.push(`
+        <tr>
+          <td>${safe(x.number || '')}</td>
+          <td>${safe(x.type)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issued))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expires))}</td>
+          <td>${safe(x.place)}</td>
+        </tr>
+      `);
+    });
+    $('#tbody-vaccinations').innerHTML = rows.length? rows.join('') : `<tr><td colspan="5" class="center empty">—</td></tr>`;
+  }catch(e){ console.warn('vaccinations', e); }
+
+  // ---- Special Skills ----
+  try{
+    const sSnap = await getDocs(collection(doc(base,'specialSkills'),'items'));
+    const rows = [];
+    sSnap.forEach(d=>{
+      const x = d.data();
+      rows.push(`
+        <tr>
+          <td>${safe(x.skillType || x.type)}</td>
+          <td>${safe(x.vessel)}</td>
+          <td>${safe(x.rank)}</td>
+          <td class="nowrap">${safe(x.period)}</td>
+          <td>${safe(x.charterer || x.voyageInfo)}</td>
+          <td>${safe(x.cargo)}</td>
+          <td>${safe(x.equipment)}</td>
+          <td>${safe(x.remarks)}</td>
+        </tr>
+      `);
+    });
+    $('#tbody-skills').innerHTML = rows.length? rows.join('') : `<tr><td colspan="8" class="center empty">—</td></tr>`;
+  }catch(e){ console.warn('specialSkills', e); }
+
+  // ---- Sea Services + Experience aggregation ----
+  const parseDays = (start, end)=>{
+    const s = new Date(start), e = new Date(end);
+    if(isNaN(+s) || isNaN(+e)) return 0;
+    return Math.max(0, Math.round((e - s)/(1000*60*60*24)));
+  };
+  const daysToYMD = (days)=>{
+    const y = Math.floor(days/365);
+    const m = Math.floor((days%365)/30);
+    const d = Math.floor((days%365)%30);
+    return `${y}Y ${m}M ${d}D`;
   };
 
-  // Sea Service
-  try {
-    const list = await loadList('seaService');
-    const rows = list.map(x => `
-      <tr>
-        <td>${fmt(x.vessel)}</td>
-        <td>${fmt(x.imo)}</td>
-        <td>${fmt(x.type)}</td>
-        <td>${fmt(x.grtDwt || x.grt || x.dwt)}</td>
-        <td>${fmt(x.flag)}</td>
-        <td>${fmt(x.rank)}</td>
-        <td>${fmt(x.start)}</td>
-        <td>${fmt(x.end)}</td>
-        <td>${fmt(x.days)}</td>
-      </tr>
-    `);
-    fillRows('tbody-seaService', rows, 9);
-  } catch (e) {
-    console.warn('seaService', e);
-  }
+  let expByVessel = new Map(); // type -> {days, voyages}
+  let expByRank = new Map();   // rank -> {days, voyages}
+  let totalDays = 0, totalVoy = 0;
 
-  // Licenses
-  try {
-    const list = await loadList('licenses');
-    const rows = list.map(x => `
-      <tr>
-        <td>${fmt(x.type)}</td>
-        <td>${fmt(x.rank)}</td>
-        <td>${fmt(x.number)}</td>
-        <td>${fmt(x.issued || x.issue)}</td>
-        <td>${fmt(x.expiry)}</td>
-        <td>${fmt(x.place)}</td>
-        <td>${fmt(x.authority)}</td>
-      </tr>
-    `);
-    fillRows('tbody-licenses', rows, 7);
-  } catch (e) { console.warn('licenses', e); }
+  try{
+    const seaSnap = await getDocs(collection(doc(base,'seaService'),'items'));
+    const rows = [];
+    seaSnap.forEach(d=>{
+      const x = d.data();
+      const joined = fmtDate(x.joined || x.start);
+      const signed = fmtDate(x.signedOff || x.end);
+      const rank = safe(x.rank);
+      const type = safe(x.type || x.vesselType);
+      const dcount = parseDays(joined, signed);
+      totalDays += dcount;
+      totalVoy += 1;
 
-  // Certificates
-  try {
-    const list = await loadList('certificates');
-    const rows = list.map(x => `
-      <tr>
-        <td>${fmt(x.name || x.certificate)}</td>
-        <td>${fmt(x.issue || x.issued)}</td>
-        <td>${fmt(x.expiry)}</td>
-      </tr>
-    `);
-    fillRows('tbody-certificates', rows, 3);
-  } catch (e) { console.warn('certificates', e); }
+      // Vessel type agg
+      if(!expByVessel.has(type)) expByVessel.set(type,{days:0,voyages:0});
+      expByVessel.get(type).days += dcount;
+      expByVessel.get(type).voyages += 1;
 
-  // Education
-  try {
-    const list = await loadList('education');
-    const rows = list.map(x => `
-      <tr>
-        <td>${fmt(x.university)}</td>
-        <td>${fmt(x.department)}</td>
-        <td>${fmt(x.city)}</td>
-        <td>${fmt(x.fromYear || x.from)}</td>
-        <td>${fmt(x.toYear || x.to)}</td>
-        <td>${fmt(x.gpa)}</td>
-      </tr>
-    `);
-    fillRows('tbody-education', rows, 6);
-  } catch (e) { console.warn('education', e); }
+      // Rank agg
+      if(!expByRank.has(rank)) expByRank.set(rank,{days:0,voyages:0});
+      expByRank.get(rank).days += dcount;
+      expByRank.get(rank).voyages += 1;
 
-  // Travel Documents (documents)
-  try {
-    const list = await loadList('documents');
-    const rows = list.map(x => `
-      <tr>
-        <td>${fmt(x.type)}</td>
-        <td>${fmt(x.number)}</td>
-        <td>${fmt(x.issueCountry || x.country)}</td>
-        <td>${fmt(x.issueDate || x.issued)}</td>
-        <td>${fmt(x.expiryDate || x.expiry)}</td>
-      </tr>
-    `);
-    fillRows('tbody-documents', rows, 5);
-  } catch (e) { console.warn('documents', e); }
+      rows.push(`
+        <tr>
+          <td>${rank}</td>
+          <td class="nowrap">${joined}</td>
+          <td class="nowrap">${signed}</td>
+          <td class="nowrap">${daysToYMD(dcount)}</td>
+          <td>${safe(x.vessel)}</td>
+          <td>${type}</td>
+          <td>${safe(x.engine)}</td>
+          <td class="right">${safe(x.grt || x.GRT || '')}</td>
+          <td class="right">${safe(x.dwt || x.DWT || '')}</td>
+          <td class="right">${safe(x.hp || x.HP || '')}</td>
+          <td class="right">${safe(x.kw || x.KW || '')}</td>
+          <td>${safe(x.owner || x.manager || x['owner/manager'])}</td>
+        </tr>
+      `);
+    });
+    $('#tbody-sea').innerHTML = rows.length? rows.join('') : `<tr><td colspan="12" class="center empty">—</td></tr>`;
 
-  // Visas
-  try {
-    const list = await loadList('visas');
-    const rows = list.map(x => `
-      <tr>
-        <td>${fmt(x.country)}</td>
-        <td>${fmt(x.type)}</td>
-        <td>${fmt(x.number)}</td>
-        <td>${fmt(x.issued || x.issueDate)}</td>
-        <td>${fmt(x.expiry || x.expiryDate)}</td>
-        <td>${fmt(x.place || x.placeOfIssue)}</td>
-      </tr>
-    `);
-    fillRows('tbody-visas', rows, 6);
-  } catch (e) { console.warn('visas', e); }
+    // Experience tables
+    const vRows = [];
+    expByVessel.forEach((val,key)=>{
+      vRows.push(`<tr><td>${key}</td><td class="nowrap">${daysToYMD(val.days)}</td><td class="right">${val.voyages}</td></tr>`);
+    });
+    $('#tbody-exp-vessel').innerHTML = vRows.length? vRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
+    $('#exp-vessel-total-period').textContent = daysToYMD(totalDays);
+    $('#exp-vessel-total-voy').textContent = String(totalVoy);
 
-  // İsteğe bağlı: profil özeti, yetenekler vs için alan eklemek istersen
-  // const details = await getDoc(doc(base, 'personalDetails')); ...
+    const rRows = [];
+    expByRank.forEach((val,key)=>{
+      rRows.push(`<tr><td>${key}</td><td class="nowrap">${daysToYMD(val.days)}</td><td class="right">${val.voyages}</td></tr>`);
+    });
+    $('#tbody-exp-rank').innerHTML = rRows.length? rRows.join('') : `<tr><td colspan="3" class="center empty">—</td></tr>`;
+    // totals by rank are same overall totals here
+    $('#exp-rank-total-period').textContent = daysToYMD(totalDays);
+    $('#exp-rank-total-voy').textContent = String(totalVoy);
+
+  }catch(e){ console.warn('seaService / experience', e); }
+
+  // Declaration date default (today) if available from cvIdx
+  const declDate = cvIdx.declarationDate ? fmtDate(cvIdx.declarationDate) : new Date().toISOString().slice(0,10);
+  $('#decl-date').textContent = declDate;
 
 </script>
 </body>
