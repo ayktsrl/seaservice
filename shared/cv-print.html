@@ -20,25 +20,25 @@
   .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
   .kv{display:grid;grid-template-columns:180px minmax(0,1fr);gap:8px;margin:2px 0;min-width:0}
-/* Değer hücreleri: kelimenin ortasından kırma */
-.kv > div:last-child{
-  min-width:0;
-  overflow-wrap: break-word;  /* sadece mecbur kalınca kır */
-  word-break: normal;
-  hyphens: none;
-}
+  /* Değer hücreleri: kelimenin ortasından kırma */
+  .kv > div:last-child{
+    min-width:0;
+    overflow-wrap: break-word;  /* sadece mecbur kalınca kır */
+    word-break: normal;
+    hyphens: none;
+  }
 
   .card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;overflow:hidden}
-table{width:100%;border-collapse:collapse;margin-top:6px;}
-/* Tablo hücreleri: normal kırma davranışı */
-th,td{
-  border:1px solid var(--line);
-  padding:6px 8px;
-  vertical-align:top;
-  overflow-wrap: break-word;  /* kelime içinde değil, kelimeler arasında kır */
-  word-break: normal;
-  hyphens: none;
-}
+  table{width:100%;border-collapse:collapse;margin-top:6px;}
+  /* Tablo hücreleri: normal kırma davranışı */
+  th,td{
+    border:1px solid var(--line);
+    padding:6px 8px;
+    vertical-align:top;
+    overflow-wrap: break-word;  /* kelime içinde değil, kelimeler arasında kır */
+    word-break: normal;
+    hyphens: none;
+  }
 
   th{background:#f3f4f6;text-align:left;font-weight:600}
   .nowrap{white-space:nowrap;overflow-wrap:normal}
@@ -52,20 +52,20 @@ th,td{
   .signature{height:64px;border:1px solid var(--line);border-radius:6px}
   .empty{color:#9ca3af}
   .banner{background:#fff3cd;border:1px solid #ffe69c;color:#594c00;padding:8px 12px;border-radius:6px;margin-bottom:10px;display:none}
-@media print{
-  body{background:#fff}
-  main{border:none;margin:0;max-width:100%;padding:0}
-  .btn-print,.banner{display:none!important}
-  a[href]:after{content:""}
-  @page { size: A4; margin: 14mm; }
 
-  /* 3 kolon yerine 2 kolon: değerler için daha geniş yer */
-  .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
-  /* Tablo kolonlarını doğal genişlikte hesapla */
-  table{table-layout:auto}
-   tr{page-break-inside: avoid}
-}
+  @media print{
+    body{background:#fff}
+    main{border:none;margin:0;max-width:100%;padding:0}
+    .btn-print,.banner{display:none!important}
+    a[href]:after{content:""}
+    @page { size: A4; margin: 14mm; }
 
+    /* 3 kolon yerine 2 kolon: değerler için daha geniş yer */
+    .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+    /* Tablo kolonlarını doğal genişlikte hesapla */
+    table{table-layout:auto}
+    tr{page-break-inside: avoid}
+  }
 </style>
 </head>
 <body>
@@ -159,32 +159,32 @@ th,td{
   </section>
 
   <!-- Licences -->
-<h2>Licences</h2>
-<section class="card">
-  <table class="licenses">
-    <colgroup>
-      <col style="width:22%"> <!-- Licence -->
-      <col style="width:10%"> <!-- Capacity -->
-      <col style="width:12%"> <!-- Rank -->
-      <col style="width:8%">  <!-- Limitation -->
-      <col style="width:14%"> <!-- Issuing Authority -->
-      <col style="width:8%">  <!-- Issued -->
-      <col style="width:8%">  <!-- Expiry -->
-      <col style="width:10%"> <!-- Number -->
-      <col style="width:8%">  <!-- Place of issue -->
-    </colgroup>
-    <thead>
-      <tr>
-        <th>Licence</th><th>Capacity</th><th>Rank</th><th>Limitation</th>
-        <th>Issuing Authority</th><th>Issued</th><th>Expiry</th>
-        <th>Number</th><th>Place of issue</th>
-      </tr>
-    </thead>
-    <tbody id="tbody-licences">
-      <tr><td colspan="9" class="center empty">—</td></tr>
-    </tbody>
-  </table>
-</section>
+  <h2>Licences</h2>
+  <section class="card">
+    <table class="licenses">
+      <colgroup>
+        <col style="width:26%"> <!-- Licence -->
+        <col style="width:10%"> <!-- Capacity -->
+        <col style="width:11%"> <!-- Rank -->
+        <col style="width:8%">  <!-- Limitation -->
+        <col style="width:15%"> <!-- Issuing Authority -->
+        <col style="width:8%">  <!-- Issued -->
+        <col style="width:8%">  <!-- Expiry -->
+        <col style="width:8%">  <!-- Number -->
+        <col style="width:6%">  <!-- Place -->
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Licence</th><th>Capacity</th><th>Rank</th><th>Limitation</th>
+          <th>Issuing Authority</th><th>Issued</th><th>Expiry</th>
+          <th>Number</th><th>Place of issue</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-licences">
+        <tr><td colspan="9" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
 
   <!-- Visas -->
   <h2>Visas</h2>
