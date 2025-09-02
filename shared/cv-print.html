@@ -37,25 +37,13 @@
   .empty{color:#9ca3af}
   .banner{background:#fff3cd;border:1px solid #ffe69c;color:#594c00;padding:8px 12px;border-radius:6px;margin-bottom:10px;display:none}
 
-  /* Licences tablosuna özel (ekranda) */
+  /* Licences tablosu */
   table.licenses{table-layout:auto}
+  table.licenses thead th{text-align:center}
   table.licenses td:nth-child(6),
   table.licenses td:nth-child(7),
   table.licenses td:nth-child(8){white-space:nowrap} /* Issued, Expiry, Number */
 
-/* Licences: iki satırlı düzen için minik etiket stili */
-table.licenses td.label{
-  color: var(--muted);
-  font-size: 12px;
-  white-space: nowrap;
-  border-right: none;
-}
-table.licenses td.value{
-  border-left: none;
-}
-@media print{
-  table.licenses{ table-layout: fixed; }  /* baskıda stabil */
-}
   @media print{
     body{background:#fff}
     main{border:none;margin:0;max-width:100%;padding:0}
@@ -63,13 +51,10 @@ table.licenses td.value{
     a[href]:after{content:""}
     @page { size: A4; margin: 12mm; }
 
-    /* 3 kolon yerine 2 kolon: yazıya alan aç */
     .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
-
-    /* Satırları sayfa arasında bölme */
     section.card, table, thead, tbody, tr{break-inside:avoid;page-break-inside:avoid}
 
-    /* Licences: baskıda sabit oran + biraz daha küçük font */
+    /* Baskıda sabit ve okunur */
     table.licenses{table-layout:fixed;font-size:12px}
   }
 </style>
@@ -157,31 +142,34 @@ table.licenses td.value{
   </section>
 
   <!-- Licences -->
-<h2>Licences</h2>
-<section class="card">
-  <table class="licenses">
-    <thead>
-      <tr>
-        <th rowspan="2">Licence</th>
-        <th rowspan="2">Capacity</th>
-        <th rowspan="2">Rank</th>
-        <th rowspan="2">Limitation</th>
-        <th rowspan="2">Issuing Authority</th>
-        <th colspan="4" class="center">Details</th>
-      </tr>
-      <tr>
-        <th>Issued</th>
-        <th>Expiry</th>
-        <th>Number</th>
-        <th>Place of Issue</th>
-      </tr>
-    </thead>
-    <tbody id="tbody-licences">
-      <tr><td colspan="9" class="center empty">—</td></tr>
-    </tbody>
-  </table>
-</section>
-
+  <h2>Licences</h2>
+  <section class="card">
+    <table class="licenses">
+      <colgroup>
+        <col style="width:25%"><col style="width:11%"><col style="width:11%"><col style="width:7%"><col style="width:16%">
+        <col style="width:8%"><col style="width:8%"><col style="width:8%"><col style="width:6%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th rowspan="2">Licence</th>
+          <th rowspan="2">Capacity</th>
+          <th rowspan="2">Rank</th>
+          <th rowspan="2">Limitation</th>
+          <th rowspan="2">Issuing Authority</th>
+          <th colspan="4" class="center">Details</th>
+        </tr>
+        <tr>
+          <th>Issued</th>
+          <th>Expiry</th>
+          <th>Number</th>
+          <th>Place of Issue</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-licences">
+        <tr><td colspan="9" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
 
   <!-- Visas -->
   <h2>Visas</h2>
@@ -454,32 +442,23 @@ table.licenses td.value{
       fillTable('#tbody-certificates',3,rows);
     }catch(e){ console.warn('certificates', e); }
 
-    // LICENSES
-// LICENSES
-try{
-  const list = await loadItems('licenses');
-  const rows = list.map(x=>`
-    <tr>
-      <td rowspan="2">${safe(x.licence || x.license || 'CERTIFICATE OF COMPETENCY')}</td>
-      <td rowspan="2">${safe(x.capacity)}</td>
-      <td rowspan="2">${safe(x.rank)}</td>
-      <td rowspan="2">${safe(x.limitation || '—')}</td>
-      <td rowspan="2">${safe(x.authority)}</td>
-
-      <td class="label">Issued</td>
-      <td class="value nowrap">${safe(fmtDate(x.issued))}</td>
-      <td class="label">Number</td>
-      <td class="value">${safe(x.number)}</td>
-    </tr>
-    <tr>
-      <td class="label">Expiry</td>
-      <td class="value nowrap">${safe(fmtDate(x.expiry))}</td>
-      <td class="label">Place</td>
-      <td class="value">${safe(x.place)}</td>
-    </tr>
-  `);
-  fillTable('#tbody-licences',9,rows);
-}catch(e){ console.warn('licenses', e); }
+    // LICENSES (tek satır gövde)
+    try{
+      const list = await loadItems('licenses');
+      const rows = list.map(x=>`
+        <tr>
+          <td>${safe(x.licence || x.license || 'CERTIFICATE OF COMPETENCY')}</td>
+          <td>${safe(x.capacity)}</td>
+          <td>${safe(x.rank)}</td>
+          <td>${safe(x.limitation || '—')}</td>
+          <td>${safe(x.authority)}</td>
+          <td class="nowrap">${safe(fmtDate(x.issued))}</td>
+          <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
+          <td>${safe(x.number)}</td>
+          <td>${safe(x.place)}</td>
+        </tr>`);
+      fillTable('#tbody-licences',9,rows);
+    }catch(e){ console.warn('licenses', e); }
 
     // VISAS
     try{
