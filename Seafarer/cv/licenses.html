@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html>.value
 <html lang="en">
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -35,11 +35,12 @@
             <th>Expiry</th>
             <th>Place</th>
             <th>Authority</th>
+<th>Limitation</th>
             <th>Remarks</th>
           </tr>
         </thead>
         <tbody id="licenseList"></tbody>
-        <tfoot><tr><td colspan="10" class="text-center text-muted small">List of all valid licenses.</td></tr></tfoot>
+        <tfoot><tr><td colspan="11" class="text-center text-muted small">List of all valid licenses.</td></tr></tfoot>
       </table>
     </div>
 
@@ -105,7 +106,10 @@
             <label class="form-label">Authority</label>
             <input id="authority" class="form-control" placeholder="e.g., Turkish Maritime Administration">
           </div>
-
+          <div class="col-md-6">
+            <label class="form-label">Limitation</label>
+            <input id="limitation" class="form-control" placeholder="e.g., —">
+          </div>
           <div class="col-12">
             <label class="form-label">Remarks</label>
             <textarea id="remarks" class="form-control" rows="2" placeholder="Notes (optional)"></textarea>
@@ -145,6 +149,7 @@
     const noExpiry     = document.getElementById('noExpiry');
     const place        = document.getElementById('place');
     const authority    = document.getElementById('authority');
+    const limitation  = document.getElementById('limitation');
     const remarks      = document.getElementById('remarks');
 
     function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -245,6 +250,7 @@
         expiry.value    = data.expiry    || '';
         place.value     = data.place     || '';
         authority.value = data.authority || '';
+        limitation.value = data.limitation || '';
         remarks.value   = data.remarks   || '';
 
         if(!data.expiry){ noExpiry.checked=true; expiry.disabled=true; }
@@ -292,6 +298,7 @@
         expiry      : noExpiry.checked ? '' : (expiry.value || ''),
         place       : place.value.trim(),
         authority   : authority.value.trim(),
+        limitation  : limitation.value.trim(),
         remarks     : remarks.value.trim()
       };
 
@@ -320,22 +327,24 @@
       rows.forEach(d=>{
         const typeText = d.licenseType || d.type || '';
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="text-center">
-            <button class="btn btn-sm btn-outline-secondary me-1"
-              onclick='openForm("${d.id}", ${JSON.stringify(d).replace(/"/g,"&quot;")})'>Edit</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='delItem("${d.id}")'>Delete</button>
-          </td>
-          <td>${esc(typeText)}</td>
-          <td>${esc(d.capacity||'')}</td>
-          <td>${esc(d.rank||'')}</td>
-          <td>${esc(d.number||'')}</td>
-          <td>${esc(d.issued||'')}</td>
-          <td>${d.expiry ? esc(d.expiry) : '—'}</td>
-          <td>${esc(d.place||'')}</td>
-          <td>${esc(d.authority||'')}</td>
-          <td>${esc(d.remarks||'')}</td>
+      tr.innerHTML = `
+        <td class="text-center">
+        <button class="btn btn-sm btn-outline-secondary me-1"
+        onclick='openForm("${d.id}", ${JSON.stringify(d).replace(/"/g,"&quot;")})'>Edit</button>
+        <button class="btn btn-sm btn-outline-danger" onclick='delItem("${d.id}")'>Delete</button>
+        </td>
+        <td>${esc(typeText)}</td>
+        <td>${esc(d.capacity||'')}</td>
+        <td>${esc(d.rank||'')}</td>
+        <td>${esc(d.number||'')}</td>
+        <td>${esc(d.issued||'')}</td>
+        <td>${d.expiry ? esc(d.expiry) : '—'}</td>
+        <td>${esc(d.place||'')}</td>
+        <td>${esc(d.authority||'')}</td>
+        <td>${esc(d.limitation||'')}</td>       <!-- NEW -->
+        <td>${esc(d.remarks||'')}</td>
         `;
+
         list.appendChild(tr);
       });
     }
