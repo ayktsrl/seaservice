@@ -16,32 +16,16 @@
   .topbar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
   .avatar{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e2e8f0;font-weight:700}
 
-  /* >>> FIX: shrinkable columns + safe value wrapping */
   .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
   .kv{display:grid;grid-template-columns:180px minmax(0,1fr);gap:8px;margin:2px 0;min-width:0}
-  /* Değer hücreleri: kelimenin ortasından kırma */
-  .kv > div:last-child{
-    min-width:0;
-    overflow-wrap: break-word;  /* sadece mecbur kalınca kır */
-    word-break: normal;
-    hyphens: none;
-  }
+  .kv > div:last-child{min-width:0;overflow-wrap:break-word;word-break:normal;hyphens:none}
 
   .card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;overflow:hidden}
-  table{width:100%;border-collapse:collapse;margin-top:6px;}
-  /* Tablo hücreleri: normal kırma davranışı */
-  th,td{
-    border:1px solid var(--line);
-    padding:6px 8px;
-    vertical-align:top;
-    overflow-wrap: break-word;  /* kelime içinde değil, kelimeler arasında kır */
-    word-break: normal;
-    hyphens: none;
-  }
-
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;overflow-wrap:break-word;word-break:normal;hyphens:none}
   th{background:#f3f4f6;text-align:left;font-weight:600}
-  .nowrap{white-space:nowrap;overflow-wrap:normal}
+  .nowrap{white-space:nowrap}
   .center{text-align:center}
   .right{text-align:right}
   .btn-print{all:unset;background:#111827;color:#fff;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600}
@@ -53,18 +37,27 @@
   .empty{color:#9ca3af}
   .banner{background:#fff3cd;border:1px solid #ffe69c;color:#594c00;padding:8px 12px;border-radius:6px;margin-bottom:10px;display:none}
 
+  /* Licences tablosuna özel (ekranda) */
+  table.licenses{table-layout:auto}
+  table.licenses td:nth-child(6),
+  table.licenses td:nth-child(7),
+  table.licenses td:nth-child(8){white-space:nowrap} /* Issued, Expiry, Number */
+
   @media print{
     body{background:#fff}
     main{border:none;margin:0;max-width:100%;padding:0}
     .btn-print,.banner{display:none!important}
     a[href]:after{content:""}
-    @page { size: A4; margin: 14mm; }
+    @page { size: A4; margin: 12mm; }
 
-    /* 3 kolon yerine 2 kolon: değerler için daha geniş yer */
+    /* 3 kolon yerine 2 kolon: yazıya alan aç */
     .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
-    /* Tablo kolonlarını doğal genişlikte hesapla */
-    table{table-layout:auto}
-    tr{page-break-inside: avoid}
+
+    /* Satırları sayfa arasında bölme */
+    section.card, table, thead, tbody, tr{break-inside:avoid;page-break-inside:avoid}
+
+    /* Licences: baskıda sabit oran + biraz daha küçük font */
+    table.licenses{table-layout:fixed;font-size:12px}
   }
 </style>
 </head>
@@ -124,9 +117,7 @@
           <th>Type</th><th class="nowrap">Number</th><th>Issue date</th><th>Expiry date</th><th>Issue country</th>
         </tr>
       </thead>
-      <tbody id="tbody-ids">
-        <tr><td colspan="5" class="center empty">—</td></tr>
-      </tbody>
+      <tbody id="tbody-ids"><tr><td colspan="5" class="center empty">—</td></tr></tbody>
     </table>
   </section>
 
@@ -139,22 +130,16 @@
           <th>Type</th><th>Name</th><th class="nowrap">From year</th><th class="nowrap">To year</th><th>Qualification attained</th>
         </tr>
       </thead>
-      <tbody id="tbody-education">
-        <tr><td colspan="5" class="center empty">—</td></tr>
-      </tbody>
+      <tbody id="tbody-education"><tr><td colspan="5" class="center empty">—</td></tr></tbody>
     </table>
   </section>
 
-  <!-- Certificates (3-col simplified) -->
+  <!-- Certificates -->
   <h2>Certificates</h2>
   <section class="card">
     <table>
-      <thead>
-        <tr><th>Certificate</th><th>Issue</th><th>Expiry</th></tr>
-      </thead>
-      <tbody id="tbody-certificates">
-        <tr><td colspan="3" class="center empty">—</td></tr>
-      </tbody>
+      <thead><tr><th>Certificate</th><th>Issue</th><th>Expiry</th></tr></thead>
+      <tbody id="tbody-certificates"><tr><td colspan="3" class="center empty">—</td></tr></tbody>
     </table>
   </section>
 
@@ -163,11 +148,11 @@
   <section class="card">
     <table class="licenses">
       <colgroup>
-        <col style="width:26%"> <!-- Licence -->
-        <col style="width:10%"> <!-- Capacity -->
+        <col style="width:25%"> <!-- Licence -->
+        <col style="width:11%"> <!-- Capacity -->
         <col style="width:11%"> <!-- Rank -->
-        <col style="width:8%">  <!-- Limitation -->
-        <col style="width:15%"> <!-- Issuing Authority -->
+        <col style="width:7%">  <!-- Limitation -->
+        <col style="width:16%"> <!-- Issuing Authority -->
         <col style="width:8%">  <!-- Issued -->
         <col style="width:8%">  <!-- Expiry -->
         <col style="width:8%">  <!-- Number -->
@@ -180,9 +165,7 @@
           <th>Number</th><th>Place of issue</th>
         </tr>
       </thead>
-      <tbody id="tbody-licences">
-        <tr><td colspan="9" class="center empty">—</td></tr>
-      </tbody>
+      <tbody id="tbody-licences"><tr><td colspan="9" class="center empty">—</td></tr></tbody>
     </table>
   </section>
 
@@ -195,9 +178,7 @@
           <th>Country</th><th>Number</th><th>Type</th><th>Issued</th><th>Expiry</th><th>Place of issue</th>
         </tr>
       </thead>
-      <tbody id="tbody-visas">
-        <tr><td colspan="6" class="center empty">—</td></tr>
-      </tbody>
+      <tbody id="tbody-visas"><tr><td colspan="6" class="center empty">—</td></tr></tbody>
     </table>
   </section>
 
@@ -210,9 +191,7 @@
           <th>Number</th><th>Type</th><th>Issued</th><th>Expires</th><th>Place of issue</th>
         </tr>
       </thead>
-      <tbody id="tbody-vaccinations">
-        <tr><td colspan="5" class="center empty">—</td></tr>
-      </tbody>
+      <tbody id="tbody-vaccinations"><tr><td colspan="5" class="center empty">—</td></tr></tbody>
     </table>
   </section>
 
@@ -225,9 +204,7 @@
           <th>Skill Type</th><th>Vessel</th><th>Rank</th><th>Period</th><th>Charterer / Voyage Info.</th><th>Cargo</th><th>Equipment</th><th>Remarks</th>
         </tr>
       </thead>
-      <tbody id="tbody-skills">
-        <tr><td colspan="8" class="center empty">—</td></tr>
-      </tbody>
+      <tbody id="tbody-skills"><tr><td colspan="8" class="center empty">—</td></tr></tbody>
     </table>
   </section>
 
@@ -243,9 +220,7 @@
           <th>Owner / Manager</th>
         </tr>
       </thead>
-      <tbody id="tbody-sea">
-        <tr><td colspan="12" class="center empty">—</td></tr>
-      </tbody>
+      <tbody id="tbody-sea"><tr><td colspan="12" class="center empty">—</td></tr></tbody>
     </table>
   </section>
 
@@ -373,7 +348,6 @@
 
   // -------- main ----------
   (async ()=>{
-    // Declaration date in MM-DD-YYYY
     $('#decl-date').textContent = fmtDate(new Date());
 
     const uid = await resolveUid();
@@ -389,7 +363,7 @@
       tb.innerHTML = rows.length? rows.join('') : `<tr><td colspan="${cols}" class="center empty">—</td></tr>`;
     };
 
-    // QUALIFICATIONS → header block
+    // QUALIFICATIONS
     try{
       const qSnap = await getDoc(doc(db,'seafarers',uid,'cv','qualifications'));
       if(qSnap.exists()){
@@ -454,7 +428,7 @@
       fillTable('#tbody-education',5,rows);
     }catch(e){ console.warn('education', e); }
 
-    // CERTIFICATES (3-col)
+    // CERTIFICATES
     try{
       const list = await loadItems('certificates');
       const rows = list.map(x=>`
