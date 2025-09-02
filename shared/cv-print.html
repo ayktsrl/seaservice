@@ -20,11 +20,25 @@
   .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
   .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
   .kv{display:grid;grid-template-columns:180px minmax(0,1fr);gap:8px;margin:2px 0;min-width:0}
-  .kv > div:last-child{min-width:0;overflow-wrap:anywhere;word-break:break-word}
+/* Değer hücreleri: kelimenin ortasından kırma */
+.kv > div:last-child{
+  min-width:0;
+  overflow-wrap: break-word;  /* sadece mecbur kalınca kır */
+  word-break: normal;
+  hyphens: none;
+}
 
   .card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;overflow:hidden}
   table{width:100%;border-collapse:collapse;margin-top:6px;table-layout:fixed}
-  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;overflow-wrap:anywhere}
+/* Tablo hücreleri: normal kırma davranışı */
+th,td{
+  border:1px solid var(--line);
+  padding:6px 8px;
+  vertical-align:top;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
   th{background:#f3f4f6;text-align:left;font-weight:600}
   .nowrap{white-space:nowrap;overflow-wrap:normal}
   .center{text-align:center}
@@ -37,13 +51,18 @@
   .signature{height:64px;border:1px solid var(--line);border-radius:6px}
   .empty{color:#9ca3af}
   .banner{background:#fff3cd;border:1px solid #ffe69c;color:#594c00;padding:8px 12px;border-radius:6px;margin-bottom:10px;display:none}
-  @media print{
-    body{background:#fff}
-    main{border:none;margin:0;max-width:100%;padding:0}
-    .btn-print,.banner{display:none!important}
-    a[href]:after{content:""}
-    @page { size: A4; margin: 14mm; }
-  }
+@media print{
+  body{background:#fff}
+  main{border:none;margin:0;max-width:100%;padding:0}
+  .btn-print,.banner{display:none!important}
+  a[href]:after{content:""}
+  @page { size: A4; margin: 14mm; }
+
+  /* 3 kolon yerine 2 kolon: değerler için daha geniş yer */
+  .grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* Tablo kolonlarını doğal genişlikte hesapla */
+  table{table-layout:auto}
+}
 </style>
 </head>
 <body>
