@@ -379,7 +379,7 @@
         $('#pd-dob').textContent    = safe(fmtDate(pd.dateOfBirth || pd.dob));
         $('#pd-nationality').textContent = safe(pd.nationality);
         $('#pd-pob').textContent    = safe(pd.placeOfBirth || pd.birthPlace);
-        $('#pd-cor').textContent    = safe(pd.countryOfResidence || pd.country);
+        $('#pd-cor').textContent    = safe(pd.countryOfResidence || pd.residance || pd.country);
         $('#pd-city').textContent   = safe(pd.cityOfResidence || pd.city);
         $('#pd-phone').textContent  = safe(pd.phone);
         $('#pd-mobile').textContent = safe(pd.mobile || pd.phone);
