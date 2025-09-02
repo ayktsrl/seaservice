@@ -43,6 +43,19 @@
   table.licenses td:nth-child(7),
   table.licenses td:nth-child(8){white-space:nowrap} /* Issued, Expiry, Number */
 
+/* Licences: iki satırlı düzen için minik etiket stili */
+table.licenses td.label{
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+  border-right: none;
+}
+table.licenses td.value{
+  border-left: none;
+}
+@media print{
+  table.licenses{ table-layout: fixed; }  /* baskıda stabil */
+}
   @media print{
     body{background:#fff}
     main{border:none;margin:0;max-width:100%;padding:0}
@@ -441,22 +454,31 @@
     }catch(e){ console.warn('certificates', e); }
 
     // LICENSES
-    try{
-      const list = await loadItems('licenses');
-      const rows = list.map(x=>`
-        <tr>
-          <td>${safe(x.licence || x.license || 'CERTIFICATE OF COMPETENCY')}</td>
-          <td>${safe(x.capacity)}</td>
-          <td>${safe(x.rank)}</td>
-          <td>${safe(x.limitation)}</td>
-          <td>${safe(x.authority)}</td>
-          <td class="nowrap">${safe(fmtDate(x.issued))}</td>
-          <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
-          <td>${safe(x.number)}</td>
-          <td>${safe(x.place)}</td>
-        </tr>`);
-      fillTable('#tbody-licences',9,rows);
-    }catch(e){ console.warn('licenses', e); }
+// LICENSES
+try{
+  const list = await loadItems('licenses');
+  const rows = list.map(x=>`
+    <tr>
+      <td rowspan="2">${safe(x.licence || x.license || 'CERTIFICATE OF COMPETENCY')}</td>
+      <td rowspan="2">${safe(x.capacity)}</td>
+      <td rowspan="2">${safe(x.rank)}</td>
+      <td rowspan="2">${safe(x.limitation || '—')}</td>
+      <td rowspan="2">${safe(x.authority)}</td>
+
+      <td class="label">Issued</td>
+      <td class="value nowrap">${safe(fmtDate(x.issued))}</td>
+      <td class="label">Number</td>
+      <td class="value">${safe(x.number)}</td>
+    </tr>
+    <tr>
+      <td class="label">Expiry</td>
+      <td class="value nowrap">${safe(fmtDate(x.expiry))}</td>
+      <td class="label">Place</td>
+      <td class="value">${safe(x.place)}</td>
+    </tr>
+  `);
+  fillTable('#tbody-licences',9,rows);
+}catch(e){ console.warn('licenses', e); }
 
     // VISAS
     try{
