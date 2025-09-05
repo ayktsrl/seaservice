@@ -468,7 +468,7 @@
         const visaType = x.type || x.visaType || x.category || x.kind || x.class || x.classification;
         return `
         <tr>
-          <td>${safe(x.visaFor || x.country))}</td>
+          <td>${safe(x.visaFor || x.country)}</td>
           <td>${safe(x.number)}</td>
           <td>${safe(visaType)}</td>
           <td class="nowrap">${safe(fmtDate(x.issued || x.issueDate))}</td>
@@ -495,25 +495,26 @@
 
     // SPECIAL SKILLS
     try{
-      const list = await loadItems('specialSkills');
-      const rows = list.map(x=>{
-        const period = x.period || ((x.from||x.start||x.fromYear||x.yearFrom) || (x.to||x.end||x.toYear||x.yearTo)
-          ? `${fmtDate(x.from||x.start||x.fromYear||x.yearFrom)} - ${fmtDate(x.to||x.end||x.toYear||x.yearTo)}`
-          : "");
-        return `
-        <tr>
-          <td>${safe(x.skillType || x.type)}</td>
-          <td>${safe(x.vessel || x.vesselName)}</td>
-          <td>${safe(x.rank)}</td>
-          <td class="nowrap">${safe(period)}</td>
-          <td>${safe(x.charterer || x.charter || x.voyageInfo || x.voyageInformation)}</td>
-          <td>${safe(x.cargo || x.cargoType)}</td>
-          <td>${safe(x.equipment || x.equipments || x.equipmentType)}</td>
-          <td>${safe(x.remarks || x.note || x.notes)}</td>
-        </tr>`;
-      });
-      fillTable('#tbody-skills',8,rows);
-    }catch(e){ console.warn('specialSkills', e); }
+const list = await loadItems('specialSkills');
+const rows = list.map(x=>{
+  const period = x.period ||
+    ((x.fromDate || x.from || x.start) || (x.toDate || x.to || x.end)
+      ? `${fmtDate(x.fromDate || x.from || x.start)} - ${fmtDate(x.toDate || x.to || x.end)}`
+      : "");
+  return `
+  <tr>
+    <td>${safe(x.skillType || x.type)}</td>
+    <td>${safe(x.vessel || x.vesselName)}</td>
+    <td>${safe(x.rank)}</td>
+    <td class="nowrap">${safe(period)}</td>
+    <td>${safe(x.charterer || x.charter || x.voyageInfo || x.voyageInformation)}</td>
+    <td>${safe(x.cargo || x.cargoType)}</td>
+    <td>${safe(x.equipment || x.equipments || x.equipmentType)}</td>
+    <td>${safe(x.remarks || x.note || x.notes)}</td>
+  </tr>`;
+});
+fillTable('#tbody-skills',8,rows);
+
 
     // SEA SERVICE + EXPERIENCE
 try{
