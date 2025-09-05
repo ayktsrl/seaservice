@@ -211,20 +211,21 @@
   </section>
 
   <!-- Sea Services -->
-  <h2>Sea Services</h2>
-  <section class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>Rank</th><th>Joined</th><th>Signed off</th><th>Period</th>
-          <th>Vessel</th><th>Type</th><th>Engine</th>
-          <th class="nowrap">GRT</th><th class="nowrap">DWT</th><th class="nowrap">HP</th><th class="nowrap">KW</th>
-          <th>Owner / Manager</th>
-        </tr>
-      </thead>
-      <tbody id="tbody-sea"><tr><td colspan="12" class="center empty">—</td></tr></tbody>
-    </table>
-  </section>
+<h2>Sea Services</h2>
+<section class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th><th>Joined</th><th>Signed off</th><th>Period</th>
+        <th>Vessel</th><th>Type</th><th>Engine</th>
+        <th class="nowrap">GRT</th><th class="nowrap">DWT</th><th class="nowrap">HP</th><th class="nowrap">KW</th>
+        <th>Reason</th>
+        <th>Owner / Manager</th>
+      </tr>
+    </thead>
+    <tbody id="tbody-sea"><tr><td colspan="13" class="center empty">—</td></tr></tbody>
+  </table>
+</section>
 
   <!-- Experience -->
   <h2>Experience</h2>
@@ -460,14 +461,14 @@
       fillTable('#tbody-licences',9,rows);
     }catch(e){ console.warn('licenses', e); }
 
-    // VISAS (country ⇢ visaFor fallback)
+    // VISAS
     try{
       const list = await loadItems('visas');
       const rows = list.map(x=>{
         const visaType = x.type || x.visaType || x.category || x.kind || x.class || x.classification;
         return `
         <tr>
-          <td>${safe(x.visaFor || x.country)}</td>
+          <td>${safe(x.visaFor || x.country))}</td>
           <td>${safe(x.number)}</td>
           <td>${safe(visaType)}</td>
           <td class="nowrap">${safe(fmtDate(x.issued || x.issueDate))}</td>
@@ -492,15 +493,13 @@
       fillTable('#tbody-vaccinations',5,rows);
     }catch(e){ console.warn('vaccinations', e); }
 
-    // SPECIAL SKILLS (period ⇢ fromDate/toDate dahil)
+    // SPECIAL SKILLS
     try{
       const list = await loadItems('specialSkills');
       const rows = list.map(x=>{
-        const period = x.period ||
-          ((x.fromDate || x.from || x.start || x.fromYear || x.yearFrom) ||
-           (x.toDate   || x.to   || x.end   || x.toYear   || x.yearTo)
-            ? `${fmtDate(x.fromDate || x.from || x.start || x.fromYear || x.yearFrom)} - ${fmtDate(x.toDate || x.to || x.end || x.toYear || x.yearTo)}`
-            : "");
+        const period = x.period || ((x.from||x.start||x.fromYear||x.yearFrom) || (x.to||x.end||x.toYear||x.yearTo)
+          ? `${fmtDate(x.from||x.start||x.fromYear||x.yearFrom)} - ${fmtDate(x.to||x.end||x.toYear||x.yearTo)}`
+          : "");
         return `
         <tr>
           <td>${safe(x.skillType || x.type)}</td>
@@ -516,8 +515,8 @@
       fillTable('#tbody-skills',8,rows);
     }catch(e){ console.warn('specialSkills', e); }
 
-    // SEA SERVICE + EXPERIENCE (signedOff ⇢ signed fallback)
-    try{
+    // SEA SERVICE + EXPERIENCE
+try{
       const list = await loadItems('seaService');
       let expByVessel = new Map(), expByRank = new Map();
       let totalDays=0, totalVoy=0;
@@ -541,6 +540,8 @@
         if(!expByRank.has(rKey)) expByRank.set(rKey,{days:0,voyages:0});
         expByRank.get(rKey).days += dcount; expByRank.get(rKey).voyages += 1;
 
+        const reason = [x.reasonCode, x.reasonNotes].filter(Boolean).join(' — ') || (x.remarks || '');
+
         return `
           <tr>
             <td>${rank}</td>
@@ -554,10 +555,11 @@
             <td class="right">${safe(x.dwt || x.DWT || '')}</td>
             <td class="right">${safe(x.hp  || x.HP  || '')}</td>
             <td class="right">${safe(x.kw  || x.KW  || '')}</td>
+            <td>${safe(reason)}</td>
             <td>${safe(x.owner || x.manager || x['owner/manager'])}</td>
           </tr>`;
       });
-      document.querySelector('#tbody-sea').innerHTML = rows.length? rows.join('') : `<tr><td colspan="12" class="center empty">—</td></tr>`;
+      document.querySelector('#tbody-sea').innerHTML = rows.length? rows.join('') : `<tr><td colspan="13" class="center empty">—</td></tr>`;
 
       const vRows=[], rRows=[];
       expByVessel.forEach((v,k)=>vRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));
