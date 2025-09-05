@@ -35,10 +35,11 @@
             <th>DWT</th>
             <th>GRT</th>
             <th>Engine (kW)</th>
+            <th>Reason</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
-        <tfoot><tr><td colspan="12" class="text-center text-muted small">Add your previous sea services.</td></tr></tfoot>
+        <tfoot><tr><td colspan="13" class="text-center text-muted small">Add your previous sea services.</td></tr></tfoot>
       </table>
     </div>
 
@@ -106,6 +107,26 @@
             <input id="grt" class="form-control" inputmode="numeric" placeholder="e.g., 28000">
           </div>
 
+          <div class="col-md-6">
+            <label class="form-label">Reason for leaving</label>
+            <select id="reasonCode" class="form-select">
+              <option value="">- Select value -</option>
+              <option>End of Contract</option>
+              <option>Mutual Agreement</option>
+              <option>Resignation</option>
+              <option>Early Relief / Family</option>
+              <option>Medical</option>
+              <option>Performance / Dismissal</option>
+              <option>Vessel Sold / Project Completed</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Details (optional)</label>
+            <input id="reasonNotes" class="form-control" placeholder="Short note if needed">
+          </div>
+
           <div class="col-12">
             <label class="form-label">Remarks</label>
             <textarea id="remarks" rows="2" class="form-control" placeholder="Notes (optional)"></textarea>
@@ -121,14 +142,12 @@
   </div>
 
   <script type="module">
-    // sadece seafarer
     if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
 
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    // DOM
     const rows   = document.getElementById('rows');
     const panel  = document.getElementById('panel');
     const form   = document.getElementById('form');
@@ -146,11 +165,12 @@
     const kw     = document.getElementById('kw');
     const period = document.getElementById('period');
     const remarks= document.getElementById('remarks');
+    const reasonCode  = document.getElementById('reasonCode');
+    const reasonNotes = document.getElementById('reasonNotes');
 
     function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     let userId=null, editId=null;
 
-    // --- Options loaders (PATH ÖNCE /options) ---
     async function loadRankOptions(){
       const paths=['/options/options-ranks.html','/options-ranks.html','/assets/options-ranks.html'];
       for (const p of paths){
@@ -170,17 +190,15 @@
       }
     }
 
-    // Period calc
     function calcPeriod(){
       if(!joined.value || !signed.value){ period.value=''; return; }
       const j=new Date(joined.value), s=new Date(signed.value);
-      const diff = Math.round((s-j)/(1000*60*60*24)) + 1; // dahil
+      const diff = Math.round((s-j)/86400000) + 1;
       period.value = isFinite(diff) && diff>0 ? diff : '';
     }
     joined.addEventListener('change', calcPeriod);
     signed.addEventListener('change', calcPeriod);
 
-    // Open/Close form
     window.openForm = (id=null,data=null)=>{
       form.reset(); editId=id; period.value='';
       submit.textContent = id ? 'Save' : 'Add';
@@ -197,12 +215,13 @@
         grt.value    = data.grt || '';
         kw.value     = data.kw || '';
         remarks.value= data.remarks || '';
+        reasonCode.value  = data.reasonCode || data.reason || '';
+        reasonNotes.value = data.reasonNotes || '';
         calcPeriod();
       }
     };
     window.closeForm = ()=>{ panel.classList.remove('active'); editId=null; };
 
-    // Auth
     onAuthStateChanged(auth, async user=>{
       if(!user) return location.href='/index.html';
       userId=user.uid;
@@ -210,7 +229,6 @@
       await render();
     });
 
-    // Save
     form.addEventListener('submit', async e=>{
       e.preventDefault();
       if(!form.checkValidity()){ form.reportValidity(); return; }
@@ -229,7 +247,9 @@
         grt:grt.value.trim(),
         kw:kw.value.trim(),
         period:period.value || '',
-        remarks:remarks.value.trim()
+        remarks:remarks.value.trim(),
+        reasonCode:reasonCode.value,
+        reasonNotes:reasonNotes.value.trim()
       };
       const base=collection(db,`seafarers/${userId}/cv/seaService/items`);
       try{
@@ -239,16 +259,16 @@
       }catch(err){ console.error(err); alert('Save failed.'); }
     });
 
-    // Render
     async function render(){
-      rows.innerHTML = '<tr><td colspan="12" class="text-center text-muted py-4">Loading…</td></tr>';
+      rows.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">Loading…</td></tr>';
       const base=collection(db,`seafarers/${userId}/cv/seaService/items`);
       const snap=await getDocs(base);
       const data=[]; snap.forEach(s=>data.push({id:s.id,...s.data()}));
-      if(!data.length){ rows.innerHTML='<tr><td colspan="12" class="text-center text-muted py-4">No sea service yet. Click <b>+</b> to add.</td></tr>'; return; }
+      if(!data.length){ rows.innerHTML='<tr><td colspan="13" class="text-center text-muted py-4">No sea service yet. Click <b>+</b> to add.</td></tr>'; return; }
       data.sort((a,b)=> (b.joined||'').localeCompare(a.joined||''));
       rows.innerHTML='';
       for(const d of data){
+        const reasonTxt = [d.reasonCode, d.reasonNotes].filter(Boolean).join(' — ');
         const tr=document.createElement('tr');
         tr.innerHTML=`
           <td class="text-center">
@@ -266,12 +286,12 @@
           <td>${esc(d.dwt||'')}</td>
           <td>${esc(d.grt||'')}</td>
           <td>${esc(d.kw||'')}</td>
+          <td>${esc(reasonTxt||d.remarks||'')}</td>
         `;
         rows.appendChild(tr);
       }
     }
 
-    // Delete
     window.delItem = async id=>{
       if(!confirm('Delete item?')) return;
       try{
