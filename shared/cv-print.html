@@ -460,14 +460,14 @@
       fillTable('#tbody-licences',9,rows);
     }catch(e){ console.warn('licenses', e); }
 
-    // VISAS
+    // VISAS (country ⇢ visaFor fallback)
     try{
       const list = await loadItems('visas');
       const rows = list.map(x=>{
         const visaType = x.type || x.visaType || x.category || x.kind || x.class || x.classification;
         return `
         <tr>
-          <td>${safe(x.country)}</td>
+          <td>${safe(x.visaFor || x.country)}</td>
           <td>${safe(x.number)}</td>
           <td>${safe(visaType)}</td>
           <td class="nowrap">${safe(fmtDate(x.issued || x.issueDate))}</td>
@@ -492,13 +492,15 @@
       fillTable('#tbody-vaccinations',5,rows);
     }catch(e){ console.warn('vaccinations', e); }
 
-    // SPECIAL SKILLS
+    // SPECIAL SKILLS (period ⇢ fromDate/toDate dahil)
     try{
       const list = await loadItems('specialSkills');
       const rows = list.map(x=>{
-        const period = x.period || ((x.from||x.start||x.fromYear||x.yearFrom) || (x.to||x.end||x.toYear||x.yearTo)
-          ? `${fmtDate(x.from||x.start||x.fromYear||x.yearFrom)} - ${fmtDate(x.to||x.end||x.toYear||x.yearTo)}`
-          : "");
+        const period = x.period ||
+          ((x.fromDate || x.from || x.start || x.fromYear || x.yearFrom) ||
+           (x.toDate   || x.to   || x.end   || x.toYear   || x.yearTo)
+            ? `${fmtDate(x.fromDate || x.from || x.start || x.fromYear || x.yearFrom)} - ${fmtDate(x.toDate || x.to || x.end || x.toYear || x.yearTo)}`
+            : "");
         return `
         <tr>
           <td>${safe(x.skillType || x.type)}</td>
@@ -514,7 +516,7 @@
       fillTable('#tbody-skills',8,rows);
     }catch(e){ console.warn('specialSkills', e); }
 
-    // SEA SERVICE + EXPERIENCE
+    // SEA SERVICE + EXPERIENCE (signedOff ⇢ signed fallback)
     try{
       const list = await loadItems('seaService');
       let expByVessel = new Map(), expByRank = new Map();
@@ -522,7 +524,7 @@
 
       const rows = list.map(x=>{
         const startRaw = x.joined || x.start;
-        const endRaw   = x.signedOff || x.end;
+        const endRaw   = x.signedOff || x.signed || x.end;
         const joined = fmtDate(startRaw);
         const signed = fmtDate(endRaw);
         const rank   = safe(x.rank);
