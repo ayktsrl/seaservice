@@ -211,21 +211,21 @@
   </section>
 
   <!-- Sea Services -->
-<h2>Sea Services</h2>
-<section class="card">
-  <table>
-    <thead>
-      <tr>
-        <th>Rank</th><th>Joined</th><th>Signed off</th><th>Period</th>
-        <th>Vessel</th><th>Type</th><th>Engine</th>
-        <th class="nowrap">GRT</th><th class="nowrap">DWT</th><th class="nowrap">HP</th><th class="nowrap">KW</th>
-        <th>Reason</th>
-        <th>Owner / Manager</th>
-      </tr>
-    </thead>
-    <tbody id="tbody-sea"><tr><td colspan="13" class="center empty">—</td></tr></tbody>
-  </table>
-</section>
+  <h2>Sea Services</h2>
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th><th>Joined</th><th>Signed off</th><th>Period</th>
+          <th>Vessel</th><th>Type</th>
+          <th class="nowrap">GRT</th><th class="nowrap">DWT</th>
+          <th class="nowrap">kW</th><th>Main Engine</th>
+          <th>Reason</th><th>Owner / Manager</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-sea"><tr><td colspan="12" class="center empty">—</td></tr></tbody>
+    </table>
+  </section>
 
   <!-- Experience -->
   <h2>Experience</h2>
@@ -495,29 +495,29 @@
 
     // SPECIAL SKILLS
     try{
-const list = await loadItems('specialSkills');
-const rows = list.map(x=>{
-  const period = x.period ||
-    ((x.fromDate || x.from || x.start) || (x.toDate || x.to || x.end)
-      ? `${fmtDate(x.fromDate || x.from || x.start)} - ${fmtDate(x.toDate || x.to || x.end)}`
-      : "");
-  return `
-  <tr>
-    <td>${safe(x.skillType || x.type)}</td>
-    <td>${safe(x.vessel || x.vesselName)}</td>
-    <td>${safe(x.rank)}</td>
-    <td class="nowrap">${safe(period)}</td>
-    <td>${safe(x.charterer || x.charter || x.voyageInfo || x.voyageInformation)}</td>
-    <td>${safe(x.cargo || x.cargoType)}</td>
-    <td>${safe(x.equipment || x.equipments || x.equipmentType)}</td>
-    <td>${safe(x.remarks || x.note || x.notes)}</td>
-  </tr>`;
-});
-fillTable('#tbody-skills',8,rows);
-} catch(e){ console.warn('specialSkills', e); }   // ← BU SATIR GEREKLİ
+      const list = await loadItems('specialSkills');
+      const rows = list.map(x=>{
+        const period = x.period ||
+          ((x.fromDate || x.from || x.start) || (x.toDate || x.to || x.end)
+            ? `${fmtDate(x.fromDate || x.from || x.start)} - ${fmtDate(x.toDate || x.to || x.end)}`
+            : "");
+        return `
+        <tr>
+          <td>${safe(x.skillType || x.type)}</td>
+          <td>${safe(x.vessel || x.vesselName)}</td>
+          <td>${safe(x.rank)}</td>
+          <td class="nowrap">${safe(period)}</td>
+          <td>${safe(x.charterer || x.charter || x.voyageInfo || x.voyageInformation)}</td>
+          <td>${safe(x.cargo || x.cargoType)}</td>
+          <td>${safe(x.equipment || x.equipments || x.equipmentType)}</td>
+          <td>${safe(x.remarks || x.note || x.notes)}</td>
+        </tr>`;
+      });
+      fillTable('#tbody-skills',8,rows);
+    } catch(e){ console.warn('specialSkills', e); }
 
-    // SEA SERVICE + EXPERIENCE
-try{
+    // SEA SERVICE + EXPERIENCE (Engine sütunu kaldırıldı)
+    try{
       const list = await loadItems('seaService');
       let expByVessel = new Map(), expByRank = new Map();
       let totalDays=0, totalVoy=0;
@@ -551,16 +551,15 @@ try{
             <td class="nowrap">${daysToYMD(dcount)}</td>
             <td>${safe(x.vessel)}</td>
             <td>${type}</td>
-            <td>${safe(x.engine)}</td>
             <td class="right">${safe(x.grt || x.GRT || '')}</td>
             <td class="right">${safe(x.dwt || x.DWT || '')}</td>
-            <td class="right">${safe(x.hp  || x.HP  || '')}</td>
             <td class="right">${safe(x.kw  || x.KW  || '')}</td>
+            <td>${safe(x.me||'')}</td>
             <td>${safe(reason)}</td>
-            <td>${safe(x.owner || x.manager || x['owner/manager'])}</td>
+            <td>${safe(x.owner||x.manager||'')}</td>
           </tr>`;
       });
-      document.querySelector('#tbody-sea').innerHTML = rows.length? rows.join('') : `<tr><td colspan="13" class="center empty">—</td></tr>`;
+      document.querySelector('#tbody-sea').innerHTML = rows.length? rows.join('') : `<tr><td colspan="12" class="center empty">—</td></tr>`;
 
       const vRows=[], rRows=[];
       expByVessel.forEach((v,k)=>vRows.push(`<tr><td>${k}</td><td class="nowrap">${daysToYMD(v.days)}</td><td class="right">${v.voyages}</td></tr>`));

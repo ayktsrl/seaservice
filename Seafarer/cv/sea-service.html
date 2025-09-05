@@ -35,11 +35,13 @@
             <th>DWT</th>
             <th>GRT</th>
             <th>Engine (kW)</th>
+            <th>Main Engine</th>
             <th>Reason</th>
+            <th>Owner / Manager</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
-        <tfoot><tr><td colspan="13" class="text-center text-muted small">Add your previous sea services.</td></tr></tfoot>
+        <tfoot><tr><td colspan="15" class="text-center text-muted small">Add your previous sea services.</td></tr></tfoot>
       </table>
     </div>
 
@@ -51,7 +53,6 @@
             <label class="form-label">Rank <span class="text-danger">*</span></label>
             <select id="rank" class="form-select" required>
               <option value="" disabled selected>- Select value -</option>
-              <!-- options-ranks.html yüklenecek -->
             </select>
           </div>
 
@@ -97,14 +98,14 @@
             <input id="kw" class="form-control" inputmode="numeric" placeholder="e.g., 9800">
           </div>
 
-          <div class="col-md-4">
-            <label class="form-label">DWT</label>
-            <input id="dwt" class="form-control" inputmode="numeric" placeholder="e.g., 50000">
+          <div class="col-md-6">
+            <label class="form-label">Main Engine</label>
+            <input id="me" class="form-control" placeholder="e.g., MAN B&W 6S50ME-B9">
           </div>
 
-          <div class="col-md-4">
-            <label class="form-label">GRT</label>
-            <input id="grt" class="form-control" inputmode="numeric" placeholder="e.g., 28000">
+          <div class="col-md-6">
+            <label class="form-label">Owner / Manager</label>
+            <input id="owner" class="form-control" placeholder="e.g., Navios Tankers Management">
           </div>
 
           <div class="col-md-6">
@@ -142,99 +143,68 @@
   </div>
 
   <script type="module">
-    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='/index.html';
-
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import { collection, addDoc, updateDoc, deleteDoc, getDocs, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    const rows   = document.getElementById('rows');
-    const panel  = document.getElementById('panel');
-    const form   = document.getElementById('form');
-    const submit = document.getElementById('submitBtn');
+    const rows=document.getElementById('rows');
+    const panel=document.getElementById('panel');
+    const form=document.getElementById('form');
+    const submit=document.getElementById('submitBtn');
 
-    const rank   = document.getElementById('rank');
-    const joined = document.getElementById('joined');
-    const signed = document.getElementById('signed');
-    const vessel = document.getElementById('vessel');
-    const imo    = document.getElementById('imo');
-    const type   = document.getElementById('type');
-    const flag   = document.getElementById('flag');
-    const dwt    = document.getElementById('dwt');
-    const grt    = document.getElementById('grt');
-    const kw     = document.getElementById('kw');
-    const period = document.getElementById('period');
-    const remarks= document.getElementById('remarks');
-    const reasonCode  = document.getElementById('reasonCode');
-    const reasonNotes = document.getElementById('reasonNotes');
+    const rank=document.getElementById('rank');
+    const joined=document.getElementById('joined');
+    const signed=document.getElementById('signed');
+    const vessel=document.getElementById('vessel');
+    const imo=document.getElementById('imo');
+    const type=document.getElementById('type');
+    const flag=document.getElementById('flag');
+    const dwt=document.getElementById('dwt');
+    const grt=document.getElementById('grt');
+    const kw=document.getElementById('kw');
+    const me=document.getElementById('me');
+    const owner=document.getElementById('owner');
+    const period=document.getElementById('period');
+    const remarks=document.getElementById('remarks');
+    const reasonCode=document.getElementById('reasonCode');
+    const reasonNotes=document.getElementById('reasonNotes');
 
-    function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function esc(s){ return (s??'').toString().replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',\"'\":'&#39;'}[m])); }
     let userId=null, editId=null;
 
-    async function loadRankOptions(){
-      const paths=['/options/options-ranks.html','/options-ranks.html','/assets/options-ranks.html'];
-      for (const p of paths){
-        try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ rank.innerHTML = '<option value="" disabled selected>- Select value -</option>' + await r.text(); return; } }catch{}
-      }
-    }
-    async function loadFlagOptions(){
-      const paths=['/options/options-countries.html','/options-countries.html','/assets/options-countries.html'];
-      for (const p of paths){
-        try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ document.getElementById('dl-flags').innerHTML = await r.text(); return; } }catch{}
-      }
-    }
-    async function loadVesselTypeOptions(){
-      const paths=['/options/options-vessels.html','/options-vessels.html','/assets/options-vessels.html'];
-      for (const p of paths){
-        try{ const r=await fetch(p,{cache:'no-store'}); if(r.ok){ document.getElementById('dl-vtypes').innerHTML = await r.text(); return; } }catch{}
-      }
-    }
-
-    function calcPeriod(){
-      if(!joined.value || !signed.value){ period.value=''; return; }
-      const j=new Date(joined.value), s=new Date(signed.value);
-      const diff = Math.round((s-j)/86400000) + 1;
-      period.value = isFinite(diff) && diff>0 ? diff : '';
-    }
-    joined.addEventListener('change', calcPeriod);
-    signed.addEventListener('change', calcPeriod);
-
-    window.openForm = (id=null,data=null)=>{
+    window.openForm=(id=null,data=null)=>{
       form.reset(); editId=id; period.value='';
-      submit.textContent = id ? 'Save' : 'Add';
+      submit.textContent=id?'Save':'Add';
       panel.classList.add('active');
       if(data){
-        rank.value   = data.rank || '';
-        joined.value = data.joined || '';
-        signed.value = data.signed || '';
-        vessel.value = data.vessel || '';
-        imo.value    = data.imo || '';
-        type.value   = data.type || '';
-        flag.value   = data.flag || '';
-        dwt.value    = data.dwt || '';
-        grt.value    = data.grt || '';
-        kw.value     = data.kw || '';
-        remarks.value= data.remarks || '';
-        reasonCode.value  = data.reasonCode || data.reason || '';
-        reasonNotes.value = data.reasonNotes || '';
-        calcPeriod();
+        rank.value=data.rank||'';
+        joined.value=data.joined||'';
+        signed.value=data.signed||'';
+        vessel.value=data.vessel||'';
+        imo.value=data.imo||'';
+        type.value=data.type||'';
+        flag.value=data.flag||'';
+        dwt.value=data.dwt||'';
+        grt.value=data.grt||'';
+        kw.value=data.kw||'';
+        me.value=data.me||'';
+        owner.value=data.owner||'';
+        remarks.value=data.remarks||'';
+        reasonCode.value=data.reasonCode||'';
+        reasonNotes.value=data.reasonNotes||'';
       }
     };
-    window.closeForm = ()=>{ panel.classList.remove('active'); editId=null; };
+    window.closeForm=()=>{panel.classList.remove('active');editId=null;};
 
-    onAuthStateChanged(auth, async user=>{
+    onAuthStateChanged(auth,async user=>{
       if(!user) return location.href='/index.html';
       userId=user.uid;
-      await Promise.all([loadRankOptions(), loadFlagOptions(), loadVesselTypeOptions()]);
       await render();
     });
 
-    form.addEventListener('submit', async e=>{
+    form.addEventListener('submit',async e=>{
       e.preventDefault();
-      if(!form.checkValidity()){ form.reportValidity(); return; }
-      if(joined.value && signed.value && signed.value < joined.value){
-        alert('Signed Off, Joined tarihinden önce olamaz.'); return;
-      }
+      if(!form.checkValidity()){form.reportValidity();return;}
       const payload={
         rank:rank.value,
         joined:joined.value,
@@ -246,7 +216,9 @@
         dwt:dwt.value.trim(),
         grt:grt.value.trim(),
         kw:kw.value.trim(),
-        period:period.value || '',
+        me:me.value.trim(),
+        owner:owner.value.trim(),
+        period:period.value||'',
         remarks:remarks.value.trim(),
         reasonCode:reasonCode.value,
         reasonNotes:reasonNotes.value.trim()
@@ -254,26 +226,26 @@
       const base=collection(db,`seafarers/${userId}/cv/seaService/items`);
       try{
         if(editId) await updateDoc(doc(base,editId),payload);
-        else       await addDoc(base,payload);
+        else await addDoc(base,payload);
         await render(); closeForm();
-      }catch(err){ console.error(err); alert('Save failed.'); }
+      }catch(err){console.error(err);alert('Save failed.');}
     });
 
     async function render(){
-      rows.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">Loading…</td></tr>';
+      rows.innerHTML='<tr><td colspan=\"15\" class=\"text-center text-muted py-4\">Loading…</td></tr>';
       const base=collection(db,`seafarers/${userId}/cv/seaService/items`);
       const snap=await getDocs(base);
       const data=[]; snap.forEach(s=>data.push({id:s.id,...s.data()}));
-      if(!data.length){ rows.innerHTML='<tr><td colspan="13" class="text-center text-muted py-4">No sea service yet. Click <b>+</b> to add.</td></tr>'; return; }
-      data.sort((a,b)=> (b.joined||'').localeCompare(a.joined||''));
+      if(!data.length){rows.innerHTML='<tr><td colspan=\"15\" class=\"text-center text-muted py-4\">No sea service yet. Click <b>+</b> to add.</td></tr>';return;}
+      data.sort((a,b)=>(b.joined||'').localeCompare(a.joined||''));
       rows.innerHTML='';
       for(const d of data){
-        const reasonTxt = [d.reasonCode, d.reasonNotes].filter(Boolean).join(' — ');
+        const reasonTxt=[d.reasonCode,d.reasonNotes].filter(Boolean).join(' — ');
         const tr=document.createElement('tr');
         tr.innerHTML=`
-          <td class="text-center">
-            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${d.id}", ${JSON.stringify(d).replace(/"/g,"&quot;")})'>Edit</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='delItem("${d.id}")'>Delete</button>
+          <td class=\"text-center\">
+            <button class=\"btn btn-sm btn-outline-secondary me-1\" onclick='openForm(\"${d.id}\", ${JSON.stringify(d).replace(/\"/g,\"&quot;\")})'>Edit</button>
+            <button class=\"btn btn-sm btn-outline-danger\" onclick='delItem(\"${d.id}\")'>Delete</button>
           </td>
           <td>${esc(d.rank||'')}</td>
           <td>${esc(d.joined||'')}</td>
@@ -286,21 +258,15 @@
           <td>${esc(d.dwt||'')}</td>
           <td>${esc(d.grt||'')}</td>
           <td>${esc(d.kw||'')}</td>
+          <td>${esc(d.me||'')}</td>
           <td>${esc(reasonTxt||d.remarks||'')}</td>
+          <td>${esc(d.owner||'')}</td>
         `;
-        rows.appendChild(tr);
-      }
-    }
+        rows.appendChild(tr);} }
 
-    window.delItem = async id=>{
-      if(!confirm('Delete item?')) return;
-      try{
-        await deleteDoc(doc(db,`seafarers/${userId}/cv/seaService/items/${id}`));
-        await render();
-      }catch(err){ console.error(err); alert('Delete failed.'); }
-    };
+    window.delItem=async id=>{if(!confirm('Delete item?'))return;
+      try{await deleteDoc(doc(db,`seafarers/${userId}/cv/seaService/items/${id}`));await render();}
+      catch(err){console.error(err);alert('Delete failed.');}};
   </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
