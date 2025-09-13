@@ -184,7 +184,7 @@
           </td>
           <td>${esc(d.name||'')}</td>
           <td>${esc(d.issue||'')}</td>
-          <td>${d.expiry ? esc(d.expiry) : '—'}</td>
+          <td>${d.expiry ? esc(d.expiry) : 'No expiry date'}</td>
         `;
         bindRowActions(tr, s.id, d);
         list.appendChild(tr);
