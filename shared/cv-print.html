@@ -192,6 +192,19 @@
     </table>
   </section>
 
+  <!-- ✅ Health -->
+  <h2>Health</h2>
+  <section class="card">
+    <table>
+      <thead>
+        <tr><th>Item</th><th>Answer / Details</th></tr>
+      </thead>
+      <tbody id="tbody-health">
+        <tr><td colspan="2" class="center empty">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
   <!-- Special Skills -->
   <h2>Special Skills</h2>
   <section class="card">
@@ -479,11 +492,42 @@
           <td>${safe(x.number || '')}</td>
           <td>${safe(x.type)}</td>
           <td class="nowrap">${safe(fmtDate(x.issued))}</td>
-          <td class="nowrap">${x.expires ? safe(fmtDate(x.expires)) : 'No expiry date'}</td>
+          <td class="nowrap">${(x.expires || x.expiry) ? safe(fmtDate(x.expires || x.expiry)) : 'No expiry date'}</td>
           <td>${safe(x.place)}</td>
         </tr>`);
       fillTable('#tbody-vaccinations',5,rows);
     }catch(e){ console.warn('vaccinations', e); }
+
+    // ✅ HEALTH
+    try{
+      const hSnap = await getDoc(doc(db,'seafarers',uid,'cv','health'));
+      if(hSnap.exists()){
+        const h = hSnap.data();
+        const yn = v => v ? v : '—';
+        const rows = [];
+
+        rows.push(`<tr><td>Smoker</td><td>${yn(h.smoker)}${h.smoker==='Yes' && h.smokeYears ? ` — ${safe(h.smokeYears)} year(s)` : ''}</td></tr>`);
+        rows.push(`<tr><td>Past long-term treatment</td><td>${yn(h.pastTreatment)}${h.pastTreatment==='Yes' && h.pastTreatmentDetails ? ` — ${safe(h.pastTreatmentDetails)}` : ''}</td></tr>`);
+        rows.push(`<tr><td>Surgery</td><td>${yn(h.surgery)}${h.surgery==='Yes' && h.surgeryDetails ? ` — ${safe(h.surgeryDetails)}` : ''}</td></tr>`);
+        rows.push(`<tr><td>Ongoing disease / treatment</td><td>${yn(h.ongoing)}${h.ongoing==='Yes' && h.ongoingDetails ? ` — ${safe(h.ongoingDetails)}` : ''}</td></tr>`);
+        rows.push(`<tr><td>Regular medication</td><td>${yn(h.medication)}${h.medication==='Yes' && h.medicationDetails ? ` — ${safe(h.medicationDetails)}` : ''}</td></tr>`);
+        rows.push(`<tr><td>Allergies</td><td>${yn(h.allergy)}${h.allergy==='Yes' && h.allergyDetails ? ` — ${safe(h.allergyDetails)}` : ''}</td></tr>`);
+        rows.push(`<tr><td>Family member under treatment</td><td>${yn(h.familyTreatment)}${h.familyTreatment==='Yes' && h.familyTreatmentDetails ? ` — ${safe(h.familyTreatmentDetails)}` : ''}</td></tr>`);
+
+        // Height / Weight / BMI
+        let bmiTxt = "—";
+        const hcm = parseFloat(h.heightCm), wkg = parseFloat(h.weightKg);
+        if(!isNaN(hcm) && !isNaN(wkg) && hcm>0){
+          const bmi = wkg / Math.pow(hcm/100,2);
+          bmiTxt = `${wkg} kg / ${hcm} cm — BMI: ${bmi.toFixed(1)}`;
+        } else if(!isNaN(hcm) || !isNaN(wkg)){
+          bmiTxt = `${isNaN(wkg)?'—':wkg+' kg'} / ${isNaN(hcm)?'—':hcm+' cm'}`;
+        }
+        rows.push(`<tr><td>Height / Weight / BMI</td><td>${bmiTxt}</td></tr>`);
+
+        document.querySelector('#tbody-health').innerHTML = rows.join('');
+      }
+    }catch(e){ console.warn('health', e); }
 
     // SPECIAL SKILLS
     try{

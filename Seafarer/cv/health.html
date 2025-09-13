@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Health Report</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../../style.css"/>
+  <style>
+    .card{box-shadow:0 1px 10px rgba(0,0,0,.05); border-radius:12px}
+    .hint{font-size:.85rem;color:#64748b}
+    .hidden{display:none}
+  </style>
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <h4 class="fw-bold m-0">Health Report</h4>
+      <div class="text-muted small">Personal medical information</div>
+    </div>
+
+    <div class="card p-3 p-md-4">
+      <form id="form" class="row g-3" novalidate>
+        <!-- Smoke -->
+        <div class="col-md-4">
+          <label class="form-label">Do you smoke?</label>
+          <select id="smoker" class="form-select">
+            <option value="">Select</option>
+            <option>Yes</option><option>No</option>
+          </select>
+          <div class="hint">Sigara kullanıyor musunuz?</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">If yes, how many years?</label>
+          <input id="smokeYears" type="number" min="0" class="form-control" placeholder="e.g., 5">
+          <div class="hint">Kaç yıldır?</div>
+        </div>
+
+        <!-- Height / Weight -->
+        <div class="col-md-2">
+          <label class="form-label">Height (cm)</label>
+          <input id="heightCm" type="number" min="100" max="230" class="form-control" placeholder="e.g., 180">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Weight (kg)</label>
+          <input id="weightKg" type="number" min="30" max="180" class="form-control" placeholder="e.g., 78">
+        </div>
+
+        <!-- Long-term treatment in the past -->
+        <div class="col-md-4">
+          <label class="form-label">Have you had long-term treatment before?</label>
+          <select id="pastTreatment" class="form-select">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+          <div class="hint">Daha önce süreğen tedavi gördünüz mü?</div>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Details (if yes)</label>
+          <input id="pastTreatmentDetails" class="form-control" placeholder="Condition, dates, etc.">
+        </div>
+
+        <!-- Surgery -->
+        <div class="col-md-4">
+          <label class="form-label">Have you undergone any surgery?</label>
+          <select id="surgery" class="form-select">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+          <div class="hint">Herhangi bir ameliyat geçirdiniz mi?</div>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Details (if yes)</label>
+          <input id="surgeryDetails" class="form-control" placeholder="Type of surgery, year, etc.">
+        </div>
+
+        <!-- Ongoing disease / treatment -->
+        <div class="col-md-4">
+          <label class="form-label">Any ongoing disease / treatment?</label>
+          <select id="ongoing" class="form-select">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+          <div class="hint">Halen tedavi gördüğünüz bir rahatsızlığınız var mı?</div>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Details (if yes)</label>
+          <input id="ongoingDetails" class="form-control" placeholder="Diagnosis, clinic, etc.">
+        </div>
+
+        <!-- Regular medication -->
+        <div class="col-md-4">
+          <label class="form-label">Do you use any regular medication?</label>
+          <select id="medication" class="form-select">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+          <div class="hint">Sürekli kullandığınız bir ilaç var mı?</div>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Medication names / dose</label>
+          <input id="medicationDetails" class="form-control" placeholder="Drug name, dose, frequency">
+        </div>
+
+        <!-- Allergies -->
+        <div class="col-md-4">
+          <label class="form-label">Any allergies?</label>
+          <select id="allergy" class="form-select">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+          <div class="hint">Alerjik bir rahatsızlığınız var mı?</div>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Allergy details</label>
+          <input id="allergyDetails" class="form-control" placeholder="e.g., Penicillin, nuts…">
+        </div>
+
+        <!-- Family treatment -->
+        <div class="col-md-4">
+          <label class="form-label">Any family member currently under treatment?</label>
+          <select id="familyTreatment" class="form-select">
+            <option value="">Select</option><option>Yes</option><option>No</option>
+          </select>
+          <div class="hint">Ailenizde halen tedavi görmekte olan kimse var mı?</div>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Details</label>
+          <input id="familyTreatmentDetails" class="form-control" placeholder="Relationship, condition (optional)">
+        </div>
+
+        <div class="text-end mt-2">
+          <button class="btn btn-primary" id="btnSave">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:11">
+    <div id="toastMsg" class="toast text-bg-primary border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastBody">Saved</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    if ((localStorage.getItem('role')||'').toLowerCase()!=='seafarer') window.top.location.href='../../index.html';
+
+    import { auth, db } from '../../firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const FIELDS = [
+      'smoker','smokeYears','heightCm','weightKg',
+      'pastTreatment','pastTreatmentDetails',
+      'surgery','surgeryDetails',
+      'ongoing','ongoingDetails',
+      'medication','medicationDetails',
+      'allergy','allergyDetails',
+      'familyTreatment','familyTreatmentDetails'
+    ];
+
+    const el = id => document.getElementById(id);
+    const toast = new bootstrap.Toast(document.getElementById('toastMsg'));
+    const tBody = document.getElementById('toastBody');
+
+    // Some details inputs only meaningful if "Yes"
+    function bindToggle(selId, detailsId){
+      const s = el(selId), d = el(detailsId);
+      const sync = ()=>{ const yes = (s.value==='Yes'); d.disabled = !yes; if(!yes) d.value=''; };
+      s.addEventListener('change', sync); sync();
+    }
+    ['pastTreatment','surgery','ongoing','medication','allergy','familyTreatment'].forEach(k=>{
+      bindToggle(k, k+'Details');
+    });
+    // smoker toggle (years)
+    el('smoker').addEventListener('change', ()=>{
+      const yes = el('smoker').value==='Yes';
+      el('smokeYears').disabled=!yes;
+      if(!yes) el('smokeYears').value='';
+    });
+
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user) return window.location.href='../../index.html';
+      const ref = doc(db,'seafarers', user.uid, 'cv', 'health');
+      const snap = await getDoc(ref);
+      if (snap.exists()){
+        const d = snap.data();
+        FIELDS.forEach(k=>{ if(d[k]!==undefined) el(k).value = d[k]; });
+        el('smokeYears').disabled = el('smoker').value!=='Yes';
+      }
+
+      document.getElementById('form').addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const data = {};
+        FIELDS.forEach(k=> data[k] = el(k).value.trim());
+        await setDoc(ref, data, { merge:true });
+        tBody.textContent='Health report saved ✅';
+        toast.show();
+      });
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
