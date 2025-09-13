@@ -17,67 +17,84 @@
     <form id="detailsForm" class="shadow-sm rounded p-4 bg-white">
       <h4 class="mb-4">Personal Details</h4>
 
-<div class="row g-3">
-  <div class="col-md-4">
-    <label class="form-label">Name</label>
-    <input id="firstName" class="form-control only-english" required>
-  </div>
-  <div class="col-md-4">
-    <label class="form-label">Last Name</label>
-    <input id="lastName" class="form-control only-english" required>
-  </div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Name</label>
+          <input id="firstName" class="form-control only-english" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Last Name</label>
+          <input id="lastName" class="form-control only-english" required>
+        </div>
 
-  <div class="col-md-4">
-    <label class="form-label d-block">Gender</label>
-    ...
-  </div>
+        <div class="col-md-4">
+          <label class="form-label d-block">Gender</label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="gender" id="male" value="Male">
+            <label class="form-check-label" for="male">Male</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="gender" id="female" value="Female">
+            <label class="form-check-label" for="female">Female</label>
+          </div>
+        </div>
 
-  <div class="col-md-4">
-    <label class="form-label">Date of Birth</label>
-    <input id="dob" type="date" class="form-control">
-  </div>
+        <div class="col-md-4">
+          <label class="form-label">Marital Status</label>
+          <select id="maritalStatus" class="form-select">
+            <option value="">Select Status</option>
+            <option value="Single">Single</option>
+            <option value="Married">Married</option>
+            <option value="Divorced">Divorced</option>
+            <option value="Widowed">Widowed</option>
+          </select>
+        </div>
 
-  <div class="col-md-4">
-    <label class="form-label">Place of Birth</label>
-    <input id="birthPlace" class="form-control only-english">
-  </div>
+        <div class="col-md-4">
+          <label class="form-label">Date of Birth</label>
+          <input id="dob" type="date" class="form-control">
+        </div>
 
-  <div class="col-md-4">
-    <label class="form-label">Nationality</label>
-    <select id="nationality" class="form-select"></select>
-  </div>
+        <div class="col-md-4">
+          <label class="form-label">Place of Birth</label>
+          <input id="birthPlace" class="form-control only-english">
+        </div>
 
-  <div class="col-md-4">
-    <label class="form-label">Email</label>
-    <input id="email" type="email" class="form-control only-english" required>
-  </div>
+        <div class="col-md-4">
+          <label class="form-label">Nationality</label>
+          <select id="nationality" class="form-select"></select>
+        </div>
 
-  <div class="col-md-4">
-    <label class="form-label">Phone</label>
-    <input id="phone" class="form-control">
-  </div>
+        <div class="col-md-4">
+          <label class="form-label">Email</label>
+          <input id="email" type="email" class="form-control only-english" required>
+        </div>
 
-  <div class="col-md-4">
-    <label class="form-label">Country of Residence</label>
-    <select id="residence" class="form-select"></select>
-  </div>
+        <div class="col-md-4">
+          <label class="form-label">Phone</label>
+          <input id="phone" class="form-control">
+        </div>
 
-  <div class="col-md-4">
-    <label class="form-label">City</label>
-    <input id="city" class="form-control only-english">
-  </div>
+        <div class="col-md-4">
+          <label class="form-label">Country of Residence</label>
+          <select id="residence" class="form-select"></select>
+        </div>
 
-  <div class="col-md-4">
-    <label class="form-label">Zip Code</label>
-    <input id="zip" class="form-control">
-  </div>
+        <div class="col-md-4">
+          <label class="form-label">City</label>
+          <input id="city" class="form-control only-english">
+        </div>
 
-  <div class="col-12">
-    <label class="form-label">Address</label>
-    <textarea id="address" rows="2" class="form-control only-english"></textarea>
-  </div>
-</div>
+        <div class="col-md-4">
+          <label class="form-label">Zip Code</label>
+          <input id="zip" class="form-control">
+        </div>
 
+        <div class="col-12">
+          <label class="form-label">Address</label>
+          <textarea id="address" rows="2" class="form-control only-english"></textarea>
+        </div>
+      </div>
 
       <div class="text-end mt-3">
         <button class="btn btn-primary">Save</button>
@@ -112,38 +129,43 @@
 
     onAuthStateChanged(auth, async (user)=>{
       if(!user) return window.location.href='../../index.html';
-      const ref = doc(db,'seafarers', user.uid, 'cv', 'personalDetails'); // <- CV altına taşıdık
+      const ref = doc(db,'seafarers', user.uid, 'cv', 'personalDetails');
       const snap = await getDoc(ref);
       if (snap.exists()){
         const d = snap.data();
-        form.firstName.value = d.firstName||''; form.middleName.value = d.middleName||''; form.lastName.value = d.lastName||'';
-        if(d.gender==='Male') form.querySelector('#male').checked=true;
-        if(d.gender==='Female') form.querySelector('#female').checked=true;
-        form.dob.value=d.dob||''; form.birthPlace.value=d.birthPlace||'';
-        form.nationality.value=d.nationality||''; form.email.value=d.email||'';
-        form.phone.value=d.phone||''; form.mobile.value=d.mobile||'';
-        form.residence.value=d.residence||''; form.city.value=d.city||'';
-        form.zip.value=d.zip||''; form.address.value=d.address||'';
+        form.firstName.value = d.firstName || '';
+        form.lastName.value  = d.lastName  || '';
+        if(d.gender==='Male')   form.querySelector('#male').checked = true;
+        if(d.gender==='Female') form.querySelector('#female').checked = true;
+        form.maritalStatus.value = d.maritalStatus || '';
+        form.dob.value        = d.dob || '';
+        form.birthPlace.value = d.birthPlace || '';
+        form.nationality.value= d.nationality || '';
+        form.email.value      = d.email || '';
+        form.phone.value      = d.phone || '';
+        form.residence.value  = d.residence || '';
+        form.city.value       = d.city || '';
+        form.zip.value        = d.zip || '';
+        form.address.value    = d.address || '';
       }
 
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
         const gender = form.querySelector('input[name="gender"]:checked')?.value || '';
         const data = {
-          firstName:form.firstName.value.trim(),
-          middleName:form.middleName.value.trim(),
-          lastName:form.lastName.value.trim(),
+          firstName: form.firstName.value.trim(),
+          lastName:  form.lastName.value.trim(),
           gender,
-          dob:form.dob.value,
-          birthPlace:form.birthPlace.value.trim(),
-          nationality:form.nationality.value,
-          email:form.email.value.trim(),
-          phone:form.phone.value.trim(),
-          mobile:form.mobile.value.trim(),
-          residence:form.residence.value,
-          city:form.city.value.trim(),
-          zip:form.zip.value.trim(),
-          address:form.address.value.trim()
+          maritalStatus: form.maritalStatus.value,
+          dob: form.dob.value,
+          birthPlace: form.birthPlace.value.trim(),
+          nationality: form.nationality.value,
+          email: form.email.value.trim(),
+          phone: form.phone.value.trim(),
+          residence: form.residence.value,
+          city: form.city.value.trim(),
+          zip: form.zip.value.trim(),
+          address: form.address.value.trim()
         };
         await setDoc(ref, data);
         tBody.textContent='Saved ✅'; toast.show();
