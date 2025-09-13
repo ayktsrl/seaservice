@@ -479,7 +479,7 @@
           <td>${safe(x.number || '')}</td>
           <td>${safe(x.type)}</td>
           <td class="nowrap">${safe(fmtDate(x.issued))}</td>
-          <td class="nowrap">${safe(fmtDate(x.expires))}</td>
+          <td class="nowrap">${x.expires ? safe(fmtDate(x.expires)) : 'No expiry date'}</td>
           <td>${safe(x.place)}</td>
         </tr>`);
       fillTable('#tbody-vaccinations',5,rows);
