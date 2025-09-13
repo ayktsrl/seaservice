@@ -17,82 +17,67 @@
     <form id="detailsForm" class="shadow-sm rounded p-4 bg-white">
       <h4 class="mb-4">Personal Details</h4>
 
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label class="form-label">First Name</label>
-          <input id="firstName" class="form-control only-english" required>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Middle/Other Name</label>
-          <input id="middleName" class="form-control only-english">
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Last Name</label>
-          <input id="lastName" class="form-control only-english" required>
-        </div>
+<div class="row g-3">
+  <div class="col-md-4">
+    <label class="form-label">Name</label>
+    <input id="firstName" class="form-control only-english" required>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Last Name</label>
+    <input id="lastName" class="form-control only-english" required>
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label d-block">Gender</label>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="gender" id="male" value="Male">
-            <label class="form-check-label" for="male">Male</label>
-          </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="gender" id="female" value="Female">
-            <label class="form-check-label" for="female">Female</label>
-          </div>
-        </div>
+  <div class="col-md-4">
+    <label class="form-label d-block">Gender</label>
+    ...
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label">Date of Birth</label>
-          <input id="dob" type="date" class="form-control">
-        </div>
+  <div class="col-md-4">
+    <label class="form-label">Date of Birth</label>
+    <input id="dob" type="date" class="form-control">
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label">Place of Birth</label>
-          <input id="birthPlace" class="form-control only-english">
-        </div>
+  <div class="col-md-4">
+    <label class="form-label">Place of Birth</label>
+    <input id="birthPlace" class="form-control only-english">
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label">Nationality</label>
-          <select id="nationality" class="form-select"></select>
-        </div>
+  <div class="col-md-4">
+    <label class="form-label">Nationality</label>
+    <select id="nationality" class="form-select"></select>
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label">Email</label>
-          <input id="email" type="email" class="form-control only-english" required>
-        </div>
+  <div class="col-md-4">
+    <label class="form-label">Email</label>
+    <input id="email" type="email" class="form-control only-english" required>
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label">Phone</label>
-          <input id="phone" class="form-control">
-        </div>
+  <div class="col-md-4">
+    <label class="form-label">Phone</label>
+    <input id="phone" class="form-control">
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label">Mobile</label>
-          <input id="mobile" class="form-control">
-        </div>
+  <div class="col-md-4">
+    <label class="form-label">Country of Residence</label>
+    <select id="residence" class="form-select"></select>
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label">Country of Residence</label>
-          <select id="residence" class="form-select"></select>
-        </div>
+  <div class="col-md-4">
+    <label class="form-label">City</label>
+    <input id="city" class="form-control only-english">
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label">City</label>
-          <input id="city" class="form-control only-english">
-        </div>
+  <div class="col-md-4">
+    <label class="form-label">Zip Code</label>
+    <input id="zip" class="form-control">
+  </div>
 
-        <div class="col-md-4">
-          <label class="form-label">Zip Code</label>
-          <input id="zip" class="form-control">
-        </div>
+  <div class="col-12">
+    <label class="form-label">Address</label>
+    <textarea id="address" rows="2" class="form-control only-english"></textarea>
+  </div>
+</div>
 
-        <div class="col-12">
-          <label class="form-label">Address</label>
-          <textarea id="address" rows="2" class="form-control only-english"></textarea>
-        </div>
-      </div>
 
       <div class="text-end mt-3">
         <button class="btn btn-primary">Save</button>
