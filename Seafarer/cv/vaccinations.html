@@ -37,7 +37,10 @@
           <div class="col-md-6">
             <label class="form-label">Expiry</label>
             <input id="expiry" type="date" class="form-control">
-            <div class="form-check mt-1"><input id="noExpiry" type="checkbox" class="form-check-input"><label class="form-check-label">No expiry</label></div>
+            <div class="form-check mt-1">
+              <input id="noExpiry" type="checkbox" class="form-check-input">
+              <label class="form-check-label" for="noExpiry">No expiry</label>
+            </div>
           </div>
           <div class="col-md-6"><label class="form-label">Place</label><input id="place" class="form-control"></div>
           <div class="col-12"><label class="form-label">Remarks</label><textarea id="remarks" class="form-control"></textarea></div>
@@ -52,10 +55,12 @@
 
   <!-- Toast -->
   <div class="position-fixed bottom-0 end-0 p-3" style="z-index:11">
-    <div id="toastMsg" class="toast text-bg-primary border-0" role="alert"><div class="d-flex">
-      <div class="toast-body" id="toastBody">Saved</div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-    </div></div>
+    <div id="toastMsg" class="toast text-bg-primary border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastBody">Saved</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -79,39 +84,82 @@
     });
 
     window.openForm=(id=null,data=null)=>{
-      formBox.classList.add('active'); submitBtn.textContent=id?'Save':'Add'; editId=id; form.reset();
-      if(data){ form.number.value=data.number||''; form.type.value=data.type||''; form.issued.value=data.issued||'';
-        form.expiry.value=data.expiry||''; form.noExpiry.checked=!data.expiry; form.place.value=data.place||''; form.remarks.value=data.remarks||''; }
+      formBox.classList.add('active');
+      submitBtn.textContent=id?'Save':'Add';
+      editId=id; form.reset();
+      if(data){
+        form.number.value   = data.number || '';
+        form.type.value     = data.type || '';
+        form.issued.value   = data.issued || '';
+        form.expiry.value   = data.expiry || '';
+        form.noExpiry.checked = !data.expiry;
+        form.place.value    = data.place || '';
+        form.remarks.value  = data.remarks || '';
+      }
     };
     window.closeForm=()=>{ formBox.classList.remove('active'); editId=null; };
 
     form.addEventListener('submit', async e=>{
       e.preventDefault();
-      const data={ number:form.number.value, type:form.type.value, issued:form.issued.value,
-                   expiry: form.noExpiry.checked?'':form.expiry.value, place:form.place.value, remarks:form.remarks.value };
+      const data={
+        number:  form.number.value.trim(),
+        type:    form.type.value.trim(),
+        issued:  form.issued.value,
+        expiry:  form.noExpiry.checked ? '' : form.expiry.value,
+        place:   form.place.value.trim(),
+        remarks: form.remarks.value.trim()
+      };
       const base=collection(db,`seafarers/${userId}/cv/vaccinations/items`);
       if(editId) await updateDoc(doc(base,editId),data); else await addDoc(base,data);
-      await render(); closeForm(); toastBody.textContent=editId?'Vaccination updated ✅':'Vaccination added ✅'; toast.show();
+      await render(); closeForm();
+      toastBody.textContent = editId ? 'Vaccination updated ✅' : 'Vaccination added ✅';
+      toast.show();
     });
 
     async function render(){
-      list.innerHTML=''; const base=collection(db,`seafarers/${userId}/cv/vaccinations/items`);
+      list.innerHTML='';
+      const base=collection(db,`seafarers/${userId}/cv/vaccinations/items`);
       const snap=await getDocs(base);
+
       snap.forEach(s=>{
-        const d=s.data(); const safe=JSON.stringify(d).replace(/"/g,'&quot;');
+        const d=s.data();
         const tr=document.createElement('tr');
-        tr.innerHTML=`
-          <td class="text-center">
-            <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${s.id}", JSON.parse("${safe}"))'>✏️</button>
-            <button class="btn btn-sm btn-outline-danger" onclick='del("${s.id}")'>❌</button>
-          </td>
-          <td>${d.number||''}</td><td>${d.type||''}</td><td>${d.issued||'-'}</td><td>${d.expiry ? d.expiry : 'No expiry date'}</td><td>${d.place||''}</td>
-          <td>${d.remarks ? `<span title="${d.remarks}">ℹ️</span>` : ''}</td>`;
+
+        tr.innerHTML = `
+          <td class="text-center"></td>
+          <td>${d.number||''}</td>
+          <td>${d.type||''}</td>
+          <td>${d.issued||'-'}</td>
+          <td>${d.expiry ? d.expiry : 'No expiry date'}</td>
+          <td>${d.place||''}</td>
+          <td>${d.remarks ? `<span title="${d.remarks.replace(/"/g,'&quot;')}">ℹ️</span>` : ''}</td>
+        `;
+
+        // Actions (programmatic event binding — inline onclick yok)
+        const actions = document.createElement('div');
+        actions.className = 'd-flex justify-content-center';
+        const btnEdit = document.createElement('button');
+        btnEdit.className = 'btn btn-sm btn-outline-secondary me-1';
+        btnEdit.textContent = '✏️';
+        btnEdit.addEventListener('click', ()=>openForm(s.id, d));
+
+        const btnDel = document.createElement('button');
+        btnDel.className = 'btn btn-sm btn-outline-danger';
+        btnDel.textContent = '❌';
+        btnDel.addEventListener('click', async ()=>{
+          if(!confirm('Delete item?')) return;
+          await deleteDoc(doc(base, s.id));
+          await render();
+          toastBody.textContent='Vaccination deleted ❌'; toast.show();
+        });
+
+        actions.appendChild(btnEdit);
+        actions.appendChild(btnDel);
+        tr.children[0].appendChild(actions);
+
         list.appendChild(tr);
       });
     }
-    window.del = async id => { if(!confirm('Delete item?')) return; await deleteDoc(doc(db,`seafarers/${userId}/cv/vaccinations/items/${id}`)); await render();
-      toastBody.textContent='Vaccination deleted ❌'; toast.show(); };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
