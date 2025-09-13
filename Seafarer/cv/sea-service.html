@@ -53,6 +53,7 @@
             <label class="form-label">Rank <span class="text-danger">*</span></label>
             <select id="rank" class="form-select" required>
               <option value="" disabled selected>- Select value -</option>
+              <!-- options JS ile yüklenecek -->
             </select>
           </div>
 
@@ -179,11 +180,30 @@
     const reasonCode=document.getElementById('reasonCode');
     const reasonNotes=document.getElementById('reasonNotes');
 
-    // FIX: valid escape map (tek tırnak için doğru anahtar)
     function esc(s){ return (s??'').toString()
       .replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m])); }
 
+    // ---- Rank options loader (dosyadan yükle, yoksa fallback) ----
+    async function fetchText(url){ try{ const r=await fetch(url); if(r.ok) return await r.text(); }catch(_){ } return null; }
+    async function loadRankOptions(selected=''){
+      const fallback=[
+        'Master','Chief Officer','Second Officer','Third Officer',
+        'Chief Engineer','Second Engineer','Third Engineer','Fourth Engineer',
+        'ETO','Bosun','AB','OS','Pumpman','Fitter','Oiler','Motorman',
+        'Deck Cadet','Engine Cadet','Cook','Chief Cook','Messman'
+      ];
+      let html = await fetchText('/options/options-ranks.html');
+      if(!html) html = await fetchText('../../options/options-ranks.html');
+      const head = `<option value="" disabled>- Select value -</option>`;
+      rank.innerHTML = html ? head + html : head + fallback.map(o=>`<option>${o}</option>`).join('');
+      // seçili değer (edit’te) varsa set et
+      if(selected){ rank.value = selected; }
+      // hâlâ boşsa placeholder seçili kalsın
+      if(!rank.value) rank.selectedIndex = 0;
+    }
+
     let userId=null, editId=null;
+    const optsReady = loadRankOptions(); // sayfa açılır açılmaz yükle
 
     // basit dönem hesaplama
     function calcDays(a,b){
@@ -196,12 +216,14 @@
     joined.addEventListener('change', updatePeriod);
     signed.addEventListener('change', updatePeriod);
 
-    window.openForm=(id=null,data=null)=>{
+    window.openForm = async (id=null,data=null)=>{
+      await optsReady;           // rank seçenekleri yüklensin
       form.reset(); editId=id; period.value='';
-      submit.textContent=id?'Save':'Add';
+      submit.textContent = id ? 'Save' : 'Add';
       panel.classList.add('active');
       if(data){
-        rank.value=data.rank||'';
+        // önce seçenekleri doldurduk; şimdi seçili rank’ı set edebiliriz
+        rank.value = data.rank || '';
         joined.value=data.joined||'';
         signed.value=data.signed||'';
         period.value=data.period||calcDays(data.joined, data.signed) || '';
