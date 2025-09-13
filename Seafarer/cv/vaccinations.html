@@ -105,7 +105,7 @@
             <button class="btn btn-sm btn-outline-secondary me-1" onclick='openForm("${s.id}", JSON.parse("${safe}"))'>✏️</button>
             <button class="btn btn-sm btn-outline-danger" onclick='del("${s.id}")'>❌</button>
           </td>
-          <td>${d.number||''}</td><td>${d.type||''}</td><td>${d.issued||'-'}</td><td>${d.expiry||'-'}</td><td>${d.place||''}</td>
+          <td>${d.number||''}</td><td>${d.type||''}</td><td>${d.issued||'-'}</td><td>${d.expiry ? d.expiry : 'No expiry date'}</td><td>${d.place||''}</td>
           <td>${d.remarks ? `<span title="${d.remarks}">ℹ️</span>` : ''}</td>`;
         list.appendChild(tr);
       });
