@@ -430,7 +430,7 @@
         <tr>
           <td>${safe(x.name)}</td>
           <td class="nowrap">${safe(fmtDate(x.issue))}</td>
-          <td class="nowrap">${safe(fmtDate(x.expiry))}</td>
+          <td class="nowrap">${x.expiry ? safe(fmtDate(x.expiry)) : 'No expiry date'}</td>
         </tr>`);
       fillTable('#tbody-certificates',3,rows);
     }catch(e){ console.warn('certificates', e); }
