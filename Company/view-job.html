@@ -20,9 +20,11 @@
     <div class="box">
       <h4 id="title" class="mb-3">Job Post Details</h4>
       <div id="details" class="mb-3">Loading...</div>
-      <div class="d-flex gap-2">
+      <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-secondary" href="/Company/company-dashboard.html">Back</a>
         <button class="btn btn-outline-primary" onclick="window.print()">Print</button>
+        <button class="btn btn-warning" id="btnClose">Close Job</button>
+        <a class="btn btn-info text-white" id="btnApps">Applications</a>
       </div>
     </div>
   </div>
@@ -32,17 +34,20 @@
 
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const params=new URLSearchParams(location.search); const jobId=params.get('id');
     const title=document.getElementById('title'); const details=document.getElementById('details');
+    const appsBtn=document.getElementById('btnApps'); const closeBtn=document.getElementById('btnClose');
+
+    let jobRef=null;
 
     function fmtDate(v){ try{ if(v?.toDate) return v.toDate().toLocaleString(); if(v) return new Date(v).toLocaleString(); }catch{} return '-'; }
 
     onAuthStateChanged(auth, async user=>{
       if(!user) return location.href='/index.html';
-      const ref=doc(db, `companies/${user.uid}/jobPosts`, jobId);
-      const snap=await getDoc(ref);
+      jobRef=doc(db, `companies/${user.uid}/jobPosts`, jobId);
+      const snap=await getDoc(jobRef);
       const job=snap.data();
       if(!job){ details.innerHTML=`<div class="text-danger">Job not found.</div>`; return; }
       title.textContent = `${job.position || 'Position'} • Details`;
@@ -53,10 +58,19 @@
           <div class="col-md-6"><b>Joining Date:</b> ${job.joiningDate||'-'}</div>
           <div class="col-md-6"><b>Duration:</b> ${job.duration||'-'}</div>
           <div class="col-md-6"><b>Location:</b> ${job.location||'-'}</div>
-          <div class="col-md-6"><b>Status:</b> ${job.status||'-'}</div>
+          <div class="col-md-6"><b>Status:</b> <span class="badge text-bg-${(job.status||'open')==='open'?'success':(job.status==='closed'?'secondary':'warning')}">${job.status||'-'}</span></div>
           <div class="col-12"><b>Notes:</b><br>${(job.notes||'-').replace(/\n/g,'<br>')}</div>
           <div class="col-12"><b>Created At:</b> ${fmtDate(job.createdAt)}</div>
         </div>`;
+
+      appsBtn.href = `/Company/company-applications.html?jobId=${jobId}`;
+    });
+
+    closeBtn?.addEventListener('click', async ()=>{
+      if(!jobRef) return; if(!confirm('Close this job?')) return;
+      closeBtn.disabled=true; closeBtn.textContent='Closing...';
+      try{ await updateDoc(jobRef, { status:'closed' }); location.reload(); }
+      catch(e){ alert('Failed: '+(e.message||'unknown')); closeBtn.disabled=false; closeBtn.textContent='Close Job'; }
     });
   </script>
 

@@ -82,7 +82,6 @@
     let companyId = null;
 
     async function loadOptions() {
-      // Ranks / Vessel Types / Countries dış HTML
       const [ranks, vtypes, countries] = await Promise.all([
         fetch('/options/options-ranks.html').then(r=>r.text()),
         fetch('/options/options-vessels.html').then(r=>r.text()),
@@ -122,14 +121,22 @@
         status:      'open',
         createdAt:   serverTimestamp()
       };
+
+      // Validation
+      const jd = new Date(data.joiningDate);
+      const today = new Date(); today.setHours(0,0,0,0);
+      if (isNaN(jd) || jd < today) return toast('Joining Date must be today or later', false);
+      if (!/^\d+\s+(day|days|week|weeks|month|months)$/i.test(data.duration))
+        return toast('Duration like "6 months" or "12 weeks"', false);
+
       try{
         // 1) company scoped
-        await addDoc(collection(db, `companies/${companyId}/jobPosts`), data);
-        // 2) global listing (opsiyonel)
+        const ref = await addDoc(collection(db, `companies/${companyId}/jobPosts`), data);
+        // 2) global listing (optional)
         await addDoc(collection(db, 'jobPosts'), { ...data, creatorId:companyId, creatorType:'company' });
 
-        form.reset();
         toast('Job created successfully ✅', true);
+        setTimeout(()=> location.href = `/Company/view-job.html?id=${ref.id}`, 500);
       }catch(err){
         console.error(err);
         toast('Failed: '+(err.message||'unknown'), false);

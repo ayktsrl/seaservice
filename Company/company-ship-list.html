@@ -28,7 +28,7 @@
         <thead class="table-light">
           <tr>
             <th>Photo</th><th>Name</th><th>Type</th><th>LOA</th><th>DWT</th><th>GRT</th>
-            <th>Build Year</th><th>Build Place</th><th style="width:80px"></th>
+            <th>Build Year</th><th>Build Place</th><th style="width:100px"></th>
           </tr>
         </thead>
         <tbody id="shipList"></tbody>
@@ -47,13 +47,13 @@
             <select class="form-select" id="type" required></select>
           </div>
           <div class="col-md-4">
-            <label class="form-label">LOA</label><input class="form-control" id="loa"/>
+            <label class="form-label">LOA</label><input class="form-control" id="loa" inputmode="decimal" pattern="\\d*(\\.\\d+)?"/>
           </div>
           <div class="col-md-4">
-            <label class="form-label">DWT</label><input class="form-control" id="dwt"/>
+            <label class="form-label">DWT</label><input class="form-control" id="dwt" inputmode="numeric" pattern="\\d+"/>
           </div>
           <div class="col-md-4">
-            <label class="form-label">GRT</label><input class="form-control" id="grt"/>
+            <label class="form-label">GRT</label><input class="form-control" id="grt" inputmode="numeric" pattern="\\d+"/>
           </div>
           <div class="col-md-6">
             <label class="form-label">Build Year</label><input class="form-control" id="buildYear"/>
@@ -78,7 +78,7 @@
 
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { collection, getDocs, addDoc, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { collection, getDocs, addDoc, deleteDoc, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const list=document.getElementById('shipList');
     const formBox=document.getElementById('formBox');
@@ -91,7 +91,6 @@
       if(!user) return location.href='/index.html';
       uid=user.uid;
       await render();
-      // options load
       const txt = await fetch('/options/options-vessels.html').then(r=>r.text());
       document.getElementById('type').innerHTML = txt;
     });
@@ -112,13 +111,16 @@
           <td>${d.grt||'-'}</td>
           <td>${d.buildYear||'-'}</td>
           <td>${d.buildPlace||'-'}</td>
-          <td><button class="btn btn-sm btn-danger" data-del="${s.id}">❌</button></td>`;
+          <td>
+            <button class="btn btn-sm btn-outline-secondary me-1" data-edit="${s.id}">✏️</button>
+            <button class="btn btn-sm btn-danger" data-del="${s.id}">❌</button>
+          </td>`;
         list.appendChild(tr);
       });
     }
 
     btnOpen.addEventListener('click', ()=>{ form.reset(); formBox.classList.remove('d-none'); });
-    btnCancel.addEventListener('click', ()=>{ formBox.classList.add('d-none'); });
+    btnCancel.addEventListener('click', ()=>{ formBox.classList.add('d-none'); form.removeAttribute('data-editing'); });
 
     form.addEventListener('submit', async e=>{
       e.preventDefault();
@@ -128,14 +130,33 @@
         buildYear:form.buildYear.value.trim(), buildPlace:form.buildPlace.value.trim(),
         photo:form.photo.value.trim()
       };
-      await addDoc(collection(db, `companies/${uid}/ships`), data);
+      const editingId=form.getAttribute('data-editing');
+      if(editingId){
+        await updateDoc(doc(db, `companies/${uid}/ships/${editingId}`), data);
+        form.removeAttribute('data-editing');
+      } else {
+        await addDoc(collection(db, `companies/${uid}/ships`), data);
+      }
       formBox.classList.add('d-none'); await render();
     });
 
     list.addEventListener('click', async e=>{
-      const id=e.target.getAttribute('data-del'); if(!id) return;
-      if(!confirm('Delete this ship?')) return;
-      await deleteDoc(doc(db, `companies/${uid}/ships/${id}`)); await render();
+      const id=e.target.getAttribute('data-del');
+      const eid=e.target.getAttribute('data-edit');
+      if(id){
+        if(!confirm('Delete this ship?')) return;
+        await deleteDoc(doc(db, `companies/${uid}/ships/${id}`)); await render();
+      }
+      if(eid){
+        const snap=await getDoc(doc(db, `companies/${uid}/ships/${eid}`));
+        const d=snap.data();
+        formBox.classList.remove('d-none');
+        form.name.value=d.name||''; form.type.value=d.type||'';
+        form.loa.value=d.loa||''; form.dwt.value=d.dwt||''; form.grt.value=d.grt||'';
+        form.buildYear.value=d.buildYear||''; form.buildPlace.value=d.buildPlace||''; form.photo.value=d.photo||'';
+        form.setAttribute('data-editing', eid);
+        form.scrollIntoView({behavior:'smooth'});
+      }
     });
   </script>
 

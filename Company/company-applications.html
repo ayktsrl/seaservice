@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="/style.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    .card .badge{align-self:flex-start}
+  </style>
 </head>
 <body class="bg-light">
 
@@ -57,6 +60,9 @@
     const modalContent = document.getElementById('modalContent');
     const hrNote = document.getElementById('hrNote');
 
+    const params = new URLSearchParams(location.search);
+    const filterJobId = params.get('jobId');
+
     onAuthStateChanged(auth, async user=>{
       if(!user) return location.href='/index.html';
       me=user;
@@ -64,6 +70,10 @@
       // Load applications
       const aSnap = await getDocs(collection(db, `companies/${me.uid}/applications`));
       applications = aSnap.docs.map(d=>({ id:d.id, ...d.data() }));
+      if (filterJobId) applications = applications.filter(a => (a.jobId||'') === filterJobId);
+
+      // Enrich with seafarer names
+      applications = await enrichWithSeafarerNames(applications);
       render(applications);
 
       // Load fleet
@@ -72,13 +82,29 @@
       shipSelect.innerHTML = ships.map(s=>`<option value="${s.name}">${s.name}</option>`).join('') || `<option disabled>No ships</option>`;
     });
 
+    async function enrichWithSeafarerNames(arr){
+      const out=[];
+      for (const a of arr){
+        try{
+          const pRef = doc(db, 'seafarers', a.seafarerId, 'cv', 'personalDetails');
+          const pSnap = await getDoc(pRef);
+          out.push({ ...a, fullName:(pSnap.data()?.fullName||'Seafarer') });
+        }catch{ out.push({ ...a, fullName:'Seafarer' }); }
+      }
+      return out;
+    }
+
     function card(a){
+      const badge = (a.status||'pending')==='approved' ? 'success' : (a.status==='rejected' ? 'danger' : 'secondary');
       return `
         <div class="col-md-4">
           <div class="card shadow-sm h-100">
             <div class="card-body d-flex flex-column">
-              <h5 class="card-title">${a.position || 'Position'}</h5>
-              <p class="card-text small">Status: <b>${a.status || 'pending'}</b></p>
+              <div class="d-flex justify-content-between align-items-start">
+                <h6 class="mb-1">${a.fullName||'Seafarer'}</h6>
+                <span class="badge text-bg-${badge}">${a.status||'pending'}</span>
+              </div>
+              <div class="small text-muted mb-2">${a.position||'Position'}</div>
               <button class="btn btn-sm btn-primary mt-auto" data-id="${a.id}" data-act="view">View Details</button>
             </div>
           </div>
@@ -96,8 +122,7 @@
         selectedId=b.getAttribute('data-id');
         const snap=await getDoc(doc(db, `companies/${me.uid}/applications`, selectedId));
         const data=snap.data();
-        modalContent.innerText = `Seafarer ID: ${data.seafarerId}\nStatus: ${data.status || 'pending'}`;
-        // view-cv.html bizim tarafta ?uid=... destekliyor
+        modalContent.innerText = `Seafarer: ${applications.find(x=>x.id===selectedId)?.fullName||'Seafarer'}\nSeafarer ID: ${data.seafarerId}\nStatus: ${data.status || 'pending'}\nApplied Position: ${data.position||'-'}`;
         document.getElementById('viewCvBtn').href = `/Seafarer/view-cv.html?uid=${data.seafarerId}`;
         hrNote.value = data.hrNote || '';
         new bootstrap.Modal(document.getElementById('detailsModal')).show();
@@ -119,14 +144,14 @@
     // Export
     document.getElementById('btnExcel').addEventListener('click', ()=>{
       if(!applications.length) return alert('No data');
-      const data = applications.map(a=>({ Position:a.position, Status:a.status||'pending', AssignedShip:a.assignedShip||'', Note:a.hrNote||'' }));
+      const data = applications.map(a=>({ Name:a.fullName||'Seafarer', Position:a.position, Status:a.status||'pending', AssignedShip:a.assignedShip||'', Note:a.hrNote||'' }));
       const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Applications'); XLSX.writeFile(wb,'applications.xlsx');
     });
 
     document.getElementById('btnPdf').addEventListener('click', ()=>{
       if(!applications.length) return alert('No data');
       const { jsPDF } = window.jspdf; const pdf=new jsPDF(); let y=10;
-      applications.forEach(a=>{ pdf.text(`Position: ${a.position}`,10,y); y+=6; pdf.text(`Status: ${a.status||'pending'}`,10,y); y+=6; pdf.text(`Assigned Ship: ${a.assignedShip||'-'}`,10,y); y+=6; pdf.text(`Note: ${a.hrNote||'-'}`,10,y); y+=10; });
+      applications.forEach(a=>{ pdf.text(`Name: ${a.fullName||'Seafarer'}`,10,y); y+=6; pdf.text(`Position: ${a.position||'-'}`,10,y); y+=6; pdf.text(`Status: ${a.status||'pending'}`,10,y); y+=6; pdf.text(`Assigned Ship: ${a.assignedShip||'-'}`,10,y); y+=6; pdf.text(`Note: ${a.hrNote||'-'}`,10,y); y+=10; });
       pdf.save('applications.pdf');
     });
 
@@ -134,6 +159,7 @@
     document.getElementById('searchInput').addEventListener('input', e=>{
       const t=e.target.value.toLowerCase();
       const f=applications.filter(a=>
+        (a.fullName||'').toLowerCase().includes(t)||
         (a.position||'').toLowerCase().includes(t)||
         (a.status||'').toLowerCase().includes(t)||
         (a.assignedShip||'').toLowerCase().includes(t)||

@@ -22,14 +22,14 @@
         <div class="col-md-4"><input class="form-control" id="fullName" placeholder="Full Name" required/></div>
         <div class="col-md-3"><input class="form-control" id="rank" placeholder="Rank" required/></div>
         <div class="col-md-3"><input type="date" class="form-control" id="joinDate" required/></div>
-        <div class="col-md-2"><button class="btn btn-primary w-100">Add</button></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">Save</button></div>
       </form>
       <div class="d-flex justify-content-end mb-2"><button class="btn btn-outline-success" id="btnExport">Export to Excel</button></div>
 
       <div class="table-responsive">
         <table class="table table-striped align-middle">
           <thead class="table-light">
-            <tr><th>Name</th><th>Rank</th><th>Joining Date</th><th style="width:90px">Action</th></tr>
+            <tr><th>Name</th><th>Rank</th><th>Joining Date</th><th style="width:120px">Action</th></tr>
           </thead>
           <tbody id="crewTableBody"></tbody>
         </table>
@@ -42,7 +42,7 @@
 
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const params = new URLSearchParams(location.search);
     const shipId = params.get('shipId');
@@ -75,7 +75,10 @@
           <td>${c.fullName||'-'}</td>
           <td>${c.rank||'-'}</td>
           <td>${c.joinDate||'-'}</td>
-          <td><button class="btn btn-sm btn-danger" data-id="${c.id}">Delete</button></td>`;
+          <td>
+            <button class="btn btn-sm btn-outline-secondary me-1" data-edit="${c.id}">Edit</button>
+            <button class="btn btn-sm btn-danger" data-id="${c.id}">Delete</button>
+          </td>`;
         tbody.appendChild(tr);
       });
     }
@@ -85,14 +88,32 @@
       const fullName=form.fullName.value.trim();
       const rank=form.rank.value.trim();
       const joinDate=form.joinDate.value;
-      await addDoc(collection(db, crewPath), { fullName, rank, joinDate });
+      const editingId=form.getAttribute('data-editing');
+      if(editingId){
+        await updateDoc(doc(db, crewPath, editingId), { fullName, rank, joinDate });
+        form.removeAttribute('data-editing');
+      } else {
+        await addDoc(collection(db, crewPath), { fullName, rank, joinDate });
+      }
       form.reset(); await loadCrew();
     });
 
     tbody.addEventListener('click', async (e)=>{
-      const id=e.target.getAttribute('data-id'); if(!id) return;
-      if(!confirm('Delete this crew member?')) return;
-      await deleteDoc(doc(db, crewPath, id)); await loadCrew();
+      const eid=e.target.getAttribute('data-edit');
+      const id=e.target.getAttribute('data-id');
+      if(eid){
+        const snap=await getDoc(doc(db, crewPath, eid));
+        const d=snap.data();
+        form.fullName.value=d.fullName||'';
+        form.rank.value=d.rank||'';
+        form.joinDate.value=d.joinDate||'';
+        form.setAttribute('data-editing', eid);
+        form.scrollIntoView({behavior:'smooth'});
+      }
+      if(id){
+        if(!confirm('Delete this crew member?')) return;
+        await deleteDoc(doc(db, crewPath, id)); await loadCrew();
+      }
     });
 
     document.getElementById('btnExport').addEventListener('click', ()=>{
