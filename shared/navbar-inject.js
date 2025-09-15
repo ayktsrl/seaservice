@@ -67,7 +67,6 @@ function buildMenu(role) {
     items.push(['Crew Lists', '/Company/ship-crew-list.html']);
     items.push(['Crew Change', '/Company/crew-change.html']);               // NEW
     items.push(['CV Browser', '/Company/public-cv-browser.html']);          // NEW (replaces Evaluate)
-items.push(['Personnel List', '/Company/personnel-list.html']);
   } else { // seafarer default
     items.push(['Job Board', '/shared/job-board.html']);
     items.push(['My Applications', '/Seafarer/my-applications.html']);

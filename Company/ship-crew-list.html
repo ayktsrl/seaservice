@@ -3,38 +3,106 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Ship Crew List - Company</title>
+  <title>Crew Lists</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="/style.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --bg:#f6f7fb; --panel:#fff; --line:#e7e9ef; --head:#f2f4f7;
+      --shadow:0 8px 24px rgba(0,0,0,.06);
+    }
+    body{background:var(--bg)}
+    .layout{display:grid; grid-template-columns:260px 1fr; gap:14px; padding:14px}
+    .panel{background:var(--panel); border-radius:14px; box-shadow:var(--shadow)}
+    .head-title{padding:10px 12px; border-bottom:1px solid var(--line); font-weight:600}
+    .left{height:calc(100vh - 120px); overflow:auto}
+    .vessel-item{display:block; padding:8px 14px; color:#334; text-decoration:none; border-left:3px solid transparent}
+    .vessel-item:hover{background:#f6f8ff}
+    .vessel-item.active{background:#eef3ff; border-left-color:#0d6efd; font-weight:600}
+    .toolbar{padding:10px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:8px}
+    .toolbar .form-select,.toolbar .form-control{min-width:160px}
+    .grid-wrap{padding:8px}
+    .table-grid{width:100%; border-collapse:separate; border-spacing:0}
+    .table-grid th,.table-grid td{border:1px solid var(--line); padding:6px 8px; font-size:.92rem; vertical-align:middle}
+    .table-grid thead th{position:sticky; top:0; background:var(--head); z-index:2}
+    .sticky-left{position:sticky; left:0; background:#fff; z-index:1}
+    .num{text-align:center; white-space:nowrap}
+    .days{display:inline-block; padding:.2rem .45rem; border-radius:9999px; font-size:.78rem; background:#d1e7dd}
+    .days.warn{background:#fff3cd}
+    .days.over{background:#f8d7da}
+    .muted{color:#6c757d}
+  </style>
 </head>
-<body class="bg-light p-3">
-
-  <!-- NAVBAR -->
+<body>
   <div id="navbar-host"></div>
   <script type="module" src="/shared/navbar-inject.js"></script>
 
-  <div class="container">
-    <div class="bg-white p-3 rounded shadow-sm mt-3">
-      <h4 class="mb-3">Crew List for Selected Ship</h4>
-      <input id="searchInput" class="form-control mb-3" placeholder="Search by name or rank"/>
-      <form id="addCrewForm" class="row g-2 mb-3">
-        <div class="col-md-4"><input class="form-control" id="fullName" placeholder="Full Name" required/></div>
-        <div class="col-md-3"><input class="form-control" id="rank" placeholder="Rank" required/></div>
-        <div class="col-md-3"><input type="date" class="form-control" id="joinDate" required/></div>
-        <div class="col-md-2"><button class="btn btn-primary w-100">Save</button></div>
-      </form>
-      <div class="d-flex justify-content-end mb-2"><button class="btn btn-outline-success" id="btnExport">Export to Excel</button></div>
+  <div class="container-fluid px-3 pt-3">
+    <h4 class="mb-2">Crew Lists</h4>
+  </div>
 
-      <div class="table-responsive">
-        <table class="table table-striped align-middle">
-          <thead class="table-light">
-            <tr><th>Name</th><th>Rank</th><th>Joining Date</th><th style="width:120px">Action</th></tr>
-          </thead>
-          <tbody id="crewTableBody"></tbody>
-        </table>
+  <div class="layout">
+    <!-- LEFT: vessels -->
+    <aside class="panel">
+      <div class="head-title">Fleet</div>
+      <div class="left" id="vesselList"><div class="p-3 text-muted">Loading…</div></div>
+      <div class="p-2 small text-muted border-top" style="border-color:var(--line)!important">
+        Şirketine ait gemiler otomatik yüklenir.
       </div>
-    </div>
+    </aside>
+
+    <!-- RIGHT: toolbar + table -->
+    <section class="panel">
+      <div class="toolbar">
+        <input id="q" class="form-control" placeholder="Search (name, email, rank)"/>
+        <select id="fltRank" class="form-select">
+          <option value="">All Ranks</option>
+        </select>
+        <div class="ms-auto d-flex gap-2">
+          <button id="btnCsv" class="btn btn-outline-secondary btn-sm">Export CSV</button>
+          <button id="btnXls" class="btn btn-outline-primary btn-sm">Export Excel</button>
+        </div>
+      </div>
+
+      <div class="grid-wrap">
+        <div class="table-responsive" style="max-height: calc(100vh - 240px);">
+          <table class="table-grid" id="grid">
+            <thead>
+              <tr>
+                <th class="sticky-left">Rank</th>
+                <th class="sticky-left">Current Personnel</th>
+                <th>Email</th>
+                <th>Nationality</th>
+                <th>Sign-On</th>
+                <th>Due Sign Off</th>
+                <th>Days Left</th>
+                <th>Last Vessel</th>
+                <th>Last Sign-Off</th>
+                <th>Assigned</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="tbody">
+              <tr><td colspan="11" class="text-center text-muted py-4">Select a vessel</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center p-2">
+          <div class="small text-muted"><span id="shown">0</span> / <span id="total">0</span> records</div>
+          <div class="d-flex align-items-center gap-2">
+            <label class="small text-muted">Page size</label>
+            <select id="pageSize" class="form-select form-select-sm" style="width:90px">
+              <option>25</option><option selected>50</option><option>100</option>
+            </select>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-secondary" id="prev">«</button>
+              <button class="btn btn-outline-secondary" id="next">»</button>
+            </div>
+            <span class="small text-muted" id="pageInfo">Page 1</span>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <script type="module">
@@ -42,90 +110,156 @@
 
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    const params = new URLSearchParams(location.search);
-    const shipId = params.get('shipId');
+    const vesselList = document.getElementById('vesselList');
+    const tbody = document.getElementById('tbody');
+    const q = document.getElementById('q');
+    const fltRank = document.getElementById('fltRank');
+    const shown = document.getElementById('shown');
+    const total = document.getElementById('total');
+    const pageSize = document.getElementById('pageSize');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    const pageInfo = document.getElementById('pageInfo');
+    const btnCsv = document.getElementById('btnCsv');
+    const btnXls = document.getElementById('btnXls');
 
-    let companyId=null, crewPath=null, allCrew=[];
-    const tbody=document.getElementById('crewTableBody');
-    const form=document.getElementById('addCrewForm');
-    const searchInput=document.getElementById('searchInput');
+    const rankOrder = [
+      'Master','Trainee Master',
+      'Chief Officer','2nd Officer','3rd Officer','4th Officer','Junior Officer','Deck Cadet',
+      'Chief Engineer','2nd Engineer','3rd Engineer','4th Engineer','Junior Engineer','Engine Cadet',
+      'Bosun','Pumpman','Able Seaman','Ordinary Seaman','Fitter','Wiper','Oiler','Cook','Steward'
+    ];
+    const rankWeight = r => {
+      const i = rankOrder.findIndex(x => (x||'').toLowerCase() === (r||'').toLowerCase());
+      return i === -1 ? 999 : i;
+    };
+
+    let currentShipId = null;
+    let rows = [];     // raw
+    let view = [];     // filtered
+    let page = 1;
+
+    const fmt = (d)=>{ if(!d) return ''; const x=new Date(d); return Number.isNaN(+x)?'':x.toISOString().slice(0,10); };
+    const dleft = (d)=>{ if(!d) return null; const x=new Date(d); if(Number.isNaN(+x)) return null; return Math.round((x.setHours(0,0,0,0)-new Date().setHours(0,0,0,0))/86400000); };
+    const pill = (n)=> n==null? '' : `<span class="days ${n<0?'over':(n<=30?'warn':'')}">${n}</span>`;
+    const norm = v => (v||'').toString().toLowerCase();
+
+    function render(){
+      const size = parseInt(pageSize.value,10)||50;
+      const start = (page-1)*size;
+      const slice = view.slice(start, start+size);
+
+      tbody.innerHTML = '';
+      if(!slice.length){
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">No crew records</td></tr>';
+      } else {
+        for(const r of slice){
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="sticky-left">${r.rank||''}</td>
+            <td class="sticky-left">${(r.lastName||'').toUpperCase()}, ${r.firstName||''}</td>
+            <td class="text-nowrap">${r.email||''}</td>
+            <td>${r.nationality||''}</td>
+            <td class="num">${fmt(r.signOn)}</td>
+            <td class="num">${fmt(r.dueSignOff)}</td>
+            <td class="num">${pill(dleft(r.dueSignOff))}</td>
+            <td>${r.lastVesselName||''}</td>
+            <td class="num">${fmt(r.lastSignOffDate)}</td>
+            <td class="num">${r.assignedToVessel?'Yes':'No'}</td>
+            <td>${r.remarks||''}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+      shown.textContent = view.length;
+      total.textContent = rows.length;
+      const totalPages = Math.max(1, Math.ceil(view.length/(parseInt(pageSize.value,10)||50)));
+      pageInfo.textContent = `Page ${Math.min(page,totalPages)} / ${totalPages}`;
+      prev.disabled = page<=1; next.disabled = page>=totalPages;
+    }
+
+    function applyFilters(){
+      const qv = norm(q.value);
+      const fr = norm(fltRank.value);
+      view = rows
+        .filter(r => (!qv || [r.firstName,r.lastName,r.email,r.rank].some(x=>norm(x).includes(qv)))
+                   && (!fr || norm(r.rank)===fr))
+        .sort((a,b)=> rankWeight(a.rank)-rankWeight(b.rank) || (a.lastName||'').localeCompare(b.lastName||''));
+      page = 1;
+      render();
+    }
+
+    function toCsv(data){
+      const head=['Rank','Current Personnel','Email','Nationality','SignOn','DueSignOff','DaysLeft','LastVessel','LastSignOff','Assigned','Remarks'];
+      const lines=[head.join(',')];
+      for(const r of data){
+        const vals=[
+          r.rank||'', `${(r.lastName||'').toUpperCase()}, ${r.firstName||''}`, r.email||'',
+          r.nationality||'', fmt(r.signOn), fmt(r.dueSignOff),
+          dleft(r.dueSignOff)??'', r.lastVesselName||'', fmt(r.lastSignOffDate),
+          r.assignedToVessel?'Yes':'No', (r.remarks||'').replace(/\n/g,' ').replace(/,/g,';')
+        ];
+        lines.push(vals.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+      }
+      return lines.join('\n');
+    }
+    function download(blob, name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+
+    btnCsv.addEventListener('click', ()=> download(new Blob([toCsv(view)],{type:'text/csv'}),'crew-list.csv'));
+    btnXls.addEventListener('click', ()=> download(new Blob([toCsv(view)],{type:'application/vnd.ms-excel'}),'crew-list.xls'));
+
+    [q, fltRank, pageSize].forEach(el => el.addEventListener('input', applyFilters));
+    [pageSize].forEach(el => el.addEventListener('change', applyFilters));
+    prev.addEventListener('click', ()=>{ if(page>1){ page--; render(); }});
+    next.addEventListener('click', ()=>{ const size=parseInt(pageSize.value,10)||50; if(page*size<view.length){ page++; render(); }});
+
+    async function loadShips(uid){
+      const snap = await getDocs(collection(db, `companies/${uid}/ships`));
+      const items = snap.docs.map(d=>({id:d.id, name:(d.data()?.name)||'(No name)'})).sort((a,b)=>a.name.localeCompare(b.name));
+      vesselList.innerHTML = items.length
+        ? items.map(v=>`<a href="#" class="vessel-item" data-id="${v.id}">${v.name}</a>`).join('')
+        : '<div class="p-3 text-muted">No ships</div>';
+
+      vesselList.querySelectorAll('.vessel-item').forEach(a=>{
+        a.addEventListener('click', async (e)=>{
+          e.preventDefault();
+          vesselList.querySelectorAll('.vessel-item').forEach(x=>x.classList.remove('active'));
+          a.classList.add('active');
+          currentShipId = a.dataset.id;
+          await loadCrew(uid, currentShipId);
+        });
+      });
+
+      // İstersen ilk gemiyi otomatik seç:
+      if(items[0]) {
+        vesselList.querySelector(`[data-id="${items[0].id}"]`)?.click();
+      }
+    }
+
+    async function loadCrew(uid, shipId){
+      tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">Loading…</td></tr>';
+      rows = [];
+      const crewSnap = await getDocs(collection(db, `companies/${uid}/ships/${shipId}/crew`));
+      const ranks = new Set();
+      crewSnap.forEach(doc=>{
+        const d = doc.data()||{};
+        rows.push({
+          rank: d.rank, firstName:d.firstName, lastName:d.lastName, email:d.email, nationality:d.nationality,
+          signOn:d.signOn, dueSignOff:d.dueSignOff, lastVesselName:d.lastVesselName, lastSignOffDate:d.lastSignOffDate,
+          assignedToVessel: !!d.assignedToVessel, remarks:d.remarks||''
+        });
+        if(d.rank) ranks.add(d.rank);
+      });
+      // Rank filtresi seçenekleri
+      fltRank.innerHTML = '<option value="">All Ranks</option>' + [...ranks].sort((a,b)=>rankWeight(a)-rankWeight(b)).map(r=>`<option>${r}</option>`).join('');
+      applyFilters();
+    }
 
     onAuthStateChanged(auth, async user=>{
       if(!user) return location.href='/index.html';
-      companyId=user.uid;
-      crewPath=`companies/${companyId}/ships/${shipId}/crew`;
-      await loadCrew();
-    });
-
-    async function loadCrew(){
-      tbody.innerHTML='';
-      const snap=await getDocs(collection(db, crewPath));
-      allCrew = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      render(allCrew);
-    }
-
-    function render(list){
-      tbody.innerHTML='';
-      if(!list.length){ tbody.innerHTML=`<tr><td colspan="4" class="text-center text-muted">No crew yet.</td></tr>`; return; }
-      list.forEach(c=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML=`
-          <td>${c.fullName||'-'}</td>
-          <td>${c.rank||'-'}</td>
-          <td>${c.joinDate||'-'}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-secondary me-1" data-edit="${c.id}">Edit</button>
-            <button class="btn btn-sm btn-danger" data-id="${c.id}">Delete</button>
-          </td>`;
-        tbody.appendChild(tr);
-      });
-    }
-
-    form.addEventListener('submit', async e=>{
-      e.preventDefault();
-      const fullName=form.fullName.value.trim();
-      const rank=form.rank.value.trim();
-      const joinDate=form.joinDate.value;
-      const editingId=form.getAttribute('data-editing');
-      if(editingId){
-        await updateDoc(doc(db, crewPath, editingId), { fullName, rank, joinDate });
-        form.removeAttribute('data-editing');
-      } else {
-        await addDoc(collection(db, crewPath), { fullName, rank, joinDate });
-      }
-      form.reset(); await loadCrew();
-    });
-
-    tbody.addEventListener('click', async (e)=>{
-      const eid=e.target.getAttribute('data-edit');
-      const id=e.target.getAttribute('data-id');
-      if(eid){
-        const snap=await getDoc(doc(db, crewPath, eid));
-        const d=snap.data();
-        form.fullName.value=d.fullName||'';
-        form.rank.value=d.rank||'';
-        form.joinDate.value=d.joinDate||'';
-        form.setAttribute('data-editing', eid);
-        form.scrollIntoView({behavior:'smooth'});
-      }
-      if(id){
-        if(!confirm('Delete this crew member?')) return;
-        await deleteDoc(doc(db, crewPath, id)); await loadCrew();
-      }
-    });
-
-    document.getElementById('btnExport').addEventListener('click', ()=>{
-      const data = allCrew.map(x=>({ Name:x.fullName, Rank:x.rank, JoiningDate:x.joinDate }));
-      const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Crew'); XLSX.writeFile(wb, 'crew-list.xlsx');
-    });
-
-    searchInput.addEventListener('input',()=>{
-      const t=searchInput.value.toLowerCase();
-      const f=allCrew.filter(c=>(c.fullName||'').toLowerCase().includes(t)||(c.rank||'').toLowerCase().includes(t));
-      render(f);
+      await loadShips(user.uid);
     });
   </script>
 
