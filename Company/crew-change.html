@@ -8,7 +8,7 @@
   <style>
     :root{
       --bg:#f6f7fb; --panel:#fff; --line:#e7e9ef; --head:#f2f4f7; --shadow:0 8px 24px rgba(0,0,0,.06);
-      /* sticky soldaki 3 kolon genişlikleri */
+      /* sticky soldaki 3 kolon genişlikleri (px) */
       --w1: 42px;   /* checkbox */
       --w2: 180px;  /* rank */
       --w3: 240px;  /* current personnel */
@@ -45,6 +45,15 @@
     .days-over{background:#f8d7da}
     .small-note{padding:8px 12px; border-top:1px dashed var(--line); color:#6c757d; font-size:.86rem}
     .chk{width:16px; height:16px}
+
+    /* === RESIZER (kolon sürükleyip genişletme) === */
+    .table-grid th { position: sticky; }
+    .table-grid th .col-resizer{
+      position:absolute; top:0; right:-3px; width:6px; height:100%;
+      cursor: col-resize; user-select:none; opacity:0; z-index:5;
+    }
+    .table-grid th:hover .col-resizer{ opacity:1; }
+    body.resizing { cursor: col-resize; user-select: none; }
   </style>
 </head>
 <body>
@@ -117,7 +126,7 @@
     const actionBtns = ['btnAssign','btnRelease','btnChange','btnPlan','btnContract','btnReliefReq','btnSwapPlan','btnSwapOB','btnCancel']
       .map(id => document.getElementById(id));
 
-    /* ===== Rank master list (görüntüdeki yapıya uygun) ===== */
+    /* ===== Rank master list ===== */
     const RANKS = [
       'Master','Trainee Master',
       'Chief Officer','Trainee Chief Officer','2nd Officer','3rd Officer','4th Officer','Junior Officer','Deck Cadet',
@@ -263,6 +272,62 @@
         chk.dispatchEvent(new Event('change'));
       });
     });
+
+    // === COLUMN RESIZER ===
+    // 0=checkbox; 1=Rank; 2=Current Personnel; 3.. = diğerleri
+    const RESIZABLE_COLS = new Set([1,2,3,4,5,6,7,8,9,10,11,12]);
+    function setColWidth(colIndex, px){
+      const t = document.getElementById('grid');
+      const th = t.querySelector(`thead th:nth-child(${colIndex+1})`);
+      if(!th) return;
+      th.style.width = px+'px';
+      th.style.minWidth = px+'px';
+      t.querySelectorAll(`tbody tr td:nth-child(${colIndex+1})`).forEach(td=>{
+        td.style.width = px+'px';
+        td.style.minWidth = px+'px';
+      });
+      // Sticky değişkenleri
+      if(colIndex===1){ document.documentElement.style.setProperty('--w2', px+'px'); }
+      if(colIndex===2){ document.documentElement.style.setProperty('--w3', px+'px'); }
+    }
+    function installResizers(){
+      const t = document.getElementById('grid');
+      const ths = t.querySelectorAll('thead th');
+      ths.forEach((th, i)=>{
+        if(!RESIZABLE_COLS.has(i)) return;
+        if(th.dataset.resizerInstalled) return;
+        th.dataset.resizerInstalled = '1';
+        th.style.position = 'relative';
+        const h = document.createElement('div');
+        h.className = 'col-resizer';
+        th.appendChild(h);
+
+        let startX=0, startW=0;
+        const MIN_W = 70;
+
+        h.addEventListener('mousedown', (e)=>{
+          startX = e.pageX;
+          startW = th.getBoundingClientRect().width;
+          document.body.classList.add('resizing');
+
+          const onMove = (ev)=>{
+            const dx = ev.pageX - startX;
+            const w = Math.max(MIN_W, Math.round(startW + dx));
+            setColWidth(i, w);
+          };
+          const onUp = ()=>{
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.body.classList.remove('resizing');
+          };
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+          e.preventDefault();
+        });
+      });
+    }
+    // başlık sabit olduğu için bir kez kurmak yeterli
+    installResizers();
 
     // Placeholder aksiyonlar (iş mantığını sonra bağlarız)
     ['btnAssign','btnRelease','btnChange','btnPlan','btnContract','btnReliefReq','btnSwapPlan','btnSwapOB','btnCancel'].forEach(id=>{
