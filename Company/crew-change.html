@@ -10,7 +10,8 @@
       --grid-bg:#f6f7fb; --panel-bg:#fff; --panel-shadow:0 8px 24px rgba(0,0,0,.06);
       --line:#e7e9ef; --head:#f2f4f7;
     }
-    body{background:var(--grid-bg)}
+    /* Küçük genel font */
+    html,body{font-size:13px; background:var(--grid-bg)}
     .layout{display:grid; grid-template-columns:260px 1fr; gap:14px; padding:14px}
     .panel{background:var(--panel-bg); border-radius:14px; box-shadow:var(--panel-shadow)}
     .head-title{padding:10px 12px; border-bottom:1px solid var(--line); font-weight:600}
@@ -18,20 +19,26 @@
     .vessel-item{display:block; padding:8px 14px; color:#334; text-decoration:none; border-left:3px solid transparent}
     .vessel-item:hover{background:#f6f8ff}
     .vessel-item.active{background:#eef3ff; border-left-color:#0d6efd; font-weight:600}
-    .toolbar{padding:10px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:8px}
+    .toolbar{padding:8px 10px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:8px}
     .toolbar .btn{white-space:nowrap}
+
     .grid-wrap{padding:8px}
-    .table-grid{width:100%; border-collapse:separate; border-spacing:0}
-    .table-grid th,.table-grid td{border:1px solid var(--line); padding:6px 8px; font-size:.92rem; vertical-align:middle}
+    .table-grid{width:100%; border-collapse:separate; border-spacing:0; font-size:12px} /* tablo font küçültüldü */
+    .table-grid th,.table-grid td{border:1px solid var(--line); padding:5px 6px; vertical-align:middle}
     .table-grid thead th{position:sticky; top:0; background:var(--head); z-index:2}
     .table-grid tbody tr:hover{background:#fafcff}
-    .table-grid .num{text-align:center; white-space:nowrap}
-    .sticky-left{position:sticky; left:0; background:#fff; z-index:1}
+    .num{text-align:center; white-space:nowrap}
     .nowrap{white-space:nowrap}
-    .days-pill{display:inline-block; padding:.2rem .45rem; border-radius:9999px; font-size:.78rem; background:#d1e7dd}
+    .sticky-left{position:sticky; left:0; background:#fff; z-index:1}
+    .sticky-left-2{position:sticky; left:150px; background:#fff; z-index:1} /* 2. sabit kolon (Current Personnel) */
+    .row-selected{outline:2px solid #0d6efd; outline-offset:-2px}
+
+    .days-pill{display:inline-block; padding:.15rem .4rem; border-radius:9999px; font-size:11px; background:#d1e7dd}
     .days-pending{background:#fff3cd}
     .days-over{background:#f8d7da}
-    .row-selected{outline:2px solid #0d6efd; outline-offset:-2px}
+
+    /* Çok küçük buton */
+    .btn-xxs{padding:.1rem .35rem; font-size:11px; line-height:1; border-radius:6px}
     .small-note{padding:8px 12px; border-top:1px dashed var(--line); color:#6c757d; font-size:.86rem}
   </style>
 </head>
@@ -44,20 +51,20 @@
     <aside class="panel">
       <div class="head-title">Fleet</div>
       <div class="vessel-list" id="vesselList"><div class="p-3 text-muted">Loading…</div></div>
-      <div class="small-note">Şirkete ait gemiler listelenir. Bir gemiyi seçince sağdaki grid dolacaktır.</div>
+      <div class="small-note">Bir gemiyi seçince sağdaki grid dolacaktır.</div>
     </aside>
 
     <!-- RIGHT: GRID + TOOLBAR -->
     <section class="panel">
       <div class="toolbar">
-        <button class="btn btn-sm btn-outline-primary" id="btnAssign"    disabled>Assign</button>
-        <button class="btn btn-sm btn-outline-primary" id="btnRelease"   disabled>Release Reliever</button>
-        <button class="btn btn-sm btn-outline-secondary" id="btnChange"  disabled>Change</button>
-        <button class="btn btn-sm btn-outline-secondary" id="btnPlan"    disabled>Plan Update</button>
-        <button class="btn btn-sm btn-outline-secondary" id="btnContract" disabled>Contract Update</button>
+        <button class="btn btn-sm btn-outline-primary"   id="btnAssign"    disabled>Assign</button>
+        <button class="btn btn-sm btn-outline-primary"   id="btnRelease"   disabled>Release Reliever</button>
+        <button class="btn btn-sm btn-outline-secondary" id="btnChange"    disabled>Change</button>
+        <button class="btn btn-sm btn-outline-secondary" id="btnPlan"      disabled>Plan Update</button>
+        <button class="btn btn-sm btn-outline-secondary" id="btnContract"  disabled>Contract Update</button>
         <button class="btn btn-sm btn-outline-secondary" id="btnReliefReq" disabled>Relief Request</button>
-        <button class="btn btn-sm btn-outline-secondary" id="btnSwapPlan" disabled>Swap Planned</button>
-        <button class="btn btn-sm btn-outline-secondary" id="btnSwapOB"   disabled>Swap O/B</button>
+        <button class="btn btn-sm btn-outline-secondary" id="btnSwapPlan"  disabled>Swap Planned</button>
+        <button class="btn btn-sm btn-outline-secondary" id="btnSwapOB"    disabled>Swap O/B</button>
         <button class="btn btn-sm btn-outline-danger ms-auto" id="btnCancel" disabled>Cancel</button>
       </div>
 
@@ -67,7 +74,8 @@
             <thead>
               <tr>
                 <th class="sticky-left">Rank</th>
-                <th class="sticky-left">Current Personnel</th>
+                <th class="sticky-left-2">Current Personnel</th>
+                <th style="width:70px;">Act</th>
                 <th>Ctr. Start</th>
                 <th>SignOn</th>
                 <th>Due Sign Off</th>
@@ -83,7 +91,7 @@
               </tr>
             </thead>
             <tbody id="tbody">
-              <tr><td colspan="14" class="text-center text-muted py-4">Select a vessel</td></tr>
+              <tr><td colspan="15" class="text-center text-muted py-4">Select a vessel</td></tr>
             </tbody>
           </table>
         </div>
@@ -99,13 +107,13 @@
     import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const vesselListEl = document.getElementById('vesselList');
-    const tbody        = document.getElementById('tbody');
-    const grid         = document.getElementById('grid');
+    const tbody  = document.getElementById('tbody');
+    const grid   = document.getElementById('grid');
 
     const actionBtns = ['btnAssign','btnRelease','btnChange','btnPlan','btnContract','btnReliefReq','btnSwapPlan','btnSwapOB','btnCancel']
       .map(id => document.getElementById(id));
 
-    // ---- RANK MASTER LIST (otomatik en az 1 satır) ----
+    /* ===== Rank master list (ekrandaki takıma göre genişletildi) ===== */
     const RANKS = [
       'Master','Trainee Master',
       'Chief Officer','Trainee Chief Officer','2nd Officer','3rd Officer','4th Officer','Junior Officer','Deck Cadet',
@@ -120,22 +128,29 @@
       return i === -1 ? 999 : i;
     };
 
-    // ---- helpers ----
-    const dstr = v => { if(!v) return ''; const d=new Date(v); return Number.isNaN(+d)?'':d.toISOString().slice(0,10); };
+    // Helpers
+    const dstr  = v => { if(!v) return ''; const d=new Date(v); return Number.isNaN(+d)?'':d.toISOString().slice(0,10); };
     const dleft = v => { if(!v) return null; const d=new Date(v); if(Number.isNaN(+d)) return null;
       return Math.round((d.setHours(0,0,0,0) - new Date().setHours(0,0,0,0))/86400000); };
-    const pill = n => n==null ? '' : `<span class="days-pill ${n<0?'days-over':(n<=30?'days-pending':'')}">${n}</span>`;
+    const pill  = n => n==null ? '' : `<span class="days-pill ${n<0?'days-over':(n<=30?'days-pending':'')}">${n}</span>`;
+
     function setActionsEnabled(on){ actionBtns.forEach(b=>b.disabled=!on); }
     function clearSelection(){ grid.querySelectorAll('tbody tr').forEach(tr=>tr.classList.remove('row-selected')); setActionsEnabled(false); }
+    function selectRow(idx){
+      clearSelection();
+      const tr = grid.querySelector(`tbody tr[data-idx="${idx}"]`);
+      tr?.classList.add('row-selected');
+      setActionsEnabled(true);
+    }
 
     let currentVesselId = null;
     let rows = [];      // final visible rows (with placeholders)
-    let rawCrew = [];   // fetched crew docs (existing onboard entries)
+    let rawCrew = [];   // fetched crew docs
 
     function render(){
       tbody.innerHTML = '';
       if(!rows.length){
-        tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-4">No crew records</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-4">No crew records</td></tr>';
         return;
       }
       rows
@@ -145,8 +160,9 @@
           tr.dataset.idx = idx;
           tr.innerHTML = `
             <td class="sticky-left nowrap">${r.rank||''}</td>
-            <td class="sticky-left">
-              ${r.lastName ? `<span class="link">${(r.lastName||'').toUpperCase()}, ${r.firstName||''}</span>` : ''}
+            <td class="sticky-left-2">${r.lastName ? `<span class="nowrap">${(r.lastName||'').toUpperCase()}, ${r.firstName||''}</span>` : ''}</td>
+            <td class="num">
+              <button class="btn btn-outline-primary btn-xxs" data-activate="${idx}" title="Activate row">Activate</button>
             </td>
             <td class="num">${dstr(r.contractStart)||''}</td>
             <td class="num">${dstr(r.signOn)||''}</td>
@@ -161,19 +177,28 @@
             <td class="num">${r.grade||''}</td>
             <td class="num">${r.cert||''}</td>
           `;
-          tr.addEventListener('click', ()=>{ clearSelection(); tr.classList.add('row-selected'); setActionsEnabled(true); });
+          // satır tıklamayla da seçilebilir
+          tr.addEventListener('click', (e)=>{ if(!(e.target && e.target.getAttribute('data-activate')!=null)) selectRow(idx); });
           tbody.appendChild(tr);
         });
+
+      // Activate butonları
+      tbody.querySelectorAll('[data-activate]').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          const i = +btn.getAttribute('data-activate');
+          selectRow(i);
+        });
+      });
+
       setActionsEnabled(false);
     }
 
     function buildRowsWithPlaceholders(){
       const counts = rawCrew.reduce((m,r)=> (m[r.rank]=(m[r.rank]||0)+1, m), {});
       rows = [...rawCrew];
-      // Her rank için en az 1 satır ekle
-      RANKS.forEach(rank=>{
-        if(!counts[rank]) rows.push({ rank }); // boş placeholder satır
-      });
+      // Her rank için en az 1 satır
+      RANKS.forEach(rank=>{ if(!counts[rank]) rows.push({ rank }); });
     }
 
     async function loadFleet(uid){
@@ -194,14 +219,12 @@
       });
 
       // İlk gemiyi otomatik seç
-      if (ships[0]) {
-        vesselListEl.querySelector(`[data-id="${ships[0].id}"]`)?.click();
-      }
+      if (ships[0]) vesselListEl.querySelector(`[data-id="${ships[0].id}"]`)?.click();
     }
 
     async function loadCrew(uid, shipId){
       clearSelection();
-      tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-4">Loading…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-4">Loading…</td></tr>';
 
       rawCrew = [];
       const crewSnap = await getDocs(collection(db, `companies/${uid}/ships/${shipId}/crew`));
@@ -220,7 +243,7 @@
       render();
     }
 
-    // Placeholder aksiyonlar (detayları sonra bağlarız)
+    // Placeholder aksiyonlar (iş mantığını sonra bağlarız)
     actionBtns.forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const sel = grid.querySelector('tbody tr.row-selected');
