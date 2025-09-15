@@ -7,39 +7,44 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     :root{
-      --grid-bg:#f6f7fb; --panel-bg:#fff; --panel-shadow:0 8px 24px rgba(0,0,0,.06);
-      --line:#e7e9ef; --head:#f2f4f7;
+      --bg:#f6f7fb; --panel:#fff; --line:#e7e9ef; --head:#f2f4f7; --shadow:0 8px 24px rgba(0,0,0,.06);
+      /* sticky soldaki 3 kolon genişlikleri */
+      --w1: 42px;   /* checkbox */
+      --w2: 180px;  /* rank */
+      --w3: 240px;  /* current personnel */
     }
-    /* Küçük genel font */
-    html,body{font-size:13px; background:var(--grid-bg)}
+    html,body{font-size:12px; background:var(--bg)}
     .layout{display:grid; grid-template-columns:260px 1fr; gap:14px; padding:14px}
-    .panel{background:var(--panel-bg); border-radius:14px; box-shadow:var(--panel-shadow)}
+    .panel{background:var(--panel); border-radius:14px; box-shadow:var(--shadow)}
     .head-title{padding:10px 12px; border-bottom:1px solid var(--line); font-weight:600}
     .vessel-list{padding:10px 0; height:calc(100vh - 120px); overflow:auto}
     .vessel-item{display:block; padding:8px 14px; color:#334; text-decoration:none; border-left:3px solid transparent}
     .vessel-item:hover{background:#f6f8ff}
     .vessel-item.active{background:#eef3ff; border-left-color:#0d6efd; font-weight:600}
+
     .toolbar{padding:8px 10px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:8px}
     .toolbar .btn{white-space:nowrap}
 
     .grid-wrap{padding:8px}
-    .table-grid{width:100%; border-collapse:separate; border-spacing:0; font-size:12px} /* tablo font küçültüldü */
+    .table-grid{width:100%; border-collapse:separate; border-spacing:0; font-size:11px}
     .table-grid th,.table-grid td{border:1px solid var(--line); padding:5px 6px; vertical-align:middle}
-    .table-grid thead th{position:sticky; top:0; background:var(--head); z-index:2}
+    .table-grid thead th{position:sticky; top:0; background:var(--head); z-index:3}
     .table-grid tbody tr:hover{background:#fafcff}
+    .table-grid tbody tr:nth-child(odd){background:#fcfdff}
     .num{text-align:center; white-space:nowrap}
     .nowrap{white-space:nowrap}
-    .sticky-left{position:sticky; left:0; background:#fff; z-index:1}
-    .sticky-left-2{position:sticky; left:150px; background:#fff; z-index:1} /* 2. sabit kolon (Current Personnel) */
-    .row-selected{outline:2px solid #0d6efd; outline-offset:-2px}
 
-    .days-pill{display:inline-block; padding:.15rem .4rem; border-radius:9999px; font-size:11px; background:#d1e7dd}
+    /* sticky sol kolonlar */
+    .sticky-1{position:sticky; left:0; background:#fff; z-index:2; min-width:var(--w1); max-width:var(--w1)}
+    .sticky-2{position:sticky; left:var(--w1); background:#fff; z-index:2; min-width:var(--w2)}
+    .sticky-3{position:sticky; left:calc(var(--w1) + var(--w2)); background:#fff; z-index:2; min-width:var(--w3)}
+
+    .row-selected{outline:2px solid #0d6efd; outline-offset:-2px}
+    .days-pill{display:inline-block; padding:.15rem .4rem; border-radius:9999px; font-size:10.5px; background:#d1e7dd}
     .days-pending{background:#fff3cd}
     .days-over{background:#f8d7da}
-
-    /* Çok küçük buton */
-    .btn-xxs{padding:.1rem .35rem; font-size:11px; line-height:1; border-radius:6px}
     .small-note{padding:8px 12px; border-top:1px dashed var(--line); color:#6c757d; font-size:.86rem}
+    .chk{width:16px; height:16px}
   </style>
 </head>
 <body>
@@ -47,7 +52,7 @@
   <script type="module" src="/shared/navbar-inject.js"></script>
 
   <div class="layout">
-    <!-- LEFT: VESSELS -->
+    <!-- LEFT: FLEET -->
     <aside class="panel">
       <div class="head-title">Fleet</div>
       <div class="vessel-list" id="vesselList"><div class="p-3 text-muted">Loading…</div></div>
@@ -73,25 +78,23 @@
           <table class="table-grid" id="grid">
             <thead>
               <tr>
-                <th class="sticky-left">Rank</th>
-                <th class="sticky-left-2">Current Personnel</th>
-                <th style="width:70px;">Act</th>
-                <th>Ctr. Start</th>
-                <th>SignOn</th>
-                <th>Due Sign Off</th>
-                <th>Vsl Sign Off</th>
-                <th>Days Left</th>
+                <th class="sticky-1 text-center" style="width:var(--w1)"><input id="selAll" class="form-check-input chk" type="checkbox"/></th>
+                <th class="sticky-2">Rank</th>
+                <th class="sticky-3">Current Personnel</th>
+                <th class="num">Ctr. Start</th>
+                <th class="num">SignOn</th>
+                <th class="num">Due Sign Off</th>
+                <th class="num">Vsl Sign Off</th>
+                <th class="num">Days Left</th>
                 <th>Reliever</th>
-                <th>Plan Date</th>
+                <th class="num">Plan Date</th>
                 <th>Comment</th>
                 <th>CV</th>
                 <th>Status</th>
-                <th>Grade</th>
-                <th>Cert.</th>
               </tr>
             </thead>
             <tbody id="tbody">
-              <tr><td colspan="15" class="text-center text-muted py-4">Select a vessel</td></tr>
+              <tr><td colspan="13" class="text-center text-muted py-4">Select a vessel</td></tr>
             </tbody>
           </table>
         </div>
@@ -109,11 +112,12 @@
     const vesselListEl = document.getElementById('vesselList');
     const tbody  = document.getElementById('tbody');
     const grid   = document.getElementById('grid');
+    const selAll = document.getElementById('selAll');
 
     const actionBtns = ['btnAssign','btnRelease','btnChange','btnPlan','btnContract','btnReliefReq','btnSwapPlan','btnSwapOB','btnCancel']
       .map(id => document.getElementById(id));
 
-    /* ===== Rank master list (ekrandaki takıma göre genişletildi) ===== */
+    /* ===== Rank master list (görüntüdeki yapıya uygun) ===== */
     const RANKS = [
       'Master','Trainee Master',
       'Chief Officer','Trainee Chief Officer','2nd Officer','3rd Officer','4th Officer','Junior Officer','Deck Cadet',
@@ -135,12 +139,13 @@
     const pill  = n => n==null ? '' : `<span class="days-pill ${n<0?'days-over':(n<=30?'days-pending':'')}">${n}</span>`;
 
     function setActionsEnabled(on){ actionBtns.forEach(b=>b.disabled=!on); }
-    function clearSelection(){ grid.querySelectorAll('tbody tr').forEach(tr=>tr.classList.remove('row-selected')); setActionsEnabled(false); }
-    function selectRow(idx){
-      clearSelection();
-      const tr = grid.querySelector(`tbody tr[data-idx="${idx}"]`);
-      tr?.classList.add('row-selected');
-      setActionsEnabled(true);
+    function anyChecked(){ return grid.querySelector('tbody input[type="checkbox"]:checked'); }
+    function updateActionState(){ setActionsEnabled(!!anyChecked()); }
+    function clearSelection(){
+      grid.querySelectorAll('tbody input[type="checkbox"]').forEach(chk=>chk.checked=false);
+      grid.querySelectorAll('tbody tr').forEach(tr=>tr.classList.remove('row-selected'));
+      selAll.checked = false;
+      updateActionState();
     }
 
     let currentVesselId = null;
@@ -150,7 +155,7 @@
     function render(){
       tbody.innerHTML = '';
       if(!rows.length){
-        tbody.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-4">No crew records</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">No crew records</td></tr>';
         return;
       }
       rows
@@ -159,11 +164,9 @@
           const tr = document.createElement('tr');
           tr.dataset.idx = idx;
           tr.innerHTML = `
-            <td class="sticky-left nowrap">${r.rank||''}</td>
-            <td class="sticky-left-2">${r.lastName ? `<span class="nowrap">${(r.lastName||'').toUpperCase()}, ${r.firstName||''}</span>` : ''}</td>
-            <td class="num">
-              <button class="btn btn-outline-primary btn-xxs" data-activate="${idx}" title="Activate row">Activate</button>
-            </td>
+            <td class="sticky-1 text-center"><input class="form-check-input chk" type="checkbox" data-idx="${idx}"/></td>
+            <td class="sticky-2 nowrap">${r.rank||''}</td>
+            <td class="sticky-3">${r.lastName ? `<span class="nowrap">${(r.lastName||'').toUpperCase()}, ${r.firstName||''}</span>` : ''}</td>
             <td class="num">${dstr(r.contractStart)||''}</td>
             <td class="num">${dstr(r.signOn)||''}</td>
             <td class="num">${dstr(r.dueSignOff)||''}</td>
@@ -174,24 +177,33 @@
             <td>${r.comment||''}</td>
             <td>${r.cvRef||''}</td>
             <td>${r.status||''}</td>
-            <td class="num">${r.grade||''}</td>
-            <td class="num">${r.cert||''}</td>
           `;
-          // satır tıklamayla da seçilebilir
-          tr.addEventListener('click', (e)=>{ if(!(e.target && e.target.getAttribute('data-activate')!=null)) selectRow(idx); });
           tbody.appendChild(tr);
         });
 
-      // Activate butonları
-      tbody.querySelectorAll('[data-activate]').forEach(btn=>{
-        btn.addEventListener('click', (e)=>{
-          e.stopPropagation();
-          const i = +btn.getAttribute('data-activate');
-          selectRow(i);
+      // checkbox davranışı
+      tbody.querySelectorAll('input[type="checkbox"]').forEach(chk=>{
+        chk.addEventListener('change', ()=>{
+          const tr = chk.closest('tr');
+          tr.classList.toggle('row-selected', chk.checked);
+          updateActionState();
+          // selAll sync
+          const list = [...tbody.querySelectorAll('input[type="checkbox"]')];
+          selAll.checked = list.length && list.every(c=>c.checked);
         });
       });
 
-      setActionsEnabled(false);
+      // satıra tıklayınca checkbox toggle
+      tbody.querySelectorAll('tr').forEach(tr=>{
+        tr.addEventListener('click', (e)=>{
+          if(e.target instanceof HTMLInputElement) return;
+          const cb = tr.querySelector('input[type="checkbox"]');
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event('change'));
+        });
+      });
+
+      updateActionState();
     }
 
     function buildRowsWithPlaceholders(){
@@ -218,13 +230,13 @@
         });
       });
 
-      // İlk gemiyi otomatik seç
+      // ilk gemiyi otomatik seç
       if (ships[0]) vesselListEl.querySelector(`[data-id="${ships[0].id}"]`)?.click();
     }
 
     async function loadCrew(uid, shipId){
       clearSelection();
-      tbody.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-4">Loading…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">Loading…</td></tr>';
 
       rawCrew = [];
       const crewSnap = await getDocs(collection(db, `companies/${uid}/ships/${shipId}/crew`));
@@ -235,7 +247,7 @@
           firstName: d.firstName, lastName: d.lastName,
           contractStart: d.contractStart, signOn: d.signOn, dueSignOff: d.dueSignOff, vslSignOff: d.vslSignOff,
           reliever: d.reliever, planDate: d.planDate, comment: d.comment,
-          cvRef: d.cvRef, status: d.status, grade: d.grade, cert: d.cert
+          cvRef: d.cvRef, status: d.status
         });
       });
 
@@ -243,13 +255,20 @@
       render();
     }
 
+    // Header "select all"
+    selAll.addEventListener('change', ()=>{
+      const state = selAll.checked;
+      grid.querySelectorAll('tbody input[type="checkbox"]').forEach(chk=>{
+        chk.checked = state;
+        chk.dispatchEvent(new Event('change'));
+      });
+    });
+
     // Placeholder aksiyonlar (iş mantığını sonra bağlarız)
-    actionBtns.forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const sel = grid.querySelector('tbody tr.row-selected');
-        if(!sel) return;
-        const r = rows[+sel.dataset.idx] || {};
-        alert(`${btn.textContent} → ${r.rank||''} ${r.lastName||''} ${r.firstName||''}`);
+    ['btnAssign','btnRelease','btnChange','btnPlan','btnContract','btnReliefReq','btnSwapPlan','btnSwapOB','btnCancel'].forEach(id=>{
+      document.getElementById(id).addEventListener('click', ()=>{
+        const selected = [...grid.querySelectorAll('tbody input[type="checkbox"]:checked')].map(c=>rows[+c.dataset.idx]);
+        alert(`${document.getElementById(id).textContent} → ${selected.length} row(s) selected`);
       });
     });
 
