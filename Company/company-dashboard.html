@@ -11,10 +11,8 @@
     .empty-state{ color:#6c757d; font-size:.9rem; }
     .clickable { cursor:pointer; }
     .notes-cell{ max-width: 420px; }
-    .truncate-1{
-      overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
-      display:block;
-    }
+    .truncate-1{ overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display:block; }
+    .ship-actions .btn{ padding:.15rem .35rem; font-size:.75rem; }
   </style>
 </head>
 <body class="bg-light p-3">
@@ -44,7 +42,7 @@
             <th>Status</th>
             <th>Posted</th>
             <th class="notes-cell">Notes</th>
-            <th style="width:90px">Actions</th>
+            <th style="width:110px">Actions</th>
           </tr>
         </thead>
         <tbody id="openJobs">
@@ -85,7 +83,7 @@
   import { auth, db } from '/firebase-config.js';
   import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
   import {
-    collection, getDocs
+    collection, getDocs, doc, updateDoc
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
   // Utils
@@ -116,7 +114,7 @@
     return '';
   }
 
-  // Match applications to a job (handles several common schema variants)
+  // Match applications to a job
   function matchApplicationToJob(app, job){
     const jid = (job.id||'').toString();
     const byId = (app.jobId||'').toString() === jid || (app.jobDocId||'').toString() === jid;
@@ -125,7 +123,7 @@
     return byId || byRef;
   }
 
-  // Render applications modal
+  // Applications modal
   function openAppsModal(job, apps){
     const listEl = document.getElementById('appsList');
     const metaEl = document.getElementById('appsJobMeta');
@@ -242,9 +240,21 @@
       const apps = appsByJob[j.id] || [];
       const notesPreview = text(j.notes, '').slice(0, 140) + (j.notes && j.notes.length > 140 ? '…' : '');
       const tr = document.createElement('tr');
+
+      // Build ship cell with Edit/Remove
+      const shipHtml = `
+        <div class="d-flex align-items-center justify-content-between">
+          <span>${text(j.ship,'-')}</span>
+          <span class="ship-actions d-flex gap-1 ms-2">
+            ${j.shipId ? `<a class="btn btn-outline-secondary" href="/Company/company-ship-list.html?focus=${encodeURIComponent(j.shipId)}" title="Edit ship">Edit</a>` : ''}
+            ${j.shipId || j.ship!=='-' ? `<button class="btn btn-outline-danger" data-remove-ship="${j.id}" title="Remove ship">Remove</button>` : ''}
+          </span>
+        </div>
+      `;
+
       tr.innerHTML = `
         <td>${text(j.title)}</td>
-        <td>${text(j.ship,'-')}</td>
+        <td>${shipHtml}</td>
         <td>${text(j.vesselType,'-')}</td>
         <td>${fmtDate(j.joiningDate)}</td>
         <td>${text(j.duration,'-')}</td>
@@ -253,19 +263,40 @@
         <td>${badgeForStatus(j.status)}</td>
         <td>${fmtDate(j.createdAt)}</td>
         <td class="notes-cell">
-          <span class="truncate-1" data-bs-toggle="tooltip" data-bs-title="${(j.notes||'').replace(/"/g,'&quot;')}">${notesPreview || '-'}</span>
+          <span class="truncate-1 ${notesPreview ? 'notes-tip' : ''}" ${notesPreview ? `data-bs-toggle="tooltip" data-bs-title="${(j.notes||'').replace(/"/g,'&quot;')}"` : ''}>${notesPreview || '-'}</span>
         </td>
         <td class="text-nowrap">
           <a class="btn btn-sm btn-outline-primary" href="/Company/create-job.html?edit=${encodeURIComponent(j.id)}">Edit</a>
         </td>
       `;
+
+      // Applications badge
       tr.querySelector('[data-job-id]').addEventListener('click', ()=> openAppsModal(j, apps));
+
+      // Remove ship action
+      const removeBtn = tr.querySelector('[data-remove-ship]');
+      if (removeBtn){
+        removeBtn.addEventListener('click', async ()=>{
+          if(!confirm('Remove the ship from this job post?')) return;
+          try{
+            await updateDoc(doc(db, `companies/${auth.currentUser.uid}/jobPosts/${j.id}`), {
+              ship: null, shipName: null, shipId: null
+            });
+            // update UI
+            removeBtn.closest('td').querySelector('span').textContent = '-';
+            removeBtn.parentElement.remove(); // remove the little buttons group
+          }catch(e){
+            alert('Could not remove ship: ' + (e?.message||e));
+          }
+        });
+      }
+
       tbody.appendChild(tr);
     });
 
-    // Bootstrap tooltips for Notes previews
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+    // ✅ Tooltip init ONLY for our notes tips (prevents null-title error)
+    const tips = document.querySelectorAll('.notes-tip');
+    tips.forEach(el => new bootstrap.Tooltip(el));
   });
 </script>
 
