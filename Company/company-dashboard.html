@@ -7,9 +7,14 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="/style.css"/>
   <style>
-    .table-sm td, .table-sm th { padding:.35rem .5rem; font-size:.85rem; }
+    .table-sm td, .table-sm th { padding:.35rem .5rem; font-size:.85rem; vertical-align: middle; }
     .empty-state{ color:#6c757d; font-size:.9rem; }
     .clickable { cursor:pointer; }
+    .notes-cell{ max-width: 420px; }
+    .truncate-1{
+      overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+      display:block;
+    }
   </style>
 </head>
 <body class="bg-light p-3">
@@ -31,15 +36,19 @@
           <tr>
             <th>Position</th>
             <th>Ship</th>
+            <th>Vessel Type</th>
+            <th>Joining Date</th>
+            <th>Duration</th>
             <th>Location</th>
             <th>Applications</th>
             <th>Status</th>
             <th>Posted</th>
+            <th class="notes-cell">Notes</th>
             <th style="width:90px">Actions</th>
           </tr>
         </thead>
         <tbody id="openJobs">
-          <tr><td colspan="7" class="empty-state text-center">Loading…</td></tr>
+          <tr><td colspan="11" class="empty-state text-center">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -89,17 +98,25 @@
     }catch(e){}
     return null;
   }
-  function fmtDate(val){
+  function fmtDate(val, withTime=false){
     const d = tsToDate(val); if(!d || isNaN(d)) return '-';
-    return d.toLocaleDateString(undefined, {year:'numeric', month:'short', day:'2-digit'});
+    return d.toLocaleDateString(undefined, {year:'numeric', month:'short', day:'2-digit'}) +
+           (withTime ? ' ' + d.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'}) : '');
   }
   function badgeForStatus(s){
     const map = { open:'success', active:'primary', closed:'secondary', draft:'warning' };
     const key = (s||'').toLowerCase(); const cls = map[key] || 'secondary';
     return `<span class="badge text-bg-${cls}">${s||'—'}</span>`;
   }
+  function text(val, fallback='-'){
+    return (val===0 ? '0' : (val||'')).toString().trim() || fallback;
+  }
+  function first(...vals){
+    for (const v of vals){ if (v !== undefined && v !== null && v !== '') return v; }
+    return '';
+  }
 
-  // Flexible matcher: try to associate apps with a job by several common fields
+  // Match applications to a job (handles several common schema variants)
   function matchApplicationToJob(app, job){
     const jid = (job.id||'').toString();
     const byId = (app.jobId||'').toString() === jid || (app.jobDocId||'').toString() === jid;
@@ -108,7 +125,7 @@
     return byId || byRef;
   }
 
-  // Render modal
+  // Render applications modal
   function openAppsModal(job, apps){
     const listEl = document.getElementById('appsList');
     const metaEl = document.getElementById('appsJobMeta');
@@ -126,9 +143,9 @@
       apps.sort((a,b)=> (tsToDate(b.createdAt)?.getTime()||0) - (tsToDate(a.createdAt)?.getTime()||0));
       apps.forEach(a=>{
         const item = document.createElement('li');
-        const name = a.applicantName || a.name || a.fullName || a.displayName || a.email || 'Unknown applicant';
-        const rank = a.rank || a.position || '';
-        const when = fmtDate(a.createdAt || a.appliedAt);
+        const name = first(a.applicantName, a.name, a.fullName, a.displayName, a.email, 'Unknown applicant');
+        const rank = first(a.rank, a.position, '');
+        const when = fmtDate(first(a.createdAt, a.appliedAt));
         item.className = 'list-group-item d-flex justify-content-between align-items-center';
         item.innerHTML = `
           <div>
@@ -149,21 +166,21 @@
     if(!user){ location.href='/index.html'; return; }
     const uid = user.uid;
 
-    // Pull jobs, ships, applications in parallel
+    // Pull collections in parallel
     const [jobsSnap, shipsSnap, appsSnap] = await Promise.all([
       getDocs(collection(db, `companies/${uid}/jobPosts`)),
       getDocs(collection(db, `companies/${uid}/ships`)),
       getDocs(collection(db, `companies/${uid}/applications`))
     ]);
 
-    // Build ship map: id->name and also allow name directly if job already has it
+    // Map shipId -> shipName
     const shipMap = {};
     shipsSnap.forEach(d=>{
-      const data = d.data()||{};
-      shipMap[d.id] = data.name || data.shipName || data.vesselName || '';
+      const s = d.data()||{};
+      shipMap[d.id] = first(s.name, s.shipName, s.vesselName, '');
     });
 
-    // Collect all applications
+    // Collect applications
     const allApps = [];
     appsSnap.forEach(d=>{
       const a = d.data()||{};
@@ -172,75 +189,83 @@
         jobId: a.jobId,
         jobDocId: a.jobDocId,
         jobRefPath: a.jobRef?.path || a.jobPath || '',
-        applicantName: a.applicantName || a.name || a.fullName,
-        rank: a.rank || a.position,
+        applicantName: first(a.applicantName, a.name, a.fullName),
+        rank: first(a.rank, a.position),
         email: a.email,
-        createdAt: a.createdAt || a.appliedAt
+        createdAt: first(a.createdAt, a.appliedAt)
       });
     });
 
-    // Prepare jobs
+    // Prepare jobs with all fields
     const jobs = [];
     jobsSnap.forEach(d=>{
       const x = d.data()||{};
-      // Resolve ship name: direct field or by shipId/shipDocId
-      let shipName = x.ship || x.shipName || '';
-      const shipId = x.shipId || x.shipDocId || x.shipDocID || '';
+      let shipName = first(x.ship, x.shipName);
+      const shipId = first(x.shipId, x.shipDocId, x.shipDocID);
       if(!shipName && shipId && shipMap[shipId]) shipName = shipMap[shipId];
 
       jobs.push({
         id: d.id,
-        title: x.title || x.position || 'Untitled',
+        title: first(x.title, x.position, 'Untitled'),
         ship: shipName || '-',
         shipId: shipId || '',
-        location: x.location || x.port || '',
+        vesselType: first(x.vesselType, x.type, x.vessel_category, ''),
+        joiningDate: first(x.joiningDate, x.onboardDate, x.embarkationDate),
+        duration: first(x.duration, x.contractDuration, ''),
+        location: first(x.location, x.port, ''),
+        notes: first(x.notes, x.description, x.requirements, ''),
         status: (x.status || '').toString(),
-        createdAt: x.createdAt || x.created_on || x.createdAtTs
+        createdAt: first(x.createdAt, x.created_on, x.createdAtTs)
       });
     });
 
-    // Filter to open/active and sort newest first
+    // Filter open/active and sort newest first
     const openJobs = jobs
       .filter(j => ['open','active'].includes((j.status||'').toLowerCase()))
       .sort((a,b)=>(tsToDate(b.createdAt)?.getTime()||0)-(tsToDate(a.createdAt)?.getTime()||0));
 
-    // Precompute application counts for each job
-    const appsByJobId = {};
+    // Precompute applications per job
+    const appsByJob = {};
     openJobs.forEach(j=>{
-      const list = allApps.filter(a=>matchApplicationToJob(a, j));
-      appsByJobId[j.id] = list;
+      appsByJob[j.id] = allApps.filter(a=>matchApplicationToJob(a, j));
     });
 
-    // Render table
+    // Render
     const tbody = document.getElementById('openJobs');
     tbody.innerHTML = '';
     if(openJobs.length === 0){
-      tbody.innerHTML = `<tr><td colspan="7" class="empty-state text-center">No open job posts.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="11" class="empty-state text-center">No open job posts.</td></tr>`;
       return;
     }
 
     openJobs.forEach(j=>{
-      const apps = appsByJobId[j.id] || [];
+      const apps = appsByJob[j.id] || [];
+      const notesPreview = text(j.notes, '').slice(0, 140) + (j.notes && j.notes.length > 140 ? '…' : '');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${j.title}</td>
-        <td>${j.ship||'-'}</td>
-        <td>${j.location||'-'}</td>
-        <td>
-          <span class="badge rounded-pill text-bg-info clickable" data-job-id="${j.id}">${apps.length}</span>
-        </td>
+        <td>${text(j.title)}</td>
+        <td>${text(j.ship,'-')}</td>
+        <td>${text(j.vesselType,'-')}</td>
+        <td>${fmtDate(j.joiningDate)}</td>
+        <td>${text(j.duration,'-')}</td>
+        <td>${text(j.location,'-')}</td>
+        <td><span class="badge rounded-pill text-bg-info clickable" data-job-id="${j.id}">${apps.length}</span></td>
         <td>${badgeForStatus(j.status)}</td>
         <td>${fmtDate(j.createdAt)}</td>
+        <td class="notes-cell">
+          <span class="truncate-1" data-bs-toggle="tooltip" data-bs-title="${(j.notes||'').replace(/"/g,'&quot;')}">${notesPreview || '-'}</span>
+        </td>
         <td class="text-nowrap">
           <a class="btn btn-sm btn-outline-primary" href="/Company/create-job.html?edit=${encodeURIComponent(j.id)}">Edit</a>
         </td>
       `;
-      // click handler for applications badge
-      tr.querySelector('[data-job-id]').addEventListener('click', ()=>{
-        openAppsModal(j, apps);
-      });
+      tr.querySelector('[data-job-id]').addEventListener('click', ()=> openAppsModal(j, apps));
       tbody.appendChild(tr);
     });
+
+    // Bootstrap tooltips for Notes previews
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
   });
 </script>
 
