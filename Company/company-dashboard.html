@@ -8,16 +8,18 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
   <link rel="stylesheet" href="/style.css"/>
   <style>
+    .container-xxl{max-width:1480px;}
     .table-sm td, .table-sm th { padding:.35rem .5rem; font-size:.85rem; vertical-align:middle; }
     .empty-state{ color:#6c757d; font-size:.9rem; }
     .clickable{ cursor:pointer; }
-    .notes-cell{ max-width:420px; }
+    .notes-cell{ max-width:520px; }
     .truncate-1{ overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display:block; }
     .icon-btn{ padding:.25rem .4rem; font-size:.95rem; line-height:1; }
+    .w-180{ max-width:180px; }
     .w-160{ max-width:160px; }
     .w-140{ max-width:140px; }
     .w-120{ max-width:120px; }
-    .w-100{ max-width:100px; }
+    .w-110{ max-width:110px; }
   </style>
 </head>
 <body class="bg-light p-3">
@@ -25,7 +27,7 @@
 <div id="navbar-host"></div>
 <script type="module" src="/shared/navbar-inject.js"></script>
 
-<div class="container py-4">
+<div class="container-xxl py-4">
   <h3 class="mb-4">Open Job Posts</h3>
 
   <div class="card shadow-sm">
@@ -93,18 +95,43 @@
     collection, getDocs, doc, updateDoc, addDoc, deleteDoc, serverTimestamp
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-  // ---------- Helpers ----------
-  const RANKS = [
-    "MASTER","CHIEF OFFICER","2ND OFFICER","3RD OFFICER",
-    "CHIEF ENGINEER","2ND ENGINEER","3RD ENGINEER","ETO",
-    "AB","OILER","COOK"
-  ];
-  const VESSEL_TYPES = [
-    "Oil - Products Tanker","Oil - Crude/Oil Products Tanker",
-    "Chemical Tanker","LNG Carrier","Bulk Carrier","Container Ship"
-  ];
+  // ---------- Option files (external) ----------
+  const OPTION_FILES = {
+    ranks: '/options/ranks.html',
+    vesselTypes: '/options/vessel-types.html',
+    countries: '/options/countries.html'
+  };
+
+  // Fallbacks (if option files not found)
+  const FALLBACK = {
+    ranks: ["MASTER","CHIEF OFFICER","2ND OFFICER","3RD OFFICER","CHIEF ENGINEER","2ND ENGINEER","3RD ENGINEER","ETO","AB","OILER","COOK"],
+    vesselTypes: ["Oil - Products Tanker","Oil - Crude/Oil Products Tanker","Chemical Tanker","LNG Carrier","Bulk Carrier","Container Ship"],
+    countries: ["Singapore","UAE","Turkey","Greece","Aruba","Panama","Malta","Italy","Spain","UK","USA"]
+  };
   const STATUS_OPTS = ["open","active","closed","draft"];
 
+  async function loadOptionsIntoDatalist(datalistId, url, fallbackArr){
+    let html = '';
+    try{
+      const res = await fetch(url, {cache:'no-store'});
+      if(res.ok){
+        html = (await res.text()).trim();
+      }
+    }catch(_){}
+    // If file didn’t load or empty, use fallback list
+    if(!html){
+      html = fallbackArr.map(v=>`<option value="${v}"></option>`).join('');
+    }
+    let el = document.getElementById(datalistId);
+    if(!el){
+      el = document.createElement('datalist');
+      el.id = datalistId;
+      document.body.appendChild(el);
+    }
+    el.innerHTML = html;
+  }
+
+  // ---------- Helpers ----------
   function tsToDate(val){
     try{
       if(!val) return null;
@@ -191,12 +218,11 @@
 
     if(!list.length){
       tbody.innerHTML = `<tr><td colspan="11" class="empty-state text-center">No open job posts.</td></tr>`;
-      return;
+    } else {
+      list.forEach(j => tbody.appendChild(renderRow(j)));
+      // init tooltips only for notes (prevents null-title errors)
+      document.querySelectorAll('.notes-tip').forEach(el=> new bootstrap.Tooltip(el));
     }
-    list.forEach(j => tbody.appendChild(renderRow(j)));
-
-    // init tooltips only for notes
-    document.querySelectorAll('.notes-tip').forEach(el=> new bootstrap.Tooltip(el));
   }
 
   function renderRow(job){
@@ -205,26 +231,20 @@
     if(job._edit){
       // --- Edit mode row ---
       const shipOpts = ['<option value="">—</option>', ...SHIPS.map(s=>`<option value="${s.id}">${s.name}</option>`)].join('');
-      const rankOpts = RANKS.map(r=>`<option value="${r}">`).join('');
-      const vtypeOpts = VESSEL_TYPES.map(v=>`<option value="${v}">`).join('');
       const statusOpts = STATUS_OPTS.map(s=>`<option ${s===job.status?'selected':''} value="${s}">${s}</option>`).join('');
 
       tr.innerHTML = `
-        <td class="w-160"><input class="form-control form-control-sm" list="rankList" value="${text(job.title,'')}" placeholder="Rank"/></td>
-        <td class="w-160">
-          <select class="form-select form-select-sm" data-field="shipId">
-            ${shipOpts}
-          </select>
+        <td class="w-180"><input class="form-control form-control-sm" list="rankList" value="${text(job.title,'')}" placeholder="Rank / Position"/></td>
+        <td class="w-180">
+          <select class="form-select form-select-sm" data-field="shipId">${shipOpts}</select>
         </td>
-        <td class="w-160"><input class="form-control form-control-sm" list="vtypeList" value="${text(job.vesselType,'')}" placeholder="Vessel Type"/></td>
+        <td class="w-180"><input class="form-control form-control-sm" list="vtypeList" value="${text(job.vesselType,'')}" placeholder="Vessel Type"/></td>
         <td class="w-140"><input type="date" class="form-control form-control-sm" value="${toInputDate(job.joiningDate)}"/></td>
-        <td class="w-100"><input class="form-control form-control-sm" value="${text(job.duration,'')}" placeholder="e.g. 6 months"/></td>
-        <td class="w-160"><input class="form-control form-control-sm" value="${text(job.location,'')}" placeholder="Country/Port"/></td>
+        <td class="w-110"><input class="form-control form-control-sm" value="${text(job.duration,'')}" placeholder="e.g. 6 months"/></td>
+        <td class="w-180"><input class="form-control form-control-sm" list="countryList" value="${text(job.location,'')}" placeholder="Country/Port"/></td>
         <td>—</td>
         <td class="w-120">
-          <select class="form-select form-select-sm" data-field="status">
-            ${statusOpts}
-          </select>
+          <select class="form-select form-select-sm" data-field="status">${statusOpts}</select>
         </td>
         <td>${fmtDate(job.createdAt)}</td>
         <td class="notes-cell"><input class="form-control form-control-sm" value="${(job.notes||'').replace(/"/g,'&quot;')}" placeholder="Notes"/></td>
@@ -235,12 +255,7 @@
       `;
 
       // set current ship selection
-      const sel = tr.querySelector('select[data-field="shipId"]');
-      sel.value = job.shipId || '';
-
-      // datalists
-      ensureDatalist('rankList', rankOpts);
-      ensureDatalist('vtypeList', vtypeOpts);
+      tr.querySelector('select[data-field="shipId"]').value = job.shipId || '';
 
       // listeners save/cancel
       tr.querySelector(`[data-save="${job.id}"]`).addEventListener('click', ()=> saveRow(job, tr));
@@ -249,7 +264,7 @@
     }else{
       // --- View mode row ---
       const apps = appsByJobId(job.id);
-      const notesPreview = text(job.notes,'').slice(0,140) + (job.notes && job.notes.length>140 ? '…':'');
+      const notesPreview = text(job.notes,'').slice(0,160) + (job.notes && j.notes?.length>160 ? '…':''); // guards below
       tr.innerHTML = `
         <td>${text(job.title)}</td>
         <td>${text(job.ship,'-')}</td>
@@ -260,7 +275,7 @@
         <td><span class="badge rounded-pill text-bg-info clickable" data-apps="${job.id}">${apps.length}</span></td>
         <td>${badgeForStatus(job.status)}</td>
         <td>${fmtDate(job.createdAt)}</td>
-        <td class="notes-cell"><span class="truncate-1 ${job.notes?'notes-tip':''}" ${job.notes?`data-bs-toggle="tooltip" data-bs-title="${(job.notes||'').replace(/"/g,'&quot;')}"`:''}>${notesPreview || '-'}</span></td>
+        <td class="notes-cell"><span class="truncate-1 ${job.notes?'notes-tip':''}" ${job.notes?`data-bs-toggle="tooltip" data-bs-title="${(job.notes||'').replace(/"/g,'&quot;')}"`:''}>${(job.notes?job.notes:'' ).slice(0,160) || '-'}</span></td>
         <td class="text-nowrap">
           <button class="btn btn-outline-primary btn-sm icon-btn me-2" data-edit="${job.id}" title="Edit"><i class="bi bi-pencil"></i></button>
           <button class="btn btn-outline-danger btn-sm icon-btn" data-remove="${job.id}" title="Remove"><i class="bi bi-x-lg"></i></button>
@@ -274,28 +289,19 @@
     return tr;
   }
 
-  function ensureDatalist(id, optionsHtml){
-    if(!document.getElementById(id)){
-      const dl = document.createElement('datalist');
-      dl.id = id;
-      dl.innerHTML = optionsHtml;
-      document.body.appendChild(dl);
-    }
-  }
-
   // ---------- CRUD ----------
   async function saveRow(job, tr){
-    const inputs = tr.querySelectorAll('td');
-    const title = inputs[0].querySelector('input').value.trim();
-    const shipSel = inputs[1].querySelector('select');
+    const cells = tr.querySelectorAll('td');
+    const title = cells[0].querySelector('input').value.trim();
+    const shipSel = cells[1].querySelector('select');
     const shipId = shipSel.value || null;
     const shipName = shipId ? (SHIPS.find(s=>s.id===shipId)?.name || '') : '';
-    const vesselType = inputs[2].querySelector('input').value.trim();
-    const joiningDate = fromInputDate(inputs[3].querySelector('input').value);
-    const duration = inputs[4].querySelector('input').value.trim();
-    const location = inputs[5].querySelector('input').value.trim();
-    const status = inputs[7].querySelector('select').value;
-    const notes = inputs[9].querySelector('input').value.trim();
+    const vesselType = cells[2].querySelector('input').value.trim();
+    const joiningDate = fromInputDate(cells[3].querySelector('input').value);
+    const duration = cells[4].querySelector('input').value.trim();
+    const location = cells[5].querySelector('input').value.trim();
+    const status = cells[7].querySelector('select').value;
+    const notes = cells[9].querySelector('input').value.trim();
 
     const payload = {
       title, position: title,
@@ -309,7 +315,6 @@
 
     try{
       if(job._isNew){
-        // create
         const ref = await addDoc(collection(db, `companies/${auth.currentUser.uid}/jobPosts`), {
           ...payload,
           createdAt: serverTimestamp()
@@ -320,7 +325,6 @@
       }else{
         await updateDoc(doc(db, `companies/${auth.currentUser.uid}/jobPosts/${job.id}`), payload);
       }
-      // update local
       Object.assign(job, payload, { ship: shipName || '-', _edit:false });
       render();
     }catch(e){
@@ -330,7 +334,6 @@
 
   function cancelEdit(job){
     if(job._isNew){
-      // drop the row
       JOBS = JOBS.filter(x=>x!==job);
     }else{
       job._edit=false;
@@ -353,6 +356,13 @@
   onAuthStateChanged(auth, async user=>{
     if(!user){ location.href='/index.html'; return; }
     const uid = user.uid;
+
+    // Load external option lists (datalists)
+    await Promise.all([
+      loadOptionsIntoDatalist('rankList', OPTION_FILES.ranks, FALLBACK.ranks),
+      loadOptionsIntoDatalist('vtypeList', OPTION_FILES.vesselTypes, FALLBACK.vesselTypes),
+      loadOptionsIntoDatalist('countryList', OPTION_FILES.countries, FALLBACK.countries),
+    ]);
 
     const [jobsSnap, shipsSnap, appsSnap] = await Promise.all([
       getDocs(collection(db, `companies/${uid}/jobPosts`)),
@@ -419,7 +429,6 @@
       };
       JOBS.unshift(j);
       render();
-      // focus first input
       const row = tbody.querySelector('tr[data-jobid="'+j.id+'"] input');
       if(row) row.focus();
     });
@@ -427,5 +436,10 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Datalists (filled dynamically) -->
+<datalist id="rankList"></datalist>
+<datalist id="vtypeList"></datalist>
+<datalist id="countryList"></datalist>
 </body>
 </html>
