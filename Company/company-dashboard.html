@@ -8,16 +8,18 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
   <link rel="stylesheet" href="/style.css"/>
   <style>
-    .container-xxl{max-width:1480px;}
-    .table-sm td, .table-sm th { padding:.35rem .5rem; font-size:.85rem; vertical-align:middle; }
-    .empty-state{ color:#6c757d; font-size:.9rem; }
+    .container-xxl{max-width:1680px;}
+    .table-sm td, .table-sm th { padding:.40rem .6rem; font-size:.9rem; vertical-align:middle; }
+    .empty-state{ color:#6c757d; font-size:.95rem; }
     .clickable{ cursor:pointer; }
-    .notes-cell{ max-width:520px; }
+    .notes-cell{ max-width:620px; }
     .truncate-1{ overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display:block; }
-    .icon-btn{ padding:.25rem .4rem; font-size:.95rem; line-height:1; }
+    .icon-btn{ padding:.25rem .45rem; font-size:.95rem; line-height:1; }
+    .w-240{ max-width:240px; }
+    .w-220{ max-width:220px; }
+    .w-200{ max-width:200px; }
     .w-180{ max-width:180px; }
     .w-160{ max-width:160px; }
-    .w-140{ max-width:140px; }
     .w-120{ max-width:120px; }
     .w-110{ max-width:110px; }
   </style>
@@ -95,40 +97,31 @@
     collection, getDocs, doc, updateDoc, addDoc, deleteDoc, serverTimestamp
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-  // ---------- Option files (external) ----------
+  // ---------- External option files ----------
   const OPTION_FILES = {
-    ranks: '/options/ranks.html',
-    vesselTypes: '/options/vessel-types.html',
-    countries: '/options/countries.html'
+    ranks: '/options/options-ranks.html',
+    vesselTypes: '/options/options-vessels.html',
+    countries: '/options/options-countries.html'
   };
 
-  // Fallbacks (if option files not found)
+  // Fallbacks (first option blank)
   const FALLBACK = {
-    ranks: ["MASTER","CHIEF OFFICER","2ND OFFICER","3RD OFFICER","CHIEF ENGINEER","2ND ENGINEER","3RD ENGINEER","ETO","AB","OILER","COOK"],
-    vesselTypes: ["Oil - Products Tanker","Oil - Crude/Oil Products Tanker","Chemical Tanker","LNG Carrier","Bulk Carrier","Container Ship"],
-    countries: ["Singapore","UAE","Turkey","Greece","Aruba","Panama","Malta","Italy","Spain","UK","USA"]
+    ranks: ["","MASTER","CHIEF OFFICER","2ND OFFICER","3RD OFFICER","CHIEF ENGINEER","2ND ENGINEER","3RD ENGINEER","ETO","AB","OILER","COOK"],
+    vesselTypes: ["","Oil - Products Tanker","Oil - Crude/Oil Products Tanker","Chemical Tanker","LNG Carrier","Bulk Carrier","Container Ship"],
+    countries: ["","Singapore","UAE","Turkey","Greece","Aruba","Panama","Malta","Italy","Spain","UK","USA"]
   };
   const STATUS_OPTS = ["open","active","closed","draft"];
 
-  async function loadOptionsIntoDatalist(datalistId, url, fallbackArr){
-    let html = '';
+  // Load option HTML (as <option> list) for SELECTs
+  async function loadOptionsHTML(url, fallbackArr){
     try{
       const res = await fetch(url, {cache:'no-store'});
       if(res.ok){
-        html = (await res.text()).trim();
+        const t = (await res.text()).trim();
+        if(t) return `<option value="">—</option>` + t;
       }
     }catch(_){}
-    // If file didn’t load or empty, use fallback list
-    if(!html){
-      html = fallbackArr.map(v=>`<option value="${v}"></option>`).join('');
-    }
-    let el = document.getElementById(datalistId);
-    if(!el){
-      el = document.createElement('datalist');
-      el.id = datalistId;
-      document.body.appendChild(el);
-    }
-    el.innerHTML = html;
+    return fallbackArr.map(v=>`<option value="${v}">${v||"—"}</option>`).join('');
   }
 
   // ---------- Helpers ----------
@@ -152,7 +145,7 @@
   }
   function fromInputDate(s){
     if(!s) return null;
-    const d = new Date(s+"T12:00:00"); // tz-safe
+    const d = new Date(s+"T12:00:00");
     return isNaN(d) ? null : d;
   }
   function badgeForStatus(s){
@@ -167,6 +160,7 @@
   let SHIPS = [];      // {id,name}
   let JOBS = [];       // job objects
   let APPS = [];       // all applications
+  let RANKS_HTML = '', VESSEL_TYPES_HTML = '', COUNTRIES_HTML = '';
   const appsByJobId = id => APPS.filter(a => {
     const byId = (a.jobId||'')===id || (a.jobDocId||'')===id;
     const byRef = (a.jobRefPath||'').endsWith('/'+id);
@@ -218,32 +212,47 @@
 
     if(!list.length){
       tbody.innerHTML = `<tr><td colspan="11" class="empty-state text-center">No open job posts.</td></tr>`;
-    } else {
-      list.forEach(j => tbody.appendChild(renderRow(j)));
-      // init tooltips only for notes (prevents null-title errors)
-      document.querySelectorAll('.notes-tip').forEach(el=> new bootstrap.Tooltip(el));
+      return;
     }
+    list.forEach(j => tbody.appendChild(renderRow(j)));
+    document.querySelectorAll('.notes-tip').forEach(el=> new bootstrap.Tooltip(el));
   }
 
   function renderRow(job){
     const tr = document.createElement('tr');
 
     if(job._edit){
-      // --- Edit mode row ---
-      const shipOpts = ['<option value="">—</option>', ...SHIPS.map(s=>`<option value="${s.id}">${s.name}</option>`)].join('');
       const statusOpts = STATUS_OPTS.map(s=>`<option ${s===job.status?'selected':''} value="${s}">${s}</option>`).join('');
 
+      // mevcut değer dışarıdan gelen listede yoksa seçilebilir kıl
+      const ensureSelectedOption = (html, val) => {
+        if(!val) return html;
+        return html.includes(`value="${val}"`) ? html : `<option value="${val}">${val}</option>` + html;
+      };
+
+      const ranksHtml  = ensureSelectedOption(RANKS_HTML, job.title||'');
+      const vtypesHtml = ensureSelectedOption(VESSEL_TYPES_HTML, job.vesselType||'');
+      const countriesHtml = ensureSelectedOption(COUNTRIES_HTML, job.location||'');
+
+      const shipOpts = ['<option value="">—</option>', ...SHIPS.map(s=>`<option value="${s.id}">${s.name}</option>`)].join('');
+
       tr.innerHTML = `
-        <td class="w-180"><input class="form-control form-control-sm" list="rankList" value="${text(job.title,'')}" placeholder="Rank / Position"/></td>
-        <td class="w-180">
+        <td class="w-240">
+          <select class="form-select form-select-sm" data-field="title">${ranksHtml}</select>
+        </td>
+        <td class="w-220">
           <select class="form-select form-select-sm" data-field="shipId">${shipOpts}</select>
         </td>
-        <td class="w-180"><input class="form-control form-control-sm" list="vtypeList" value="${text(job.vesselType,'')}" placeholder="Vessel Type"/></td>
-        <td class="w-140"><input type="date" class="form-control form-control-sm" value="${toInputDate(job.joiningDate)}"/></td>
-        <td class="w-110"><input class="form-control form-control-sm" value="${text(job.duration,'')}" placeholder="e.g. 6 months"/></td>
-        <td class="w-180"><input class="form-control form-control-sm" list="countryList" value="${text(job.location,'')}" placeholder="Country/Port"/></td>
+        <td class="w-240">
+          <select class="form-select form-select-sm" data-field="vesselType">${vtypesHtml}</select>
+        </td>
+        <td class="w-180"><input type="date" class="form-control form-control-sm" value="${toInputDate(job.joiningDate)}"/></td>
+        <td class="w-120"><input class="form-control form-control-sm" value="${text(job.duration,'')}" placeholder="e.g. 6 months"/></td>
+        <td class="w-240">
+          <select class="form-select form-select-sm" data-field="location">${countriesHtml}</select>
+        </td>
         <td>—</td>
-        <td class="w-120">
+        <td class="w-160">
           <select class="form-select form-select-sm" data-field="status">${statusOpts}</select>
         </td>
         <td>${fmtDate(job.createdAt)}</td>
@@ -254,17 +263,18 @@
         </td>
       `;
 
-      // set current ship selection
+      tr.querySelector('select[data-field="title"]').value = job.title || '';
       tr.querySelector('select[data-field="shipId"]').value = job.shipId || '';
+      tr.querySelector('select[data-field="vesselType"]').value = job.vesselType || '';
+      tr.querySelector('select[data-field="location"]').value = job.location || '';
+      tr.querySelector('select[data-field="status"]').value = job.status || 'open';
 
-      // listeners save/cancel
       tr.querySelector(`[data-save="${job.id}"]`).addEventListener('click', ()=> saveRow(job, tr));
       tr.querySelector(`[data-cancel="${job.id}"]`).addEventListener('click', ()=> cancelEdit(job));
 
     }else{
-      // --- View mode row ---
       const apps = appsByJobId(job.id);
-      const notesPreview = text(job.notes,'').slice(0,160) + (job.notes && j.notes?.length>160 ? '…':''); // guards below
+      const notesPreview = (job.notes?job.notes:'').slice(0,160) + (job.notes && job.notes.length>160 ? '…':'');
       tr.innerHTML = `
         <td>${text(job.title)}</td>
         <td>${text(job.ship,'-')}</td>
@@ -275,7 +285,7 @@
         <td><span class="badge rounded-pill text-bg-info clickable" data-apps="${job.id}">${apps.length}</span></td>
         <td>${badgeForStatus(job.status)}</td>
         <td>${fmtDate(job.createdAt)}</td>
-        <td class="notes-cell"><span class="truncate-1 ${job.notes?'notes-tip':''}" ${job.notes?`data-bs-toggle="tooltip" data-bs-title="${(job.notes||'').replace(/"/g,'&quot;')}"`:''}>${(job.notes?job.notes:'' ).slice(0,160) || '-'}</span></td>
+        <td class="notes-cell"><span class="truncate-1 ${job.notes?'notes-tip':''}" ${job.notes?`data-bs-toggle="tooltip" data-bs-title="${(job.notes||'').replace(/"/g,'&quot;')}"`:''}>${notesPreview || '-'}</span></td>
         <td class="text-nowrap">
           <button class="btn btn-outline-primary btn-sm icon-btn me-2" data-edit="${job.id}" title="Edit"><i class="bi bi-pencil"></i></button>
           <button class="btn btn-outline-danger btn-sm icon-btn" data-remove="${job.id}" title="Remove"><i class="bi bi-x-lg"></i></button>
@@ -291,17 +301,16 @@
 
   // ---------- CRUD ----------
   async function saveRow(job, tr){
-    const cells = tr.querySelectorAll('td');
-    const title = cells[0].querySelector('input').value.trim();
-    const shipSel = cells[1].querySelector('select');
-    const shipId = shipSel.value || null;
+    const qs = s => tr.querySelector(s);
+    const title = qs('select[data-field="title"]').value.trim();
+    const shipId = qs('select[data-field="shipId"]').value || null;
     const shipName = shipId ? (SHIPS.find(s=>s.id===shipId)?.name || '') : '';
-    const vesselType = cells[2].querySelector('input').value.trim();
-    const joiningDate = fromInputDate(cells[3].querySelector('input').value);
-    const duration = cells[4].querySelector('input').value.trim();
-    const location = cells[5].querySelector('input').value.trim();
-    const status = cells[7].querySelector('select').value;
-    const notes = cells[9].querySelector('input').value.trim();
+    const vesselType = qs('select[data-field="vesselType"]').value.trim();
+    const joiningDate = fromInputDate(qs('td:nth-child(4) input').value);
+    const duration = qs('td:nth-child(5) input').value.trim();
+    const location = qs('select[data-field="location"]').value.trim();
+    const status = qs('select[data-field="status"]').value;
+    const notes = qs('td:nth-child(10) input').value.trim();
 
     const payload = {
       title, position: title,
@@ -316,8 +325,7 @@
     try{
       if(job._isNew){
         const ref = await addDoc(collection(db, `companies/${auth.currentUser.uid}/jobPosts`), {
-          ...payload,
-          createdAt: serverTimestamp()
+          ...payload, createdAt: serverTimestamp()
         });
         job.id = ref.id;
         job.createdAt = new Date();
@@ -333,11 +341,8 @@
   }
 
   function cancelEdit(job){
-    if(job._isNew){
-      JOBS = JOBS.filter(x=>x!==job);
-    }else{
-      job._edit=false;
-    }
+    if(job._isNew){ JOBS = JOBS.filter(x=>x!==job); }
+    else{ job._edit=false; }
     render();
   }
 
@@ -357,11 +362,11 @@
     if(!user){ location.href='/index.html'; return; }
     const uid = user.uid;
 
-    // Load external option lists (datalists)
-    await Promise.all([
-      loadOptionsIntoDatalist('rankList', OPTION_FILES.ranks, FALLBACK.ranks),
-      loadOptionsIntoDatalist('vtypeList', OPTION_FILES.vesselTypes, FALLBACK.vesselTypes),
-      loadOptionsIntoDatalist('countryList', OPTION_FILES.countries, FALLBACK.countries),
+    // Load external options (for SELECTs)
+    [RANKS_HTML, VESSEL_TYPES_HTML, COUNTRIES_HTML] = await Promise.all([
+      loadOptionsHTML(OPTION_FILES.ranks, FALLBACK.ranks),
+      loadOptionsHTML(OPTION_FILES.vesselTypes, FALLBACK.vesselTypes),
+      loadOptionsHTML(OPTION_FILES.countries, FALLBACK.countries)
     ]);
 
     const [jobsSnap, shipsSnap, appsSnap] = await Promise.all([
@@ -429,17 +434,12 @@
       };
       JOBS.unshift(j);
       render();
-      const row = tbody.querySelector('tr[data-jobid="'+j.id+'"] input');
-      if(row) row.focus();
+      const firstSelect = tbody.querySelector('tr[data-jobid="'+j.id+'"] select');
+      if(firstSelect) firstSelect.focus();
     });
   });
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Datalists (filled dynamically) -->
-<datalist id="rankList"></datalist>
-<datalist id="vtypeList"></datalist>
-<datalist id="countryList"></datalist>
 </body>
 </html>
