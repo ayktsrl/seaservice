@@ -94,7 +94,8 @@
   import { auth, db } from '/firebase-config.js';
   import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
   import {
-    collection, getDocs, doc, updateDoc, addDoc, deleteDoc, serverTimestamp
+    collection, doc, updateDoc, addDoc, deleteDoc, serverTimestamp,
+    getDocsFromServer
   } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
   // ---------- External option files ----------
@@ -112,7 +113,7 @@
   };
   const STATUS_OPTS = ["open","active","closed","draft"];
 
-  // Load option HTML (as <option> list) for SELECTs
+  // Load option HTML for SELECTs
   async function loadOptionsHTML(url, fallbackArr){
     try{
       const res = await fetch(url, {cache:'no-store'});
@@ -224,7 +225,6 @@
     if(job._edit){
       const statusOpts = STATUS_OPTS.map(s=>`<option ${s===job.status?'selected':''} value="${s}">${s}</option>`).join('');
 
-      // mevcut değer dışarıdan gelen listede yoksa seçilebilir kıl
       const ensureSelectedOption = (html, val) => {
         if(!val) return html;
         return html.includes(`value="${val}"`) ? html : `<option value="${val}">${val}</option>` + html;
@@ -295,7 +295,6 @@
       tr.querySelector(`[data-edit="${job.id}"]`)?.addEventListener('click', ()=> { job._edit=true; render(); });
       tr.querySelector(`[data-remove="${job.id}"]`)?.addEventListener('click', ()=> removeJob(job));
     }
-    tr.dataset.jobid = job.id;
     return tr;
   }
 
@@ -328,13 +327,10 @@
           ...payload, createdAt: serverTimestamp()
         });
         job.id = ref.id;
-        job.createdAt = new Date();
-        job._isNew = false;
       }else{
         await updateDoc(doc(db, `companies/${auth.currentUser.uid}/jobPosts/${job.id}`), payload);
       }
-      Object.assign(job, payload, { ship: shipName || '-', _edit:false });
-      render();
+      await reloadFromServer(); // en güncel snapshotı çek
     }catch(e){
       alert('Save failed: ' + (e?.message||e));
     }
@@ -349,30 +345,25 @@
   async function removeJob(job){
     if(!confirm('Delete this job post?')) return;
     try{
-      await deleteDoc(doc(db, `companies/${auth.currentUser.uid}/jobPosts/${job.id}`));
-      JOBS = JOBS.filter(x=>x.id!==job.id);
-      render();
+      await updateDoc(doc(db, `companies/${auth.currentUser.uid}/jobPosts/${job.id}`), {deleted:true}); // istersen hard delete yap
+      // hard delete:
+      // await deleteDoc(doc(db, `companies/${auth.currentUser.uid}/jobPosts/${job.id}`));
+      await reloadFromServer();
     }catch(e){
       alert('Delete failed: ' + (e?.message||e));
     }
   }
 
-  // ---------- Boot ----------
-  onAuthStateChanged(auth, async user=>{
-    if(!user){ location.href='/index.html'; return; }
+  // ---------- Load (always from server) ----------
+  async function reloadFromServer(){
+    const user = auth.currentUser;
+    if(!user) return;
     const uid = user.uid;
 
-    // Load external options (for SELECTs)
-    [RANKS_HTML, VESSEL_TYPES_HTML, COUNTRIES_HTML] = await Promise.all([
-      loadOptionsHTML(OPTION_FILES.ranks, FALLBACK.ranks),
-      loadOptionsHTML(OPTION_FILES.vesselTypes, FALLBACK.vesselTypes),
-      loadOptionsHTML(OPTION_FILES.countries, FALLBACK.countries)
-    ]);
-
     const [jobsSnap, shipsSnap, appsSnap] = await Promise.all([
-      getDocs(collection(db, `companies/${uid}/jobPosts`)),
-      getDocs(collection(db, `companies/${uid}/ships`)),
-      getDocs(collection(db, `companies/${uid}/applications`))
+      getDocsFromServer(collection(db, `companies/${uid}/jobPosts`)),
+      getDocsFromServer(collection(db, `companies/${uid}/ships`)),
+      getDocsFromServer(collection(db, `companies/${uid}/applications`))
     ]);
 
     // ships
@@ -400,6 +391,7 @@
     JOBS = [];
     jobsSnap.forEach(d=>{
       const x=d.data()||{};
+      if(x?.deleted) return; // soft delete'i gizle
       let shipName = first(x.ship, x.shipName, '');
       const shipId = first(x.shipId, x.shipDocId, x.shipDocID, '');
       if(!shipName && shipId){
@@ -422,8 +414,21 @@
     });
 
     render();
+  }
 
-    // Add new row
+  // ---------- Boot ----------
+  onAuthStateChanged(auth, async user=>{
+    if(!user){ location.href='/index.html'; return; }
+
+    // options (no-cache)
+    [RANKS_HTML, VESSEL_TYPES_HTML, COUNTRIES_HTML] = await Promise.all([
+      loadOptionsHTML(OPTION_FILES.ranks, FALLBACK.ranks),
+      loadOptionsHTML(OPTION_FILES.vesselTypes, FALLBACK.vesselTypes),
+      loadOptionsHTML(OPTION_FILES.countries, FALLBACK.countries)
+    ]);
+
+    // ilk yükleme her zaman serverdan
+    await reloadFromServer();
     document.getElementById('addRowBtn').addEventListener('click', ()=>{
       const j = {
         id: 'new-'+Date.now(),
@@ -434,7 +439,7 @@
       };
       JOBS.unshift(j);
       render();
-      const firstSelect = tbody.querySelector('tr[data-jobid="'+j.id+'"] select');
+      const firstSelect = document.querySelector('tr select');
       if(firstSelect) firstSelect.focus();
     });
   });
