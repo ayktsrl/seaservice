@@ -15,7 +15,6 @@
 </head>
 <body class="bg-light">
 
-  <!-- NAVBAR -->
   <div id="navbar-host"></div>
   <script type="module" src="/shared/navbar-inject.js"></script>
 
@@ -54,8 +53,7 @@
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import {
-      collection, addDoc, deleteDoc, doc, updateDoc,
-      getDocsFromServer
+      collection, addDoc, deleteDoc, doc, updateDoc, getDocsFromServer
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     // ---- Options (ship types) ----
@@ -90,26 +88,26 @@
         tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No ships.</td></tr>`;
         return;
       }
-      SHIPS
-        .sort((a,b)=> (a.name||'').localeCompare(b.name||''))
-        .forEach(s=> tbody.appendChild(renderRow(s)));
+      SHIPS.sort((a,b)=> (a.name||'').localeCompare(b.name||''))
+           .forEach(s=> tbody.appendChild(renderRow(s)));
     }
 
     function renderRow(s){
       const tr=document.createElement('tr');
       if(s._edit){
-        const ensureSelected = (html,val)=> !val ? `<option value="">—</option>${html}` :
-          (html.includes(\`value="\${val}"\`) ? html : \`<option value="\${val}">\${val}</option>\` + html);
+        const ensureSelected = (html,val)=> !val
+          ? `<option value="">—</option>${html}`
+          : (html.includes(`value="${val}"`) ? html : `<option value="${val}">${val}</option>` + html);
 
         const typesHtml = ensureSelected(VESSEL_TYPES_HTML, s.type||'');
 
         tr.innerHTML = `
           <td><input class="form-control form-control-sm" value="${(s.name||'').replace(/"/g,'&quot;')}" /></td>
           <td><select class="form-select form-select-sm">${typesHtml}</select></td>
-          <td><input class="form-control form-control-sm" inputmode="decimal" pattern="\\d*(\\.\\d+)?" value="${text(s.loa,'')}" /></td>
-          <td><input class="form-control form-control-sm" inputmode="numeric" pattern="\\d+" value="${text(s.dwt,'')}" /></td>
-          <td><input class="form-control form-control-sm" inputmode="numeric" pattern="\\d+" value="${text(s.grt,'')}" /></td>
-          <td><input class="form-control form-control-sm" inputmode="numeric" pattern="\\d{4}" placeholder="YYYY" value="${text(s.buildYear,'')}" /></td>
+          <td><input type="number" step="0.01" min="0" class="form-control form-control-sm" value="${text(s.loa,'')}" /></td>
+          <td><input type="number" step="1" min="0" class="form-control form-control-sm" value="${text(s.dwt,'')}" /></td>
+          <td><input type="number" step="1" min="0" class="form-control form-control-sm" value="${text(s.grt,'')}" /></td>
+          <td><input type="number" step="1" min="1900" max="2100" class="form-control form-control-sm" placeholder="YYYY" value="${text(s.buildYear,'')}" /></td>
           <td><input class="form-control form-control-sm" value="${text(s.buildPlace,'')}" /></td>
           <td class="text-nowrap">
             <button class="btn btn-success btn-sm icon-btn me-1" data-save="${s.id}" title="Save"><i class="bi bi-check-lg"></i></button>
