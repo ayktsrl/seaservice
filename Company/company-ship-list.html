@@ -7,8 +7,10 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="/style.css"/>
   <style>
-    @media(max-width:768px){ .table{font-size:.92rem} .btn{font-size:.92rem} }
-    .form-box{background:#fff;border-radius:12px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+    .container-xxl{max-width:1400px}
+    .table-sm td, .table-sm th { padding:.40rem .6rem; font-size:.9rem; vertical-align:middle; }
+    .icon-btn{ padding:.25rem .45rem; font-size:.9rem; line-height:1; }
+    .w-220{max-width:220px} .w-180{max-width:180px} .w-140{max-width:140px} .w-120{max-width:120px}
   </style>
 </head>
 <body class="bg-light">
@@ -17,59 +19,32 @@
   <div id="navbar-host"></div>
   <script type="module" src="/shared/navbar-inject.js"></script>
 
-  <div class="container py-4">
+  <div class="container-xxl py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
       <h3 class="mb-0">Ship List</h3>
-      <button class="btn btn-sm btn-outline-primary" id="btnOpen">➕ Add Ship</button>
+      <button class="btn btn-sm btn-primary" id="addRowBtn"><i class="bi bi-plus-lg me-1"></i>Add Ship</button>
     </div>
 
-    <div class="table-responsive mb-3">
-      <table class="table table-bordered align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Photo</th><th>Name</th><th>Type</th><th>LOA</th><th>DWT</th><th>GRT</th>
-            <th>Build Year</th><th>Build Place</th><th style="width:100px"></th>
-          </tr>
-        </thead>
-        <tbody id="shipList"></tbody>
-      </table>
-    </div>
-
-    <div id="formBox" class="form-box d-none">
-      <form id="shipForm">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Ship Name</label>
-            <input class="form-control" id="name" required/>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Ship Type</label>
-            <select class="form-select" id="type" required></select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">LOA</label><input class="form-control" id="loa" inputmode="decimal" pattern="\\d*(\\.\\d+)?"/>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">DWT</label><input class="form-control" id="dwt" inputmode="numeric" pattern="\\d+"/>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">GRT</label><input class="form-control" id="grt" inputmode="numeric" pattern="\\d+"/>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Build Year</label><input class="form-control" id="buildYear"/>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Build Place</label><input class="form-control" id="buildPlace"/>
-          </div>
-          <div class="col-12">
-            <label class="form-label">Photo URL</label><input class="form-control" id="photo" placeholder="https://..."/>
-          </div>
-        </div>
-        <div class="d-flex gap-2 justify-content-end mt-3">
-          <button class="btn btn-primary">Save</button>
-          <button type="button" class="btn btn-secondary" id="btnCancel">Cancel</button>
-        </div>
-      </form>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="w-220">Name</th>
+              <th class="w-220">Type</th>
+              <th class="w-120">LOA</th>
+              <th class="w-120">DWT</th>
+              <th class="w-120">GRT</th>
+              <th class="w-140">Build Year</th>
+              <th class="w-220">Build Place</th>
+              <th style="width:120px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="shipTbody">
+            <tr><td colspan="8" class="text-center text-muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -78,88 +53,176 @@
 
     import { auth, db } from '/firebase-config.js';
     import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { collection, getDocs, addDoc, deleteDoc, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import {
+      collection, addDoc, deleteDoc, doc, updateDoc,
+      getDocsFromServer
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    const list=document.getElementById('shipList');
-    const formBox=document.getElementById('formBox');
-    const form=document.getElementById('shipForm');
-    const btnOpen=document.getElementById('btnOpen'); const btnCancel=document.getElementById('btnCancel');
+    // ---- Options (ship types) ----
+    const VESSEL_TYPES_URL = '/options/options-vessels.html';
+    const VESSEL_TYPES_FALLBACK = ["","Oil - Products Tanker","Oil - Crude/Oil Products Tanker","Chemical Tanker","LNG Carrier","Bulk Carrier","Container Ship"];
 
+    async function loadOptionsHTML(url, fallbackArr){
+      try{
+        const res = await fetch(url, {cache:'no-store'});
+        if(res.ok){
+          const t = (await res.text()).trim();
+          if(t) return `<option value="">—</option>` + t;
+        }
+      }catch(_){}
+      return fallbackArr.map(v=>`<option value="${v}">${v||"—"}</option>`).join('');
+    }
+
+    // ---- Helpers ----
+    const text = (v,f='-') => (v===0?'0':(v||'').toString().trim()) || f;
+    const first = (...vals) => { for(const v of vals){ if(v!==undefined && v!==null && v!=='') return v; } return ''; };
+
+    // ---- State ----
     let uid=null;
+    let SHIPS=[];
+    let VESSEL_TYPES_HTML='';
+
+    const tbody = document.getElementById('shipTbody');
+
+    function render(){
+      tbody.innerHTML = '';
+      if(!SHIPS.length){
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No ships.</td></tr>`;
+        return;
+      }
+      SHIPS
+        .sort((a,b)=> (a.name||'').localeCompare(b.name||''))
+        .forEach(s=> tbody.appendChild(renderRow(s)));
+    }
+
+    function renderRow(s){
+      const tr=document.createElement('tr');
+      if(s._edit){
+        const ensureSelected = (html,val)=> !val ? `<option value="">—</option>${html}` :
+          (html.includes(\`value="\${val}"\`) ? html : \`<option value="\${val}">\${val}</option>\` + html);
+
+        const typesHtml = ensureSelected(VESSEL_TYPES_HTML, s.type||'');
+
+        tr.innerHTML = `
+          <td><input class="form-control form-control-sm" value="${(s.name||'').replace(/"/g,'&quot;')}" /></td>
+          <td><select class="form-select form-select-sm">${typesHtml}</select></td>
+          <td><input class="form-control form-control-sm" inputmode="decimal" pattern="\\d*(\\.\\d+)?" value="${text(s.loa,'')}" /></td>
+          <td><input class="form-control form-control-sm" inputmode="numeric" pattern="\\d+" value="${text(s.dwt,'')}" /></td>
+          <td><input class="form-control form-control-sm" inputmode="numeric" pattern="\\d+" value="${text(s.grt,'')}" /></td>
+          <td><input class="form-control form-control-sm" inputmode="numeric" pattern="\\d{4}" placeholder="YYYY" value="${text(s.buildYear,'')}" /></td>
+          <td><input class="form-control form-control-sm" value="${text(s.buildPlace,'')}" /></td>
+          <td class="text-nowrap">
+            <button class="btn btn-success btn-sm icon-btn me-1" data-save="${s.id}" title="Save"><i class="bi bi-check-lg"></i></button>
+            <button class="btn btn-secondary btn-sm icon-btn" data-cancel="${s.id}" title="Cancel"><i class="bi bi-x-lg"></i></button>
+          </td>
+        `;
+        tr.querySelector('select').value = s.type || '';
+        tr.querySelector(`[data-save="${s.id}"]`).addEventListener('click', ()=> saveRow(s,tr));
+        tr.querySelector(`[data-cancel="${s.id}"]`).addEventListener('click', ()=> cancelEdit(s));
+      } else {
+        tr.innerHTML = `
+          <td>${text(s.name)}</td>
+          <td>${text(s.type)}</td>
+          <td>${text(s.loa)}</td>
+          <td>${text(s.dwt)}</td>
+          <td>${text(s.grt)}</td>
+          <td>${text(s.buildYear)}</td>
+          <td>${text(s.buildPlace)}</td>
+          <td class="text-nowrap">
+            <button class="btn btn-outline-primary btn-sm icon-btn me-2" data-edit="${s.id}" title="Edit"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-outline-danger btn-sm icon-btn" data-remove="${s.id}" title="Remove"><i class="bi bi-x-lg"></i></button>
+          </td>
+        `;
+        tr.querySelector(`[data-edit="${s.id}"]`).addEventListener('click', ()=> { s._edit=true; render(); });
+        tr.querySelector(`[data-remove="${s.id}"]`).addEventListener('click', ()=> removeShip(s));
+      }
+      return tr;
+    }
+
+    async function saveRow(s, tr){
+      const qs = sel => tr.querySelector(sel);
+      const payload = {
+        name: qs('td:nth-child(1) input').value.trim(),
+        type: qs('td:nth-child(2) select').value.trim(),
+        loa: qs('td:nth-child(3) input').value.trim(),
+        dwt: qs('td:nth-child(4) input').value.trim(),
+        grt: qs('td:nth-child(5) input').value.trim(),
+        buildYear: qs('td:nth-child(6) input').value.trim(),
+        buildPlace: qs('td:nth-child(7) input').value.trim()
+      };
+      if(!payload.name){ alert('Name is required'); return; }
+
+      try{
+        if(s._isNew){
+          const ref = await addDoc(collection(db, `companies/${uid}/ships`), payload);
+          s.id = ref.id;
+          s._isNew = false;
+        }else{
+          await updateDoc(doc(db, `companies/${uid}/ships/${s.id}`), payload);
+        }
+        Object.assign(s, payload, { _edit:false });
+        await reloadFromServer();
+      }catch(e){
+        alert('Save failed: ' + (e?.message||e));
+      }
+    }
+
+    function cancelEdit(s){
+      if(s._isNew){ SHIPS = SHIPS.filter(x=>x!==s); }
+      else{ s._edit=false; }
+      render();
+    }
+
+    async function removeShip(s){
+      if(!confirm('Delete this ship?')) return;
+      try{
+        await deleteDoc(doc(db, `companies/${uid}/ships/${s.id}`));
+        await reloadFromServer();
+      }catch(e){
+        alert('Delete failed: ' + (e?.message||e));
+      }
+    }
+
+    async function reloadFromServer(){
+      const snap = await getDocsFromServer(collection(db, `companies/${uid}/ships`));
+      SHIPS = [];
+      snap.forEach(d=>{
+        const x=d.data()||{};
+        SHIPS.push({
+          id:d.id,
+          name:first(x.name,x.shipName,''),
+          type:first(x.type,x.vesselType,''),
+          loa:first(x.loa,''),
+          dwt:first(x.dwt,''),
+          grt:first(x.grt,''),
+          buildYear:first(x.buildYear,''),
+          buildPlace:first(x.buildPlace,'')
+        });
+      });
+      render();
+    }
+
+    document.getElementById('addRowBtn').addEventListener('click', ()=>{
+      const s = {
+        id: 'new-' + Date.now(),
+        name:'', type:'', loa:'', dwt:'', grt:'', buildYear:'', buildPlace:'',
+        _edit:true, _isNew:true
+      };
+      SHIPS.unshift(s);
+      render();
+      const firstInput = tbody.querySelector('tr input, tr select');
+      if(firstInput) firstInput.focus();
+    });
 
     onAuthStateChanged(auth, async user=>{
       if(!user) return location.href='/index.html';
       uid=user.uid;
-      await render();
-      const txt = await fetch('/options/options-vessels.html').then(r=>r.text());
-      document.getElementById('type').innerHTML = txt;
-    });
-
-    async function render(){
-      list.innerHTML='';
-      const snap=await getDocs(collection(db, `companies/${uid}/ships`));
-      if(!snap.size){ list.innerHTML=`<tr><td colspan="9" class="text-center text-muted">No ships.</td></tr>`; return; }
-      snap.forEach(s=>{
-        const d=s.data();
-        const tr=document.createElement('tr');
-        tr.innerHTML=`
-          <td><img src="${d.photo||''}" onerror="this.src='https://via.placeholder.com/80'" class="img-thumbnail" width="80"/></td>
-          <td>${d.name||'-'}</td>
-          <td>${d.type||'-'}</td>
-          <td>${d.loa||'-'}</td>
-          <td>${d.dwt||'-'}</td>
-          <td>${d.grt||'-'}</td>
-          <td>${d.buildYear||'-'}</td>
-          <td>${d.buildPlace||'-'}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-secondary me-1" data-edit="${s.id}">✏️</button>
-            <button class="btn btn-sm btn-danger" data-del="${s.id}">❌</button>
-          </td>`;
-        list.appendChild(tr);
-      });
-    }
-
-    btnOpen.addEventListener('click', ()=>{ form.reset(); formBox.classList.remove('d-none'); });
-    btnCancel.addEventListener('click', ()=>{ formBox.classList.add('d-none'); form.removeAttribute('data-editing'); });
-
-    form.addEventListener('submit', async e=>{
-      e.preventDefault();
-      const data={
-        name:form.name.value.trim(), type:form.type.value,
-        loa:form.loa.value.trim(), dwt:form.dwt.value.trim(), grt:form.grt.value.trim(),
-        buildYear:form.buildYear.value.trim(), buildPlace:form.buildPlace.value.trim(),
-        photo:form.photo.value.trim()
-      };
-      const editingId=form.getAttribute('data-editing');
-      if(editingId){
-        await updateDoc(doc(db, `companies/${uid}/ships/${editingId}`), data);
-        form.removeAttribute('data-editing');
-      } else {
-        await addDoc(collection(db, `companies/${uid}/ships`), data);
-      }
-      formBox.classList.add('d-none'); await render();
-    });
-
-    list.addEventListener('click', async e=>{
-      const id=e.target.getAttribute('data-del');
-      const eid=e.target.getAttribute('data-edit');
-      if(id){
-        if(!confirm('Delete this ship?')) return;
-        await deleteDoc(doc(db, `companies/${uid}/ships/${id}`)); await render();
-      }
-      if(eid){
-        const snap=await getDoc(doc(db, `companies/${uid}/ships/${eid}`));
-        const d=snap.data();
-        formBox.classList.remove('d-none');
-        form.name.value=d.name||''; form.type.value=d.type||'';
-        form.loa.value=d.loa||''; form.dwt.value=d.dwt||''; form.grt.value=d.grt||'';
-        form.buildYear.value=d.buildYear||''; form.buildPlace.value=d.buildPlace||''; form.photo.value=d.photo||'';
-        form.setAttribute('data-editing', eid);
-        form.scrollIntoView({behavior:'smooth'});
-      }
+      VESSEL_TYPES_HTML = await loadOptionsHTML(VESSEL_TYPES_URL, VESSEL_TYPES_FALLBACK);
+      await reloadFromServer();
     });
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
 </body>
 </html>
