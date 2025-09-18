@@ -61,12 +61,9 @@ function buildMenu(role) {
     items.push(['Seafarers', '/Agency/agency-seafarers.html']);
   } else if (role === 'company') {
     items.push(['Dashboard', '/Company/company-dashboard.html']);
-    items.push(['Create Job', '/Company/create-job.html']);
-    items.push(['Applications', '/Company/company-applications.html']);
     items.push(['Ships', '/Company/company-ship-list.html']);
     items.push(['Crew Lists', '/Company/ship-crew-list.html']);
     items.push(['Crew Change', '/Company/crew-change.html']);               // NEW
-    items.push(['CV Browser', '/Company/public-cv-browser.html']);          // NEW (replaces Evaluate)
   } else { // seafarer default
     items.push(['Job Board', '/shared/job-board.html']);
     items.push(['My Applications', '/Seafarer/my-applications.html']);
